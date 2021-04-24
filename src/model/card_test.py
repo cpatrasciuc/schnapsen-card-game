@@ -42,4 +42,4 @@ class CardTest(unittest.TestCase):
     for card_value in CardValue:
       for suit in Suit:
         card = Card(card_value, suit)
-        self.assertEquals(card, loads(dumps(card)))
+        self.assertEqual(card, loads(dumps(card)))
