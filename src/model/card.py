@@ -19,3 +19,11 @@ class Card:
 
   def __str__(self):
     return "%s%s" % (self.card_value, self.suit)
+
+  @staticmethod
+  def get_all_cards():
+    deck = []
+    for card_value in CardValue:
+      for suit in Suit:
+        deck.append(Card(card_value, suit))
+    return deck

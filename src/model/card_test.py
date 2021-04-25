@@ -13,10 +13,9 @@ from model.suit import Suit
 class CardTest(unittest.TestCase):
   @staticmethod
   def test_create_and_print_all_cards():
-    for card_value in CardValue:
-      for suit in Suit:
-        card = Card(card_value, suit)
-        print(repr(card), card)
+    deck = Card.get_all_cards()
+    for card in deck:
+      print(repr(card), card)
 
   # noinspection PyTypeChecker
   def test_card_value_and_suit_cannot_be_none(self):
@@ -43,3 +42,10 @@ class CardTest(unittest.TestCase):
       for suit in Suit:
         card = Card(card_value, suit)
         self.assertEqual(card, loads(dumps(card)))
+
+  def test_hash_and_eq(self):
+    s = {Card(CardValue.ACE, Suit.DIAMONDS),
+         Card(CardValue.KING, Suit.DIAMONDS)}
+    self.assertEqual(2, len(s), s)
+    s = {Card(CardValue.ACE, Suit.DIAMONDS), Card(CardValue.ACE, Suit.DIAMONDS)}
+    self.assertEqual(1, len(s), s)
