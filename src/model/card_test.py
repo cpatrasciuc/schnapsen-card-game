@@ -29,6 +29,15 @@ class CardTest(unittest.TestCase):
                                 "card_value and suit cannot be None"):
       print(Card(None, None))
 
+  # noinspection PyTypeChecker
+  def test_init_args_order_and_type(self):
+    # Swaps the order of the arguments.
+    with self.assertRaisesRegex(TypeError, "suit must be an instance of Suit"):
+      Card(CardValue.ACE, Suit.DIAMONDS)
+    with self.assertRaisesRegex(TypeError,
+                                "card_value must be an instance of CardValue"):
+      Card(Suit.DIAMONDS, Suit.DIAMONDS)
+
   def test_immutable(self):
     card = Card(Suit.DIAMONDS, CardValue.ACE)
     with self.assertRaisesRegex(dataclasses.FrozenInstanceError,

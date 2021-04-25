@@ -26,7 +26,7 @@ class Card:
       raise ValueError("card_value and suit cannot be None")
     if not isinstance(self.suit, Suit):
       raise TypeError(
-        "Suit must be an instance of Suit, not %s." % type(self.suit))
+        "suit must be an instance of Suit, not %s." % type(self.suit))
     if not isinstance(self.card_value, CardValue):
       raise TypeError(
         "card_value must be an instance of CardValue, not %s." % type(
