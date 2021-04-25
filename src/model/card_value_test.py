@@ -26,3 +26,5 @@ class CardValueTest(unittest.TestCase):
     self.assertEqual(CardValue.JACK, CardValue(2))
     with self.assertRaisesRegex(ValueError, "5 is not a valid CardValue"):
       CardValue(5)
+    with self.assertRaisesRegex(ValueError, "0 is not a valid CardValue"):
+      CardValue(0)

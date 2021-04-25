@@ -6,7 +6,7 @@ import enum
 
 
 @enum.unique
-class CardValue(enum.Enum):
+class CardValue(enum.IntEnum):
   ACE = 11
   TEN = 10
   KING = 4

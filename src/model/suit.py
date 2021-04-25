@@ -6,10 +6,10 @@ import enum
 
 
 @enum.unique
-class Suit(enum.Enum):
+class Suit(enum.IntEnum):
   HEARTS = enum.auto()
-  DIAMONDS = enum.auto()
   SPADES = enum.auto()
+  DIAMONDS = enum.auto()
   CLUBS = enum.auto()
 
   def __str__(self):
