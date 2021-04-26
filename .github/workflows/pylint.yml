@@ -20,4 +20,4 @@ jobs:
         pip install coverage
     - name: Analysing the code with pylint
       run: |
-        cd src && pylint --indent-string='  ' `find . -type f|grep .py$|xargs`
+        cd src && pylint --indent-string='  ' --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring `find . -type f|grep .py$|xargs`
