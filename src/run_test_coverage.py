@@ -41,7 +41,7 @@ def run_all_tests_with_coverage() -> float:
   pct_covered = cov.report(skip_empty=True, skip_covered=True,
                            show_missing=True)
   print("\nOutput saved to: %s" % html_path)
-  
+
   return pct_covered
 
 

@@ -3,7 +3,9 @@
 #  found in the LICENSE file.
 
 import dataclasses
+import random
 import unittest
+from pickle import dumps, loads
 
 from model.card import Card
 from model.card_value import CardValue
@@ -46,18 +48,18 @@ class CardTest(unittest.TestCase):
       card.suit = Suit.HEARTS
 
   def test_serialization(self):
-    from pickle import dumps, loads
     for card_value in CardValue:
       for suit in Suit:
         card = Card(suit, card_value)
         self.assertEqual(card, loads(dumps(card)))
 
   def test_hash_and_eq(self):
-    s = {Card(Suit.DIAMONDS, CardValue.ACE),
-         Card(Suit.DIAMONDS, CardValue.KING)}
-    self.assertEqual(2, len(s), s)
-    s = {Card(Suit.DIAMONDS, CardValue.ACE), Card(Suit.DIAMONDS, CardValue.ACE)}
-    self.assertEqual(1, len(s), s)
+    card_set = {Card(Suit.DIAMONDS, CardValue.ACE),
+                Card(Suit.DIAMONDS, CardValue.KING)}
+    self.assertEqual(2, len(card_set), card_set)
+    card_set = {Card(Suit.DIAMONDS, CardValue.ACE),
+                Card(Suit.DIAMONDS, CardValue.ACE)}
+    self.assertEqual(1, len(card_set), card_set)
 
   def test_display_order(self):
     # Sort by suit first.
@@ -72,7 +74,6 @@ class CardTest(unittest.TestCase):
     deck = Card.get_all_cards()
     # Shuffle it in case it is already sorted.
     shuffled_deck = deck[:]
-    import random
     random.seed(1234)
     random.shuffle(shuffled_deck)
     self.assertNotEqual(deck, shuffled_deck)

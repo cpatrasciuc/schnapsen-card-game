@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import unittest
+from pickle import loads, dumps
 
 from model.suit import Suit
 
@@ -14,7 +15,6 @@ class SuitTest(unittest.TestCase):
       print(repr(suit), suit)
 
   def test_serialization(self):
-    from pickle import dumps, loads
     for suit in Suit:
       self.assertEqual(suit, loads(dumps(suit)))
 

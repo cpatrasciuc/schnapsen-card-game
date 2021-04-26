@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import unittest
+from pickle import loads, dumps
 
 from model.card_value import CardValue
 
@@ -14,7 +15,6 @@ class CardValueTest(unittest.TestCase):
       print(repr(card_value), card_value)
 
   def test_serialization(self):
-    from pickle import dumps, loads
     for card_value in CardValue:
       self.assertEqual(card_value, loads(dumps(card_value)))
 
