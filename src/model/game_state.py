@@ -29,6 +29,8 @@ class InvalidGameStateError(Exception):
 class GameState:
   """Stores all the information about a game at a specific point in time."""
 
+  # pylint: disable=too-many-instance-attributes
+
   # The cards that each player holds in their hands. The lists are not sorted.
   # Each player can have at most 5 cards in their hand.
   cards_in_hand: PlayerPair[List[Card]]
@@ -71,8 +73,6 @@ class GameState:
   # This stores the current, incomplete trick. This means we are waiting for
   # either one of both players to play card.
   current_trick: Trick = PlayerPair(None, None)
-
-  # pylint: disable=too-many-instance-attributes
 
   def on_lead(self, player_id):
     """
