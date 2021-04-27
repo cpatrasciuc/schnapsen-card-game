@@ -16,8 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
-        pip install coverage
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Analysing the code with pylint
       run: |
-        cd src && pylint --indent-string='  ' --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring,fixme,locally-disabled `find . -type f|grep .py$|xargs`
+        cd src && python run_pylint.py
