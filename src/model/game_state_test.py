@@ -6,8 +6,10 @@ import copy
 import unittest
 
 from model.game_state import InvalidGameStateError
-from model.game_state_test_utils import get_game_state_for_tests
+from model.game_state_test_utils import get_game_state_for_tests, \
+  get_game_state_with_empty_talon_for_tests
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 
 
@@ -76,9 +78,17 @@ class GameStateValidationTest(unittest.TestCase):
   def test_same_number_of_cards_in_hand(self):
     card = self.game_state.cards_in_hand.one.pop()
     self.game_state.talon.append(card)
-    with self.assertRaisesRegex(InvalidGameStateError, "equal number of cards"):
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "equal number of cards .* 4 vs 5"):
       self.game_state.validate()
-    # TODO(tests): add a test case for the end-game, when they have < 5 cards.
+
+    self.game_state = get_game_state_with_empty_talon_for_tests()
+    trick = PlayerPair(one=self.game_state.cards_in_hand.one.pop(),
+                       two=self.game_state.cards_in_hand.one.pop())
+    self.game_state.won_tricks.one.append(trick)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "equal number of cards .* 2 vs 4"):
+      self.game_state.validate()
 
   def test_five_cards_in_hand(self):
     self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
@@ -126,4 +136,54 @@ class GameStateValidationTest(unittest.TestCase):
     self.game_state.game_points.two = 7
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "between 0 and 6: PlayerId.TWO has 7"):
+      self.game_state.validate()
+
+  def test_empty_talon_cannot_be_closed(self):
+    self.game_state = get_game_state_with_empty_talon_for_tests()
+    self.game_state.is_talon_closed = True
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "An empty talon cannot be closed"):
+      self.game_state.validate()
+
+  def test_duplicated_marriage_suits(self):
+    self.game_state.marriage_suits.two.append(Suit.DIAMONDS)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "Duplicated marriage suits: ♦"):
+      self.game_state.validate()
+    self.game_state.marriage_suits.two.pop()
+    self.game_state.validate()
+    self.game_state.marriage_suits.one.append(Suit.DIAMONDS)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "Duplicated marriage suits: ♦"):
+      self.game_state.validate()
+
+  def test_marriage_card_not_played(self):
+    # One card is in the talon, one card is in the player's hand.
+    card = self.game_state.won_tricks.one[-1].two
+    self.game_state.won_tricks.one[-1].two = self.game_state.talon[0]
+    self.game_state.talon[0] = card
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "♦ was announced, but no card was played"):
+      self.game_state.validate()
+
+    # Both cards are still in the players hand.
+    self.game_state = get_game_state_for_tests()
+    self.game_state.marriage_suits.one.append(Suit.HEARTS)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "♥ was announced, but no card was played"):
+      self.game_state.validate()
+
+    # Both cards were played, but by different players.
+    self.game_state = get_game_state_for_tests()
+    self.game_state.marriage_suits.one.append(Suit.SPADES)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "ONE announced .* ♠ and played one card"):
+      self.game_state.validate()
+
+    # The other player announced the marriage.
+    self.game_state = get_game_state_for_tests()
+    self.game_state.marriage_suits.one.append(
+      self.game_state.marriage_suits.two.pop())
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "♦ was announced, but no card was played"):
       self.game_state.validate()

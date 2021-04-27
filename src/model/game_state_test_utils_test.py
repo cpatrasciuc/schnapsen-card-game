@@ -4,7 +4,8 @@
 
 import unittest
 
-from model.game_state_test_utils import get_game_state_for_tests
+from model.game_state_test_utils import get_game_state_for_tests, \
+  get_game_state_with_empty_talon_for_tests
 
 
 class GameStateTestUtilsTest(unittest.TestCase):
@@ -12,4 +13,13 @@ class GameStateTestUtilsTest(unittest.TestCase):
   def test_get_simple_game_state_for_tests():
     """Verify that get_simple_game_state_for_tests() returns a valid state."""
     game_state = get_game_state_for_tests()
+    game_state.validate()
+
+  @staticmethod
+  def test_get_game_state_with_empty_talon_for_tests():
+    """
+    Verify that get_game_state_with_empty_talon_for_tests() returns a valid
+    game state.
+    """
+    game_state = get_game_state_with_empty_talon_for_tests()
     game_state.validate()

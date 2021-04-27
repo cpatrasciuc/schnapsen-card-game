@@ -4,9 +4,10 @@
 
 import dataclasses
 from collections import Counter
-from typing import List
+from typing import List, Optional
 
 from model.card import Card
+from model.card_value import CardValue
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -43,7 +44,7 @@ class GameState:
   # If a player holds the Trump Jack, the player may exchange it for this card
   # before leading their next trick.
   # This is None iff the talon is exhausted.
-  trump_card: Card
+  trump_card: Optional[Card]
 
   # The remaining deck, placed face-down on the trump card.
   talon: List[Card]
@@ -96,8 +97,9 @@ class GameState:
     self._validate_num_cards_in_hand()
     self._validate_current_trick_and_next_player()
     self._validate_talon()
+    self._validate_marriage_suits()
 
-    # TODO: Add validation for won_tricks, marriage_suits, trick_points.
+    # TODO: Add validation for won_tricks, trick_points.
 
     self._validate_game_points()
 
@@ -109,7 +111,6 @@ class GameState:
             player_id, self.game_points[player_id]))
 
   def _validate_talon(self):
-    # TODO(tests): Add a test for this.
     if self.is_talon_closed and len(self.talon) == 0:
       raise InvalidGameStateError("An empty talon cannot be closed")
 
@@ -122,7 +123,8 @@ class GameState:
     num_cards_player_one = len(self.cards_in_hand.one)
     if num_cards_player_one != len(self.cards_in_hand.two):
       raise InvalidGameStateError(
-        "The players must have an equal number of cards in their hands")
+        "The players must have an equal number of cards in their hands: "
+        + "%d vs %d" % (num_cards_player_one, len(self.cards_in_hand.two)))
     if num_cards_player_one > 5:
       raise InvalidGameStateError(
         "The players cannot have more than 5 cards in hand: %d" % (
@@ -156,6 +158,33 @@ class GameState:
     if self.trump_card is None and len(self.talon) > 0:
       raise InvalidGameStateError("trump_card is missing")
 
+  def _validate_marriage_suits(self):
+    marriages = self.marriage_suits.one + self.marriage_suits.two
+    duplicated_marriages = [suit for suit, count in Counter(marriages).items()
+                            if count > 1]
+    if len(duplicated_marriages) > 0:
+      raise InvalidGameStateError("Duplicated marriage suits: %s" % (
+        ",".join(str(suit) for suit in duplicated_marriages)))
+
+    # Check if at least one card from the marriage suits was played and that the
+    # not-yet-played cards are in the player's hand.
+    tricks = self.won_tricks.one + self.won_tricks.two
+    for player_id in PlayerId:
+      for marriage_suit in self.marriage_suits[player_id]:
+        marriage = [Card(marriage_suit, CardValue.QUEEN),
+                    Card(marriage_suit, CardValue.KING)]
+        played_cards = [trick[player_id] for trick in tricks if
+                        trick[player_id] in marriage]
+        if len(played_cards) == 0:
+          raise InvalidGameStateError(
+            f"Marriage {marriage_suit} was announced, but no card was played")
+        if len(played_cards) == 1:
+          marriage.remove(played_cards[0])
+          if self.cards_in_hand[player_id].count(marriage[0]) != 1:
+            raise InvalidGameStateError(
+              f"{player_id} announced marriage {marriage_suit} and played one" +
+              " card. The other card is not in their hand.")
+
   def _get_played_cards(self):
-    return [card for trick in self.won_tricks.one + self.won_tricks.two for card
-            in [trick.one, trick.two]]
+    return [card for trick in self.won_tricks.one + self.won_tricks.two for
+            card in [trick.one, trick.two]]
