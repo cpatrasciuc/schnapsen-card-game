@@ -16,7 +16,8 @@ class Card:
   The sorting order is for display purposes only. It groups first by suit and
   then by card value. Comparison operators should not be used to check whether
   one card wins a trick or not.
-  TODO: add a method that checks if a card wins a trick.
+  To check if a card wins a trick against a different card, given a trump suit,
+  use Card.wins().
   """
   suit: Suit
   card_value: CardValue
@@ -42,3 +43,14 @@ class Card:
       for card_value in CardValue:
         deck.append(Card(suit, card_value))
     return deck
+
+  def wins(self, other: "Card", trump_suit: Suit) -> bool:
+    """
+    Returns True if this card wins a trick in which the other card was played
+    first, given the trump suit provided as an argument.
+    trump_suit cannot be None.
+    other cannot be None and it must be different than this card.
+    """
+    if self.suit == other.suit:
+      return self.card_value > other.card_value
+    return self.suit == trump_suit

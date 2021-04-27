@@ -80,3 +80,28 @@ class CardTest(unittest.TestCase):
     sorted_deck = list(sorted(shuffled_deck))
     self.assertEqual(sorted_deck[0], Card(Suit.HEARTS, CardValue.JACK))
     self.assertEqual(sorted_deck[-1], Card(Suit.CLUBS, CardValue.ACE))
+
+  def test_wins(self):
+    # Different suits, no trumps. The card played first always wins.
+    card1 = Card(Suit.HEARTS, CardValue.KING)
+    card2 = Card(Suit.SPADES, CardValue.QUEEN)
+    self.assertFalse(card1.wins(card2, trump_suit=Suit.DIAMONDS))
+    self.assertFalse(card2.wins(card1, trump_suit=Suit.DIAMONDS))
+
+    # Same suit, no trumps. The greater card wins.
+    card1 = Card(Suit.HEARTS, CardValue.KING)
+    card2 = Card(Suit.HEARTS, CardValue.QUEEN)
+    self.assertTrue(card1.wins(card2, trump_suit=Suit.DIAMONDS))
+    self.assertFalse(card2.wins(card1, trump_suit=Suit.DIAMONDS))
+
+    # Same suit, both trump. The greater card wins.
+    card1 = Card(Suit.HEARTS, CardValue.KING)
+    card2 = Card(Suit.HEARTS, CardValue.QUEEN)
+    self.assertTrue(card1.wins(card2, trump_suit=Suit.HEARTS))
+    self.assertFalse(card2.wins(card1, trump_suit=Suit.HEARTS))
+
+    # Different suits, one trump. The trump card wins.
+    card1 = Card(Suit.HEARTS, CardValue.KING)
+    card2 = Card(Suit.SPADES, CardValue.QUEEN)
+    self.assertFalse(card1.wins(card2, trump_suit=Suit.SPADES))
+    self.assertTrue(card2.wins(card1, trump_suit=Suit.SPADES))
