@@ -210,3 +210,32 @@ class GameStateValidationTest(unittest.TestCase):
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "Invalid trick points.*two=0.*two=20"):
       self.game_state.validate()
+
+  def test_won_tricks(self):
+    # Cannot win with the same suit, but smaller card.
+    trick = self.game_state.won_tricks.one[0]  # K♠, Q♠
+    swapped_trick = PlayerPair(one=trick.two, two=trick.one)
+    self.game_state.won_tricks.one[0] = swapped_trick
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "ONE cannot win this trick: Q♠, K♠"):
+      self.game_state.validate()
+
+    # Cannot win with non-trump card against a trump card.
+    self.game_state = get_game_state_for_tests()
+    self.game_state.won_tricks.one.append(self.game_state.won_tricks.two.pop())
+    self.game_state.trick_points = PlayerPair(42, 33)
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "ONE cannot win this trick: X♦, X♣"):
+      self.game_state.validate()
+
+    # Different suits, no trump. Could be valid wins for both players, since we
+    # don't know who played the first card.
+    self.game_state = get_game_state_for_tests()
+    card = self.game_state.won_tricks.two[-1].two
+    self.game_state.won_tricks.two[-1].two = \
+      self.game_state.cards_in_hand.one[3]
+    self.game_state.cards_in_hand.one[3] = card
+    self.game_state.validate()
+    self.game_state.won_tricks.one.append(self.game_state.won_tricks.two.pop())
+    self.game_state.trick_points = PlayerPair(42, 33)
+    self.game_state.validate()

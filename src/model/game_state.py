@@ -99,9 +99,7 @@ class GameState:
     self._validate_talon()
     self._validate_marriage_suits()
     self._validate_trick_points()
-
-    # TODO: Add validation for won_tricks, trick_points.
-
+    self._validate_won_tricks()
     self._validate_game_points()
 
   def _validate_game_points(self):
@@ -200,6 +198,14 @@ class GameState:
       raise InvalidGameStateError(
         f"Invalid trick points. Expected {expected_points}, "
         + f"actual {self.trick_points}")
+
+  def _validate_won_tricks(self):
+    for player_id in PlayerId:
+      for trick in self.won_tricks[player_id]:
+        if trick[player_id.opponent()].wins(trick[player_id], self.trump):
+          if not trick[player_id].wins(trick[player_id.opponent()], self.trump):
+            raise InvalidGameStateError(
+              f"{player_id} cannot win this trick: {trick.one}, {trick.two}")
 
   def _get_played_cards(self):
     return [card for trick in self.won_tricks.one + self.won_tricks.two for
