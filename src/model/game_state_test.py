@@ -187,3 +187,26 @@ class GameStateValidationTest(unittest.TestCase):
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "♦ was announced, but no card was played"):
       self.game_state.validate()
+
+  def test_invalid_trick_points(self):
+    correct_trick_points = self.game_state.trick_points
+    for points_one in range(100):
+      for points_two in range(100):
+        self.game_state.trick_points = PlayerPair(points_one, points_two)
+        if self.game_state.trick_points == correct_trick_points:
+          continue
+        with self.assertRaisesRegex(InvalidGameStateError,
+                                    "Invalid trick points",
+                                    msg=f"{points_one} {points_two}"):
+          self.game_state.validate()
+
+  def test_marriages_with_no_tricks_won(self):
+    # Move won tricks to the talon and subtract their value.
+    while len(self.game_state.won_tricks.two) > 0:
+      trick = self.game_state.won_tricks.two.pop()
+      self.game_state.trick_points.two -= trick.one.card_value
+      self.game_state.trick_points.two -= trick.two.card_value
+      self.game_state.talon.extend([trick.one, trick.two])
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "Invalid trick points.*two=0.*two=20"):
+      self.game_state.validate()
