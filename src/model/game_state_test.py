@@ -118,10 +118,10 @@ class GameStateValidationTest(unittest.TestCase):
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "between 0 and 6: PlayerId.ONE has -1"):
       self.game_state.validate()
-    for p1 in range(7):
-      for p2 in range(7):
-        self.game_state.game_points.one = p1
-        self.game_state.game_points.two = p2
+    for points_one in range(7):
+      for points_two in range(7):
+        self.game_state.game_points.one = points_one
+        self.game_state.game_points.two = points_two
         self.game_state.validate()
     self.game_state.game_points.two = 7
     with self.assertRaisesRegex(InvalidGameStateError,
