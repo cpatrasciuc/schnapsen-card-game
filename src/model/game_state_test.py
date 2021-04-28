@@ -315,4 +315,6 @@ class GameStateNewGameTest(unittest.TestCase):
       for j in range(5):
         if expected[i][j] != 0.0:
           total_diff += expected[i][j] - num[i][j]
+        else:
+          self.assertEqual(0.0, num[i][j])
     self.assertLess(total_diff, 0.5)
