@@ -7,11 +7,11 @@ import enum
 
 @enum.unique
 class CardValue(enum.IntEnum):
-  ACE = 11
-  TEN = 10
-  KING = 4
-  QUEEN = 3
   JACK = 2
+  QUEEN = 3
+  KING = 4
+  TEN = 10
+  ACE = 11
 
   def __str__(self):
     card_value_to_str = {

@@ -38,6 +38,7 @@ class Card:
 
   @staticmethod
   def get_all_cards():
+    """Returns all the 20 cards sorted in display order."""
     deck = []
     for suit in Suit:
       for card_value in CardValue:

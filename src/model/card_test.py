@@ -72,7 +72,7 @@ class CardTest(unittest.TestCase):
 
     # Sort the whole deck, check the first and last card.
     deck = Card.get_all_cards()
-    # Shuffle it in case it is already sorted.
+    # Shuffle it since it is already sorted.
     shuffled_deck = deck[:]
     random.seed(1234)
     random.shuffle(shuffled_deck)
@@ -80,6 +80,12 @@ class CardTest(unittest.TestCase):
     sorted_deck = list(sorted(shuffled_deck))
     self.assertEqual(sorted_deck[0], Card(Suit.HEARTS, CardValue.JACK))
     self.assertEqual(sorted_deck[-1], Card(Suit.CLUBS, CardValue.ACE))
+
+  def test_get_all_cards(self):
+    deck = Card.get_all_cards()
+    self.assertEqual(20, len(deck))
+    self.assertEqual(20, len(set(deck)))
+    self.assertEqual(deck, sorted(deck))
 
   def test_wins(self):
     # Different suits, no trumps. The card played first always wins.
