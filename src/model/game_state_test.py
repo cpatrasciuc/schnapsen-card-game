@@ -259,6 +259,12 @@ class GameStateNewGameTest(unittest.TestCase):
     self.assertEqual(PlayerPair(0, 0), game_state.game_points)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
 
+  def test_first_player_is_not_the_dealer(self):
+    game_state = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+    game_state = GameState.new_game(dealer=PlayerId.TWO, random_seed=321)
+    self.assertEqual(PlayerId.ONE, game_state.next_player)
+
   def test_same_seed_returns_same_state(self):
     game_state_1 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
     game_state_2 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
