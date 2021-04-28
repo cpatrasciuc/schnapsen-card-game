@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import dataclasses
+import random
 from collections import Counter
 from typing import List, Optional
 
@@ -123,15 +124,15 @@ class GameState:
     if num_cards_player_one != len(self.cards_in_hand.two):
       raise InvalidGameStateError(
         "The players must have an equal number of cards in their hands: "
-        + "%d vs %d" % (num_cards_player_one, len(self.cards_in_hand.two)))
+        + f"{num_cards_player_one} vs {len(self.cards_in_hand.two)}")
     if num_cards_player_one > 5:
       raise InvalidGameStateError(
-        "The players cannot have more than 5 cards in hand: %d" % (
-          num_cards_player_one))
+        "The players cannot have more than 5 cards in hand: "
+        + f"{num_cards_player_one}")
     if num_cards_player_one < 5:
       if (not self.is_talon_closed) and (len(self.talon) > 0):
         raise InvalidGameStateError(
-          "The players should have 5 cards in hand: %d" % num_cards_player_one)
+          f"The players should have 5 cards in hand: {num_cards_player_one}")
 
   def _verify_there_are_twenty_unique_cards(self):
     all_cards = [self.trump_card]
@@ -141,7 +142,7 @@ class GameState:
     all_cards = [card for card in all_cards if card is not None]
     if len(all_cards) != 20:
       raise InvalidGameStateError(
-        "Total number of cards must be 20, not %d" % len(all_cards))
+        f"Total number of cards must be 20, not {len(all_cards)}")
     duplicated_card_names = [str(card) for card, count in
                              Counter(all_cards).items() if count > 1]
     if len(duplicated_card_names) != 0:
@@ -179,7 +180,7 @@ class GameState:
             f"Marriage {marriage_suit} was announced, but no card was played")
         if len(played_cards) == 1:
           marriage.remove(played_cards[0])
-          if self.cards_in_hand[player_id].count(marriage[0]) != 1:
+          if marriage[0] not in self.cards_in_hand[player_id]:
             raise InvalidGameStateError(
               f"{player_id} announced marriage {marriage_suit} and played one" +
               " card. The other card is not in their hand.")
@@ -210,3 +211,18 @@ class GameState:
   def _get_played_cards(self):
     return [card for trick in self.won_tricks.one + self.won_tricks.two for
             card in [trick.one, trick.two]]
+
+  @staticmethod
+  def new_game(dealer: PlayerId = PlayerId.ONE,
+               random_seed: Optional[int] = None) -> "GameState":
+    deck = Card.get_all_cards()
+    rng = random.Random(x=random_seed)
+    rng.shuffle(deck)
+    if dealer == PlayerId.ONE:
+      cards_in_hand = PlayerPair(one=deck[:5], two=deck[5:10])
+    else:
+      cards_in_hand = PlayerPair(one=deck[5:10], two=deck[:5])
+    trump_card = deck[10]
+    return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
+                     trump_card=trump_card, talon=deck[11:],
+                     next_player=dealer.opponent())

@@ -3,9 +3,10 @@
 #  found in the LICENSE file.
 
 import copy
+import pprint
 import unittest
 
-from model.game_state import InvalidGameStateError
+from model.game_state import InvalidGameStateError, GameState
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests
 from model.player_id import PlayerId
@@ -239,3 +240,79 @@ class GameStateValidationTest(unittest.TestCase):
     self.game_state.won_tricks.one.append(self.game_state.won_tricks.two.pop())
     self.game_state.trick_points = PlayerPair(42, 33)
     self.game_state.validate()
+
+
+class GameStateNewGameTest(unittest.TestCase):
+  def test_new_game_is_valid(self):
+    game_state = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    game_state.validate()
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+    self.assertEqual(5, len(game_state.cards_in_hand.one))
+    self.assertEqual(5, len(game_state.cards_in_hand.two))
+    self.assertEqual(9, len(game_state.talon))
+    self.assertFalse(game_state.is_talon_closed)
+    self.assertEqual(0, len(game_state.won_tricks.one))
+    self.assertEqual(0, len(game_state.won_tricks.two))
+    self.assertEqual(0, len(game_state.marriage_suits.one))
+    self.assertEqual(0, len(game_state.marriage_suits.two))
+    self.assertEqual(PlayerPair(0, 0), game_state.trick_points)
+    self.assertEqual(PlayerPair(0, 0), game_state.game_points)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+
+  def test_same_seed_returns_same_state(self):
+    game_state_1 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    game_state_2 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    self.assertEqual(game_state_1, game_state_2)
+    game_state_3 = GameState.new_game(dealer=PlayerId.TWO, random_seed=321)
+    self.assertNotEqual(game_state_1, game_state_3)
+    self.assertEqual(game_state_1.cards_in_hand.one,
+                     game_state_3.cards_in_hand.two)
+    self.assertEqual(game_state_1.cards_in_hand.two,
+                     game_state_3.cards_in_hand.one)
+    self.assertEqual(game_state_1.trump_card, game_state_3.trump_card)
+    self.assertEqual(game_state_1.talon, game_state_3.talon)
+
+  def test_random_dealing_trumps_distribution(self):
+    """
+    Test that by generating multiple new games we have this distribution of
+    trump cards.
+    http://schnapsenstrategy.blogspot.com/2010/10/probabilities.html
+    """
+    num = [[0 for _ in range(5)] for _ in range(5)]
+    denom = [0 for _ in range(5)]
+    num_games = 10000
+    for _ in range(num_games):
+      game_state = GameState.new_game()
+
+      def count_trumps(hand):
+        return len([card for card in hand if card.suit == game_state.trump])
+
+      trumps_p1 = count_trumps(game_state.cards_in_hand.one)
+      trumps_p2 = count_trumps(game_state.cards_in_hand.two)
+
+      num[trumps_p1][trumps_p2] += 1
+      denom[trumps_p2] += 1
+      num[trumps_p2][trumps_p1] += 1
+      denom[trumps_p1] += 1
+
+    for i in range(5):
+      self.assertNotEqual(0, denom[i])
+      for j in range(5):
+        num[j][i] /= denom[i]
+        num[j][i] = round(100 * num[j][i], 2)
+    pprint.pprint(num)
+
+    expected = [
+      [12.6, 23.1, 39.6, 64.3, 100.0],
+      [42.0, 49.5, 49.5, 35.7, 0.0],
+      [36.0, 24.7, 11.0, 0.0, 0.0],
+      [9.0, 2.7, 0.0, 0.0, 0.0],
+      [0.5, 0.0, 0.0, 0.0, 0.0]
+    ]
+
+    total_diff = 0.0
+    for i in range(5):
+      for j in range(5):
+        if expected[i][j] != 0.0:
+          total_diff += expected[i][j] - num[i][j]
+    self.assertLess(total_diff, 0.5)
