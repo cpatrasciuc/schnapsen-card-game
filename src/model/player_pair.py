@@ -7,11 +7,11 @@ from typing import TypeVar, Generic
 
 from model.player_id import PlayerId
 
-TypeName = TypeVar('TypeName')
+_TypeName = TypeVar('_TypeName')
 
 
 @dataclasses.dataclass
-class PlayerPair(Generic[TypeName]):
+class PlayerPair(Generic[_TypeName]):
   """
   Generic class that stores a pair of variables, one for each of the two players
   in a game of Schnapsen. It can be keyed by PlayerId.
@@ -21,14 +21,14 @@ class PlayerPair(Generic[TypeName]):
     * the cards in hand: a list of cards for each player
     * a trick: one card for each player
   """
-  one: TypeName = None
-  two: TypeName = None
+  one: _TypeName = None
+  two: _TypeName = None
 
-  def __getitem__(self, key):
+  def __getitem__(self, key: PlayerId):
     self._check_key_type(key)
     return self.one if key == PlayerId.ONE else self.two
 
-  def __setitem__(self, key, value):
+  def __setitem__(self, key: PlayerId, value: _TypeName):
     self._check_key_type(key)
     if key == PlayerId.ONE:
       self.one = value
