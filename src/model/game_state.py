@@ -268,6 +268,17 @@ class GameState:
   @staticmethod
   def new_game(dealer: PlayerId = PlayerId.ONE,
                random_seed: Optional[int] = None) -> "GameState":
+    """
+    Creates and returns a new game state representing the beginning of a new
+    game.
+    :param dealer: The PlayerID that deals the cards. The opponent will be
+    on-lead.
+    :param random_seed: Seed to pass to the random number generator. Calls using
+    the same seed will shuffle the deck in the same way. The game states can be
+    different, depending on who is the dealer. If the dealer is the same the
+    game states will be equal.
+    :return: the new game state.
+    """
     deck = Card.get_all_cards()
     rng = random.Random(x=random_seed)
     rng.shuffle(deck)
