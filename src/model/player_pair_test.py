@@ -72,10 +72,14 @@ class PlayerPairTest(unittest.TestCase):
   def test_cannot_index_by_other_types(self):
     test_pair: PlayerPair[int] = PlayerPair(123, 345)
     with self.assertRaisesRegex(TypeError, "Keys must be of type PlayerId"):
+      # noinspection PyTypeChecker
       print(test_pair[1])
     with self.assertRaisesRegex(TypeError, "Keys must be of type PlayerId"):
+      # noinspection PyTypeChecker
       test_pair[1] = 100
     with self.assertRaisesRegex(TypeError, "Keys must be of type PlayerId"):
+      # noinspection PyTypeChecker
       print(test_pair["string key"])
     with self.assertRaisesRegex(TypeError, "Keys must be of type PlayerId"):
+      # noinspection PyTypeChecker
       test_pair["string key"] = 100
