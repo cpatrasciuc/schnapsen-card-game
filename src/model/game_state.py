@@ -48,13 +48,23 @@ class GameState:
   trump_card: Optional[Card]
 
   # The remaining deck, placed face-down on the trump card.
+  # TODO(optimization): Maybe change this to collections.deque.
   talon: List[Card]
 
   # The player expected to make the next move. It cannot be None.
   next_player: PlayerId = PlayerId.ONE
 
-  # This is True if one of the players chose to close the talon.
-  is_talon_closed: bool = False
+  # If one player decided to close the talon, this field stores their player ID.
+  # The opponent_points_when_talon_was_closed must also be set.
+  # Use close_talon(), instead of setting this directly.
+  player_that_closed_the_talon: Optional[PlayerId] = None
+
+  # When a player decides to close the talon, this field stores their opponents'
+  # trick points right before the deck was closed. This is needed to compute the
+  # score at the end of this round.
+  # This should only be set if player_that_closed_the_talon is not None.
+  # Use close_talon(), instead of setting this directly.
+  opponent_points_when_talon_was_closed: Optional[int] = None
 
   # The list of tricks won by each player so far.
   won_tricks: PlayerPair[List[Trick]] = PlayerPair([], [])
@@ -93,6 +103,27 @@ class GameState:
     """
     return self.is_talon_closed or len(self.talon) == 0
 
+  @property
+  def is_talon_closed(self) -> bool:
+    return self.player_that_closed_the_talon is not None
+
+  @is_talon_closed.setter
+  def is_talon_closed(self, value: bool):
+    # TODO(game): Remove this and rely only on close_talon().
+    if not value:
+      raise ValueError("Only call this with True")
+    self.close_talon()
+
+  def close_talon(self):
+    if self.is_talon_closed:
+      raise InvalidGameStateError("The talon is already closed")
+    if len(self.talon) == 0:
+      raise InvalidGameStateError("An empty talon cannot be closed")
+    self.player_that_closed_the_talon = self.next_player
+    self.opponent_points_when_talon_was_closed = self.trick_points[
+      self.player_that_closed_the_talon.opponent()]
+    self._validate_talon()
+
   def validate(self) -> None:
     """
     Runs a series of check to validate the current game state (e.g., no
@@ -121,6 +152,20 @@ class GameState:
   def _validate_talon(self):
     if self.is_talon_closed and len(self.talon) == 0:
       raise InvalidGameStateError("An empty talon cannot be closed")
+    player_is_set = self.player_that_closed_the_talon is not None
+    points_are_set = self.opponent_points_when_talon_was_closed is not None
+    if player_is_set != points_are_set:
+      raise InvalidGameStateError(
+        "player_that_closed_the_talon and opponent_points_when_talon_was_closed"
+        " must be either both set or both None: "
+        f"{self.player_that_closed_the_talon} "
+        f"{self.opponent_points_when_talon_was_closed}")
+    if player_is_set:
+      if self.opponent_points_when_talon_was_closed > self.trick_points[
+        self.player_that_closed_the_talon.opponent()]:
+        raise InvalidGameStateError(
+          "opponent_points_when_talon_was_closed is greater than the current "
+          "value of trick_points for that player")
 
   def _validate_current_trick_and_next_player(self):
     if self.current_trick[self.next_player] is not None:

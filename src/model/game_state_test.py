@@ -141,9 +141,41 @@ class GameStateValidationTest(unittest.TestCase):
 
   def test_empty_talon_cannot_be_closed(self):
     self.game_state = get_game_state_with_empty_talon_for_tests()
-    self.game_state.is_talon_closed = True
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "An empty talon cannot be closed"):
+      self.game_state.close_talon()
+    # Bypass the checks above by manually setting the fields (not recommended).
+    self.game_state.player_that_closed_the_talon = self.game_state.next_player
+    self.game_state.opponent_points_when_talon_was_closed = 10
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "An empty talon cannot be closed"):
+      self.game_state.validate()
+
+  def test_cannot_call_is_talon_closed_with_false(self):
+    with self.assertRaisesRegex(ValueError, "Only call this with True"):
+      self.game_state.is_talon_closed = False
+
+  def test_cannot_close_the_talon_twice(self):
+    self.game_state.close_talon()
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "The talon is already closed"):
+      self.game_state.close_talon()
+
+  def test_if_talon_is_closed_opponents_points_must_be_set(self):
+    self.game_state.player_that_closed_the_talon = self.game_state.next_player
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "must be either both set or both None"):
+      self.game_state.validate()
+    self.game_state.player_that_closed_the_talon = None
+    self.game_state.opponent_points_when_talon_was_closed = 10
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "must be either both set or both None"):
+      self.game_state.validate()
+    self.game_state.player_that_closed_the_talon = self.game_state.next_player
+    self.game_state.opponent_points_when_talon_was_closed = \
+      self.game_state.trick_points[self.game_state.next_player.opponent()] + 1
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "greater than the current value"):
       self.game_state.validate()
 
   def test_duplicated_marriage_suits(self):
