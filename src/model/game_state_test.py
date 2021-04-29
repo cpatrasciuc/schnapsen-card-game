@@ -324,3 +324,34 @@ class GameStateNewGameTest(unittest.TestCase):
         else:
           self.assertEqual(0.0, num[i][j])
     self.assertLess(total_diff, 0.5)
+
+
+class GameStateTest(unittest.TestCase):
+  def test_on_lead(self):
+    game_state = get_game_state_for_tests()
+    self.assertTrue(game_state.on_lead(PlayerId.ONE))
+    self.assertFalse(game_state.on_lead(PlayerId.TWO))
+
+    game_state.next_player = PlayerId.TWO
+    self.assertTrue(game_state.on_lead(PlayerId.TWO))
+    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+
+    game_state.current_trick.one = game_state.cards_in_hand.one[0]
+    game_state.validate()
+    self.assertFalse(game_state.on_lead(PlayerId.TWO))
+    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+
+    game_state.current_trick.one = None
+    game_state.current_trick.two = game_state.cards_in_hand.two[0]
+    game_state.next_player = PlayerId.ONE
+    game_state.validate()
+    self.assertFalse(game_state.on_lead(PlayerId.TWO))
+    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+
+  def test_must_follow_suit(self):
+    game_state = get_game_state_for_tests()
+    self.assertFalse(game_state.must_follow_suit())
+    game_state.is_talon_closed = True
+    self.assertTrue(game_state.must_follow_suit())
+    game_state = get_game_state_with_empty_talon_for_tests()
+    self.assertTrue(game_state.must_follow_suit())

@@ -83,7 +83,15 @@ class GameState:
     If a player is on lead, it can exchange the trump card or close the talon.
     """
     # TODO(tests): add a test case for this.
-    return self.next_player == player_id and self.current_trick == (None, None)
+    return self.next_player == player_id and self.current_trick == PlayerPair(
+      None, None)
+
+  def must_follow_suit(self) -> bool:
+    """
+    Checks if players must follow-suit. This is true when the talon is empty or
+    closed.
+    """
+    return self.is_talon_closed or len(self.talon) == 0
 
   def validate(self) -> None:
     """
@@ -117,7 +125,7 @@ class GameState:
   def _validate_current_trick_and_next_player(self):
     if self.current_trick[self.next_player] is not None:
       raise InvalidGameStateError(
-        "current_trick already contains a card for the next_player")
+        f"current_trick already contains a card for {self.next_player}")
 
   def _validate_num_cards_in_hand(self):
     num_cards_player_one = len(self.cards_in_hand.one)
@@ -204,9 +212,8 @@ class GameState:
     for player_id in PlayerId:
       for trick in self.won_tricks[player_id]:
         if trick[player_id.opponent()].wins(trick[player_id], self.trump):
-          if not trick[player_id].wins(trick[player_id.opponent()], self.trump):
-            raise InvalidGameStateError(
-              f"{player_id} cannot win this trick: {trick.one}, {trick.two}")
+          raise InvalidGameStateError(
+            f"{player_id} cannot win this trick: {trick.one}, {trick.two}")
 
   def _get_played_cards(self):
     return [card for trick in self.won_tricks.one + self.won_tricks.two for
