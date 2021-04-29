@@ -17,7 +17,7 @@ def get_all_python_files():
 
 
 def run_pylint():
-  disabled_ckecks = [
+  disabled_checks = [
     "missing-module-docstring",
     "missing-class-docstring",
     "missing-function-docstring",
@@ -27,7 +27,7 @@ def run_pylint():
   pylint_opts = [
     "--indent-string='  '",
     "-j 0",  # Run in parallel on all available processors
-    "--disable=" + ",".join(disabled_ckecks),
+    "--disable=" + ",".join(disabled_checks),
   ]
   pylint.lint.Run(pylint_opts + get_all_python_files())
 
