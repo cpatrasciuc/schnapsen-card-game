@@ -97,7 +97,7 @@ class GameStateValidationTest(unittest.TestCase):
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "The players should have 5 cards in hand: 4"):
       self.game_state.validate()
-    self.game_state.is_talon_closed = True
+    self.game_state.close_talon()
     self.game_state.validate()
 
   def test_at_most_five_cards_in_hand(self):
@@ -107,7 +107,7 @@ class GameStateValidationTest(unittest.TestCase):
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "more than 5 cards in hand: 6"):
       self.game_state.validate()
-    self.game_state.is_talon_closed = True
+    self.game_state.close_talon()
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "more than 5 cards in hand: 6"):
       self.game_state.validate()
@@ -151,14 +151,20 @@ class GameStateValidationTest(unittest.TestCase):
                                 "An empty talon cannot be closed"):
       self.game_state.validate()
 
-  def test_cannot_call_is_talon_closed_with_false(self):
-    with self.assertRaisesRegex(ValueError, "Only call this with True"):
-      self.game_state.is_talon_closed = False
-
   def test_cannot_close_the_talon_twice(self):
     self.game_state.close_talon()
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "The talon is already closed"):
+      self.game_state.close_talon()
+
+  def test_can_only_close_talon_before_a_new_trick_is_played(self):
+    next_player = self.game_state.next_player
+    self.assertTrue(self.game_state.on_lead(next_player))
+    self.game_state.current_trick[next_player] = \
+      self.game_state.cards_in_hand[next_player][0]
+    self.game_state.next_player = next_player.opponent()
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "can only be closed by the on-lead player"):
       self.game_state.close_talon()
 
   def test_if_talon_is_closed_opponents_points_must_be_set(self):
@@ -383,7 +389,7 @@ class GameStateTest(unittest.TestCase):
   def test_must_follow_suit(self):
     game_state = get_game_state_for_tests()
     self.assertFalse(game_state.must_follow_suit())
-    game_state.is_talon_closed = True
+    game_state.close_talon()
     self.assertTrue(game_state.must_follow_suit())
     game_state = get_game_state_with_empty_talon_for_tests()
     self.assertTrue(game_state.must_follow_suit())

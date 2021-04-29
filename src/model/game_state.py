@@ -107,18 +107,19 @@ class GameState:
   def is_talon_closed(self) -> bool:
     return self.player_that_closed_the_talon is not None
 
-  @is_talon_closed.setter
-  def is_talon_closed(self, value: bool):
-    # TODO(game): Remove this and rely only on close_talon().
-    if not value:
-      raise ValueError("Only call this with True")
-    self.close_talon()
-
-  def close_talon(self):
+  def close_talon(self) -> None:
+    """
+    Closes the talon. Saves the current player and their opponent's current
+    trick points. Can only be called before a card is played by the on-lead
+    player.
+    """
     if self.is_talon_closed:
       raise InvalidGameStateError("The talon is already closed")
     if len(self.talon) == 0:
       raise InvalidGameStateError("An empty talon cannot be closed")
+    if not self.on_lead(self.next_player):
+      raise InvalidGameStateError(
+        "The talon can only be closed by the on-lead player")
     self.player_that_closed_the_talon = self.next_player
     self.opponent_points_when_talon_was_closed = self.trick_points[
       self.player_that_closed_the_talon.opponent()]
