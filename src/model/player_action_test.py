@@ -50,3 +50,10 @@ class CloseTheTalonActionTest(unittest.TestCase):
     self.assertTrue(game_state.is_talon_closed)
     self.assertEqual(next_player, game_state.player_that_closed_the_talon)
     self.assertEqual(53, game_state.opponent_points_when_talon_was_closed)
+
+  def test_cannot_execute_illegal_action(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+    action = CloseTheTalonAction(game_state.next_player)
+    self.assertFalse(action.can_execute_on(game_state))
+    with self.assertRaises(AssertionError):
+      action.execute(game_state)
