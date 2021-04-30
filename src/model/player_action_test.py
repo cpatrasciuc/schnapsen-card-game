@@ -9,8 +9,9 @@ from model.card_value import CardValue
 from model.game_state_test_utils import \
   get_game_state_with_empty_talon_for_tests, get_game_state_for_tests
 from model.player_action import CloseTheTalonAction, ExchangeTrumpCardAction, \
-  AnnounceMarriageAction
+  AnnounceMarriageAction, PlayCardAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 
 
@@ -212,3 +213,352 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertFalse(action.can_execute_on(game_state))
     with self.assertRaises(AssertionError):
       action.execute(game_state)
+
+
+class PlayCardActionTest(unittest.TestCase):
+  """Tests for the PlayCardAction class."""
+
+  def test_can_only_execute_on_players_turn(self):
+    game_state = get_game_state_for_tests()
+    card = game_state.cards_in_hand[PlayerId.ONE][0]
+    action_one = PlayCardAction(PlayerId.ONE, card)
+    self.assertTrue(action_one.can_execute_on(game_state))
+    action_two = PlayCardAction(PlayerId.TWO,
+                                game_state.cards_in_hand[PlayerId.TWO][0])
+    self.assertFalse(action_two.can_execute_on(game_state))
+    action_one.execute(game_state)
+    self.assertFalse(action_one.can_execute_on(game_state))
+    self.assertTrue(action_two.can_execute_on(game_state))
+
+  def test_cannot_play_cards_not_in_hand(self):
+    game_state = get_game_state_for_tests()
+    for card in Card.get_all_cards():
+      action = PlayCardAction(PlayerId.ONE, card)
+      self.assertEqual(card in game_state.cards_in_hand[PlayerId.ONE],
+                       action.can_execute_on(game_state))
+    action = PlayCardAction(PlayerId.ONE,
+                            game_state.cards_in_hand[PlayerId.ONE][0])
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    for card in Card.get_all_cards():
+      action = PlayCardAction(PlayerId.TWO, card)
+      self.assertEqual(card in game_state.cards_in_hand[PlayerId.TWO],
+                       action.can_execute_on(game_state))
+
+  def test_must_follow_suit_cannot_play_lower_card_same_suit(self):
+    """
+    Player.ONE has two cards of the same suit as the card played by Player.TWO,
+    one lower and one higher. Player.ONE also has a trump card. The only valid
+    card is the higher card having the same suit as the card played by
+    Player.TWO.
+    """
+    game_state = get_game_state_for_tests()
+
+    ten_spades = game_state.cards_in_hand.one[3]
+    jack_spades = game_state.cards_in_hand.two[3]
+    game_state.cards_in_hand.two[3] = ten_spades
+    game_state.cards_in_hand.one[3] = jack_spades
+
+    queen_hearts = game_state.cards_in_hand.one[0]
+    queen_clubs = game_state.cards_in_hand.two[4]
+    game_state.cards_in_hand.two[4] = queen_hearts
+    game_state.cards_in_hand.one[0] = queen_clubs
+
+    game_state.validate()
+    game_state.close_talon()
+    game_state.next_player = PlayerId.TWO
+    self.assertTrue(game_state.must_follow_suit())
+    action = PlayCardAction(PlayerId.TWO, ten_spades)
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    num_legal_cards = 0
+    for card in game_state.cards_in_hand[PlayerId.ONE]:
+      action = PlayCardAction(PlayerId.ONE, card)
+      is_legal_card = action.can_execute_on(game_state)
+      self.assertEqual(card == ace_spades, is_legal_card, msg=f"{card}")
+      if is_legal_card:
+        num_legal_cards += 1
+    self.assertEqual(1, num_legal_cards)
+
+  def test_must_follow_suit_can_play_any_higher_card_same_suit(self):
+    """
+    Player.ONE has two cards of the same suit as the card played by Player.TWO,
+    both higher. Player.ONE also has a trump card. Any of the two cards from the
+    same suit as the card played by Player.TWO are valid.
+    """
+    game_state = get_game_state_for_tests()
+
+    queen_hearts = game_state.cards_in_hand.one[0]
+    queen_clubs = game_state.cards_in_hand.two[4]
+    game_state.cards_in_hand.two[4] = queen_hearts
+    game_state.cards_in_hand.one[0] = queen_clubs
+
+    game_state.validate()
+    game_state.close_talon()
+    game_state.next_player = PlayerId.TWO
+    self.assertTrue(game_state.must_follow_suit())
+    jack_spades = Card(Suit.SPADES, CardValue.JACK)
+    action = PlayCardAction(PlayerId.TWO, jack_spades)
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    num_legal_cards = 0
+    for card in game_state.cards_in_hand[PlayerId.ONE]:
+      action = PlayCardAction(PlayerId.ONE, card)
+      is_legal_card = action.can_execute_on(game_state)
+      self.assertEqual(card.suit == Suit.SPADES, is_legal_card, msg=f"{card}")
+      if is_legal_card:
+        num_legal_cards += 1
+    self.assertEqual(2, num_legal_cards)
+
+  def test_must_follow_suit_only_lower_card_same_suit(self):
+    """
+    Player.ONE has two cards of the same suit as the card played by Player.TWO,
+    both lower. Player.ONE also has a trump card. Any of the two cards from the
+    same suit as the card played by Player.TWO are valid.
+    """
+    game_state = get_game_state_for_tests()
+
+    ace_spades = game_state.cards_in_hand.one[4]
+    jack_spades = game_state.cards_in_hand.two[3]
+    game_state.cards_in_hand.two[3] = ace_spades
+    game_state.cards_in_hand.one[4] = jack_spades
+
+    queen_hearts = game_state.cards_in_hand.one[0]
+    queen_clubs = game_state.cards_in_hand.two[4]
+    game_state.cards_in_hand.two[4] = queen_hearts
+    game_state.cards_in_hand.one[0] = queen_clubs
+
+    game_state.validate()
+    game_state.close_talon()
+    game_state.next_player = PlayerId.TWO
+    self.assertTrue(game_state.must_follow_suit())
+    action = PlayCardAction(PlayerId.TWO, ace_spades)
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    num_legal_cards = 0
+    for card in game_state.cards_in_hand[PlayerId.ONE]:
+      action = PlayCardAction(PlayerId.ONE, card)
+      is_legal_card = action.can_execute_on(game_state)
+      self.assertEqual(card.suit == Suit.SPADES, is_legal_card, msg=f"{card}")
+      if is_legal_card:
+        num_legal_cards += 1
+    self.assertEqual(2, num_legal_cards)
+
+  def test_must_follow_suit_must_use_trump(self):
+    """Player.TWO has no hearts, so they must use one of the trump cards."""
+    game_state = get_game_state_for_tests()
+    game_state.close_talon()
+    self.assertTrue(game_state.must_follow_suit())
+    action = PlayCardAction(PlayerId.ONE,
+                            game_state.cards_in_hand[PlayerId.ONE][0])
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    num_legal_cards = 0
+    for card in game_state.cards_in_hand[PlayerId.TWO]:
+      action = PlayCardAction(PlayerId.TWO, card)
+      is_legal_card = action.can_execute_on(game_state)
+      self.assertEqual(card.suit == game_state.trump, is_legal_card,
+                       msg=f"{card}")
+      if is_legal_card:
+        num_legal_cards += 1
+    self.assertEqual(3, num_legal_cards)
+
+  def test_must_follow_suit_must_use_higher_trump(self):
+    """
+    Player.ONE plays the trump Queen. Player.TWO has three trump cards.
+    The valid cards are only the trump King and Ace.
+    """
+    game_state = get_game_state_with_empty_talon_for_tests()
+
+    ace_clubs = game_state.cards_in_hand.one[0]
+    queen_clubs = game_state.cards_in_hand.two[3]
+    game_state.cards_in_hand.two[3] = ace_clubs
+    game_state.cards_in_hand.one[0] = queen_clubs
+
+    game_state.validate()
+    action = PlayCardAction(PlayerId.ONE, queen_clubs)
+    self.assertTrue(action.can_execute_on(game_state))
+    action.execute(game_state)
+    num_legal_cards = 0
+    valid_cards = [Card(Suit.CLUBS, CardValue.KING),
+                   Card(Suit.CLUBS, CardValue.ACE)]
+    for card in game_state.cards_in_hand[PlayerId.TWO]:
+      action = PlayCardAction(PlayerId.TWO, card)
+      is_legal_card = action.can_execute_on(game_state)
+      self.assertEqual(card in valid_cards, is_legal_card, msg=f"{card}")
+      if is_legal_card:
+        num_legal_cards += 1
+    self.assertEqual(2, num_legal_cards)
+
+  def test_must_follow_trump_can_discard_any_card(self):
+    game_state = get_game_state_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.close_talon()
+    game_state.validate()
+    action = PlayCardAction(PlayerId.TWO,
+                            game_state.cards_in_hand[PlayerId.TWO][0])
+    action.execute(game_state)
+    for card in game_state.cards_in_hand[PlayerId.ONE]:
+      action = PlayCardAction(PlayerId.ONE, card)
+      self.assertTrue(action.can_execute_on(game_state))
+
+  def test_play_trick_player_one_wins(self):
+    game_state = get_game_state_for_tests()
+    trump_card = game_state.trump_card
+    last_talon_card = game_state.talon[0]
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+    queen_diamonds = game_state.cards_in_hand[PlayerId.TWO][0]
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(28, 53), game_state.trick_points)
+    self.assertEqual(PlayerPair(queen_hearts, queen_diamonds),
+                     game_state.won_tricks[PlayerId.ONE][-1])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(queen_diamonds in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertTrue(last_talon_card in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual([], game_state.talon)
+    self.assertIsNone(game_state.trump_card)
+    self.assertEqual(PlayerId.ONE, game_state.next_player)
+
+  def test_play_trick_player_two_wins(self):
+    game_state = get_game_state_for_tests()
+    trump_card = game_state.trump_card
+    last_talon_card = game_state.talon[0]
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+    jack_clubs = game_state.cards_in_hand[PlayerId.TWO][2]
+    action = PlayCardAction(PlayerId.TWO, jack_clubs)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(22, 58), game_state.trick_points)
+    self.assertEqual(PlayerPair(queen_hearts, jack_clubs),
+                     game_state.won_tricks[PlayerId.TWO][-1])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(jack_clubs in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertTrue(last_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual([], game_state.talon)
+    self.assertIsNone(game_state.trump_card)
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+  def test_play_trick_talon_has_more_than_one_card(self):
+    game_state = get_game_state_for_tests()
+    trick = game_state.won_tricks[PlayerId.TWO].pop()
+    game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+    game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+    game_state.talon.extend([trick.one, trick.two])
+    game_state.validate()
+
+    first_talon_card = game_state.talon[0]
+    second_talon_card = game_state.talon[1]
+
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+    queen_diamonds = game_state.cards_in_hand[PlayerId.TWO][0]
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(28, 33), game_state.trick_points)
+    self.assertEqual(PlayerPair(queen_hearts, queen_diamonds),
+                     game_state.won_tricks[PlayerId.ONE][-1])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(queen_diamonds in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual([trick.two], game_state.talon)
+    self.assertEqual(PlayerId.ONE, game_state.next_player)
+
+  def test_play_trick_talon_is_closed(self):
+    game_state = get_game_state_for_tests()
+    game_state.close_talon()
+
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    action = PlayCardAction(PlayerId.TWO, queen_clubs)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(22, 59), game_state.trick_points)
+    self.assertEqual(PlayerPair(queen_hearts, queen_clubs),
+                     game_state.won_tricks[PlayerId.TWO][-1])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(queen_clubs in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual(4, len(game_state.cards_in_hand[PlayerId.ONE]))
+    self.assertEqual(4, len(game_state.cards_in_hand[PlayerId.TWO]))
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+  def test_play_trick_talon_is_empty(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+
+    ace_clubs = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, ace_clubs)
+    action.execute(game_state)
+    self.assertEqual(ace_clubs, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+    jack_clubs = game_state.cards_in_hand[PlayerId.TWO][2]
+    action = PlayCardAction(PlayerId.TWO, jack_clubs)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(48, 59), game_state.trick_points)
+    self.assertEqual(PlayerPair(ace_clubs, jack_clubs),
+                     game_state.won_tricks[PlayerId.ONE][-1])
+    self.assertFalse(ace_clubs in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(jack_clubs in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual(3, len(game_state.cards_in_hand[PlayerId.ONE]))
+    self.assertEqual(3, len(game_state.cards_in_hand[PlayerId.TWO]))
+    self.assertEqual(PlayerId.ONE, game_state.next_player)
+
+  def test_play_trick_winner_has_pending_marriage_points(self):
+    game_state = get_game_state_for_tests()
+    for trick in game_state.won_tricks[PlayerId.TWO]:
+      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+      game_state.talon.extend([trick.one, trick.two])
+    game_state.trick_points = PlayerPair(22, 0)
+    game_state.won_tricks[PlayerId.TWO] = []
+    game_state.validate()
+
+    first_talon_card = game_state.talon[0]
+    second_talon_card = game_state.talon[1]
+
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
+    self.assertEqual([Suit.DIAMONDS], game_state.marriage_suits[PlayerId.TWO])
+    self.assertEqual(0, game_state.trick_points[PlayerId.TWO])
+
+    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    action = PlayCardAction(PlayerId.TWO, queen_clubs)
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+    self.assertEqual(PlayerPair(22, 26), game_state.trick_points)
+    self.assertEqual(PlayerPair(queen_hearts, queen_clubs),
+                     game_state.won_tricks[PlayerId.TWO][-1])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(queen_clubs in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual(PlayerId.TWO, game_state.next_player)
