@@ -8,6 +8,13 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.player_id import PlayerId
+from model.suit import Suit
+
+
+def _add_marriage_points(game_state: GameState, player_id: PlayerId,
+                         suit: Suit):
+  marriage_value = 40 if suit == game_state.trump else 20
+  game_state.trick_points[player_id] += marriage_value
 
 
 class PlayerAction(abc.ABC):
@@ -50,6 +57,48 @@ class PlayerAction(abc.ABC):
     The action must be a legal action given the currest state of the game.
     This can be checked with can_execute_on().
     """
+
+
+class AnnounceMarriageAction(PlayerAction):
+  """Announces a marriage and plays one of the two cards."""
+
+  def __init__(self, player_id: PlayerId, card: Card):
+    """
+    Instantiates a new AnnounceMarriageAction.
+    :param player_id: The player that will perform this action.
+    :param card: One of the two cards in the marriage that will be played.
+    """
+    assert card.card_value in [CardValue.QUEEN, CardValue.KING]
+    super().__init__(player_id)
+    self._card = card
+
+  def can_execute_on(self, game_state: GameState) -> bool:
+    if not game_state.on_lead(self.player_id):
+      return False
+    queen = Card(self._card.suit, CardValue.QUEEN)
+    king = Card(self._card.suit, CardValue.KING)
+    if queen not in game_state.cards_in_hand[self.player_id]:
+      return False
+    if king not in game_state.cards_in_hand[self.player_id]:
+      return False
+    return True
+
+  def execute(self, game_state: GameState):
+    """
+    Updates game_state to include the marriage announcement and plays
+    self._card. The next player will be the opponent.
+
+    If the player won any tricks so far, their trick_points get updated to
+    reflect the value of the marriage. Otherwise, this update is delayed until
+    they win a trick.
+    """
+    assert self.can_execute_on(game_state)
+    game_state.current_trick[self.player_id] = self._card
+    game_state.marriage_suits[self.player_id].append(self._card.suit)
+    if game_state.trick_points[self.player_id] > 0:
+      _add_marriage_points(game_state, self.player_id, self._card.suit)
+    game_state.next_player = self.player_id.opponent()
+    # TODO(game): Check if the player has more than 66 points and game is over.
 
 
 class ExchangeTrumpCardAction(PlayerAction):
