@@ -52,9 +52,9 @@ class PlayerAction(abc.ABC):
   @abc.abstractmethod
   def execute(self, game_state: GameState):
     """
-    Abstract method that must perform the necessary changes corresponding to
-    performing this player action on the game state provided as an argument.
-    The action must be a legal action given the currest state of the game.
+    Abstract method that must apply the necessary changes corresponding to
+    performing this action on the game state provided as an argument.
+    The action must be a legal action given the current state of the game.
     This can be checked with can_execute_on().
     """
 
