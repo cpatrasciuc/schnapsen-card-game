@@ -4,6 +4,8 @@
 
 import abc
 
+from model.card import Card
+from model.card_value import CardValue
 from model.game_state import GameState
 from model.player_id import PlayerId
 
@@ -48,6 +50,29 @@ class PlayerAction(abc.ABC):
     The action must be a legal action given the currest state of the game.
     This can be checked with can_execute_on().
     """
+
+
+class ExchangeTrumpCardAction(PlayerAction):
+  """Exchanges the trump jack in the player's hand with the trump card."""
+
+  def can_execute_on(self, game_state: GameState) -> bool:
+    if not game_state.on_lead(self.player_id):
+      return False
+    if game_state.is_talon_closed:
+      return False
+    if game_state.trump_card is None:
+      return False
+    trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
+    if trump_jack not in game_state.cards_in_hand[self.player_id]:
+      return False
+    return True
+
+  def execute(self, game_state: GameState):
+    assert self.can_execute_on(game_state)
+    trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
+    game_state.cards_in_hand[self.player_id].remove(trump_jack)
+    game_state.cards_in_hand[self.player_id].append(game_state.trump_card)
+    game_state.trump_card = trump_jack
 
 
 class CloseTheTalonAction(PlayerAction):
