@@ -159,12 +159,12 @@ class GameStateValidationTest(unittest.TestCase):
 
   def test_can_only_close_talon_before_a_new_trick_is_played(self):
     next_player = self.game_state.next_player
-    self.assertTrue(self.game_state.on_lead(next_player))
+    self.assertTrue(self.game_state.is_to_lead(next_player))
     self.game_state.current_trick[next_player] = \
       self.game_state.cards_in_hand[next_player][0]
     self.game_state.next_player = next_player.opponent()
     with self.assertRaisesRegex(InvalidGameStateError,
-                                "can only be closed by the on-lead player"):
+                                "only be closed by the player that is to lead"):
       self.game_state.close_talon()
 
   def test_if_talon_is_closed_opponents_points_must_be_set(self):
@@ -365,26 +365,26 @@ class GameStateNewGameTest(unittest.TestCase):
 
 
 class GameStateTest(unittest.TestCase):
-  def test_on_lead(self):
+  def test_is_to_lead(self):
     game_state = get_game_state_for_tests()
-    self.assertTrue(game_state.on_lead(PlayerId.ONE))
-    self.assertFalse(game_state.on_lead(PlayerId.TWO))
+    self.assertTrue(game_state.is_to_lead(PlayerId.ONE))
+    self.assertFalse(game_state.is_to_lead(PlayerId.TWO))
 
     game_state.next_player = PlayerId.TWO
-    self.assertTrue(game_state.on_lead(PlayerId.TWO))
-    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+    self.assertTrue(game_state.is_to_lead(PlayerId.TWO))
+    self.assertFalse(game_state.is_to_lead(PlayerId.ONE))
 
     game_state.current_trick.one = game_state.cards_in_hand.one[0]
     game_state.validate()
-    self.assertFalse(game_state.on_lead(PlayerId.TWO))
-    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+    self.assertFalse(game_state.is_to_lead(PlayerId.TWO))
+    self.assertFalse(game_state.is_to_lead(PlayerId.ONE))
 
     game_state.current_trick.one = None
     game_state.current_trick.two = game_state.cards_in_hand.two[0]
     game_state.next_player = PlayerId.ONE
     game_state.validate()
-    self.assertFalse(game_state.on_lead(PlayerId.TWO))
-    self.assertFalse(game_state.on_lead(PlayerId.ONE))
+    self.assertFalse(game_state.is_to_lead(PlayerId.TWO))
+    self.assertFalse(game_state.is_to_lead(PlayerId.ONE))
 
   def test_must_follow_suit(self):
     game_state = get_game_state_for_tests()

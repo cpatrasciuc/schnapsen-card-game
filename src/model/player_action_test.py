@@ -71,7 +71,7 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
   def test_can_only_execute_before_leading_a_trick(self):
     # Other player is to lead, cannot exchange trump.
     game_state = get_game_state_for_tests()
-    self.assertTrue(game_state.on_lead(PlayerId.ONE))
+    self.assertTrue(game_state.is_to_lead(PlayerId.ONE))
     action = ExchangeTrumpCardAction(PlayerId.TWO)
     self.assertFalse(action.can_execute_on(game_state))
 
@@ -90,7 +90,7 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
   def test_cannot_exchange_trump_when_the_talon_is_empty(self):
     game_state = get_game_state_with_empty_talon_for_tests()
     game_state.next_player = PlayerId.TWO
-    self.assertTrue(game_state.on_lead(PlayerId.TWO))
+    self.assertTrue(game_state.is_to_lead(PlayerId.TWO))
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
     self.assertTrue(trump_jack in game_state.cards_in_hand[PlayerId.TWO])
     self.assertFalse(game_state.is_talon_closed)
@@ -101,7 +101,7 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
     game_state = get_game_state_for_tests()
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
     self.assertFalse(trump_jack in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertTrue(game_state.on_lead(PlayerId.ONE))
+    self.assertTrue(game_state.is_to_lead(PlayerId.ONE))
     self.assertFalse(game_state.is_talon_closed)
     action = ExchangeTrumpCardAction(PlayerId.ONE)
     self.assertFalse(action.can_execute_on(game_state))

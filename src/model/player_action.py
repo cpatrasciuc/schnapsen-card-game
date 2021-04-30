@@ -80,9 +80,10 @@ class PlayCardAction(PlayerAction):
       return False
     if self._card not in game_state.cards_in_hand[self.player_id]:
       return False
-    if not game_state.on_lead(self.player_id) and game_state.must_follow_suit():
-      if not self._is_following_suit(game_state):
-        return False
+    if not game_state.is_to_lead(self.player_id):
+      if game_state.must_follow_suit():
+        if not self._is_following_suit(game_state):
+          return False
     return True
 
   def _is_following_suit(self, game_state: GameState) -> bool:
@@ -192,7 +193,7 @@ class AnnounceMarriageAction(PlayerAction):
     self._card = card
 
   def can_execute_on(self, game_state: GameState) -> bool:
-    if not game_state.on_lead(self.player_id):
+    if not game_state.is_to_lead(self.player_id):
       return False
     queen = Card(self._card.suit, CardValue.QUEEN)
     king = Card(self._card.suit, CardValue.KING)
@@ -224,7 +225,7 @@ class ExchangeTrumpCardAction(PlayerAction):
   """Exchanges the trump jack in the player's hand with the trump card."""
 
   def can_execute_on(self, game_state: GameState) -> bool:
-    if not game_state.on_lead(self.player_id):
+    if not game_state.is_to_lead(self.player_id):
       return False
     if game_state.is_talon_closed:
       return False
@@ -247,7 +248,7 @@ class CloseTheTalonAction(PlayerAction):
   """The player who is to lead closes the talon."""
 
   def can_execute_on(self, game_state: GameState) -> bool:
-    if not game_state.on_lead(self.player_id):
+    if not game_state.is_to_lead(self.player_id):
       return False
     if game_state.is_talon_closed:
       return False

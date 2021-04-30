@@ -86,11 +86,11 @@ class GameState:
   # either one of both players to play card.
   current_trick: Trick = PlayerPair(None, None)
 
-  def on_lead(self, player_id):
+  def is_to_lead(self, player_id):
     """
     Checks if we are at the beginning of a trick and the given player is
     expected to make the next move.
-    If a player is on lead, it can exchange the trump card or close the talon.
+    If a player is to lead, it can exchange the trump card or close the talon.
     """
     # TODO(tests): add a test case for this.
     return self.next_player == player_id and self.current_trick == PlayerPair(
@@ -110,16 +110,16 @@ class GameState:
   def close_talon(self) -> None:
     """
     Closes the talon. Saves the current player and their opponent's current
-    trick points. Can only be called before a card is played by the on-lead
-    player.
+    trick points. Can only be called before a card is played by the player that
+    is to lead.
     """
     if self.is_talon_closed:
       raise InvalidGameStateError("The talon is already closed")
     if len(self.talon) == 0:
       raise InvalidGameStateError("An empty talon cannot be closed")
-    if not self.on_lead(self.next_player):
+    if not self.is_to_lead(self.next_player):
       raise InvalidGameStateError(
-        "The talon can only be closed by the on-lead player")
+        "The talon can only be closed by the player that is to lead")
     self.player_that_closed_the_talon = self.next_player
     self.opponent_points_when_talon_was_closed = self.trick_points[
       self.player_that_closed_the_talon.opponent()]
@@ -272,7 +272,7 @@ class GameState:
     Creates and returns a new game state representing the beginning of a new
     game.
     :param dealer: The PlayerID that deals the cards. The opponent will be
-    on-lead.
+    to lead.
     :param random_seed: Seed to pass to the random number generator. Calls using
     the same seed will shuffle the deck in the same way. The game states can be
     different, depending on who is the dealer. If the dealer is the same the
