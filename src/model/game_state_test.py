@@ -5,8 +5,10 @@
 import copy
 import pprint
 import unittest
+from typing import List, Tuple, Optional
 
-from model.game_state import InvalidGameStateError, GameState, Trick
+from model.game_state import InvalidGameStateError, GameState, Trick, \
+  get_game_points
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests, \
   get_game_state_with_all_tricks_played
@@ -413,6 +415,7 @@ class GameStateTest(unittest.TestCase):
 
     self.assertEqual(66, game_state.trick_points[PlayerId.TWO])
     self.assertTrue(game_state.is_game_over())
+    self.assertEqual(PlayerPair(0, 2), game_state.score())
 
   def test_is_game_over_player_one_goes_beyond_66(self):
     game_state = get_game_state_for_tests()
@@ -439,6 +442,7 @@ class GameStateTest(unittest.TestCase):
 
     self.assertEqual(68, game_state.trick_points[PlayerId.ONE])
     self.assertTrue(game_state.is_game_over())
+    self.assertEqual(PlayerPair(3, 0), game_state.score())
 
   def test_is_game_over_no_more_cards_to_play_talon_is_closed(self):
     game_state = get_game_state_for_tests()
@@ -458,7 +462,53 @@ class GameStateTest(unittest.TestCase):
     game_state.validate()
 
     self.assertTrue(game_state.is_game_over())
+    self.assertEqual(PlayerPair(0, 2), game_state.score())
 
   def test_is_game_over_no_more_cards_to_play(self):
     game_state = get_game_state_with_all_tricks_played()
     self.assertTrue(game_state.is_game_over())
+    self.assertEqual(PlayerPair(1, 0), game_state.score())
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    self.assertEqual(PlayerPair(0, 1), game_state.score())
+
+
+class GetGamePointsTest(unittest.TestCase):
+  """Tests for the get_game_points() function."""
+
+  def test_one_player_reaches_66_talon_not_closed(self):
+    test_cases: List[Tuple[Tuple[PlayerPair[int], Optional[PlayerId], Optional[
+      PlayerId], Optional[int]], PlayerPair[int]]] = [
+      # Player.ONE wins, talon is not closed
+      ((PlayerPair(66, 33), PlayerId.ONE, None, None), PlayerPair(1, 0)),
+      ((PlayerPair(68, 40), PlayerId.ONE, None, None), PlayerPair(1, 0)),
+      ((PlayerPair(66, 32), PlayerId.ONE, None, None), PlayerPair(2, 0)),
+      ((PlayerPair(70, 12), PlayerId.ONE, None, None), PlayerPair(2, 0)),
+      ((PlayerPair(66, 0), PlayerId.ONE, None, None), PlayerPair(3, 0)),
+      ((PlayerPair(70, 0), PlayerId.ONE, None, None), PlayerPair(3, 0)),
+      ((PlayerPair(62, 58), PlayerId.ONE, None, None), PlayerPair(1, 0)),
+
+      # Player.ONE closed the talon
+      ((PlayerPair(66, 33), None, PlayerId.ONE, 33), PlayerPair(1, 0)),
+      ((PlayerPair(68, 50), None, PlayerId.ONE, 40), PlayerPair(1, 0)),
+      ((PlayerPair(58, 45), None, PlayerId.ONE, 40), PlayerPair(0, 2)),
+      ((PlayerPair(66, 42), None, PlayerId.ONE, 32), PlayerPair(2, 0)),
+      ((PlayerPair(70, 12), None, PlayerId.ONE, 12), PlayerPair(2, 0)),
+      ((PlayerPair(60, 22), None, PlayerId.ONE, 12), PlayerPair(0, 2)),
+      ((PlayerPair(66, 33), None, PlayerId.ONE, 0), PlayerPair(3, 0)),
+      ((PlayerPair(70, 10), None, PlayerId.ONE, 0), PlayerPair(3, 0)),
+      ((PlayerPair(50, 0), None, PlayerId.ONE, 0), PlayerPair(0, 3)),
+    ]
+    for inputs, expected_result in test_cases:
+      self.assertEqual(expected_result, get_game_points(*inputs),
+                       msg=f"{inputs}")
+      # Swap Player.ONE with Player.TWO in the inputs and expectations
+      swapped_inputs = (PlayerPair(inputs[0].two, inputs[0].one),
+                        inputs[1].opponent() if inputs[1] is not None else None,
+                        inputs[2].opponent() if inputs[2] is not None else None,
+                        inputs[3])
+      swapped_expected_result = PlayerPair(expected_result.two,
+                                           expected_result.one)
+      self.assertEqual(swapped_expected_result,
+                       get_game_points(*swapped_inputs),
+                       msg=f"{swapped_inputs}")

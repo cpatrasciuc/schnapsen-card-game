@@ -13,6 +13,58 @@ from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
 
+
+def get_game_points(
+    trick_points: PlayerPair[int], won_last_trick: Optional[PlayerId] = None,
+    closed_the_talon: Optional[PlayerId] = None,
+    opp_points_when_talon_was_closed: Optional[int] = None) -> PlayerPair[int]:
+  """
+  Returns the game points won by each player at the end of a game. Only the
+  winner will score points; the other player will score zero points.
+
+  :param trick_points: The trick points for each player at the end of the game.
+  :param won_last_trick: The player that won the last trick. Only needed if the
+    talon was not closed (i.e., closed_the_talon is None).
+  :param closed_the_talon: The player that closed the talon, if any.
+  :param opp_points_when_talon_was_closed: If one player closed the talon, this
+    argument should contain the points that their opponent had when the talon
+    was closed.
+  :return: A PlayerPair with the game points for each player. One entry will be
+    zero.
+  """
+  assert closed_the_talon is not None or won_last_trick is not None
+
+  def _get_game_points_won(opponent_points: int) -> int:
+    if opponent_points >= 33:
+      return 1
+    if opponent_points > 0:
+      return 2
+    return 3
+
+  if closed_the_talon is not None:
+    assert opp_points_when_talon_was_closed is not None
+    if trick_points[closed_the_talon] >= 66:
+      winner = closed_the_talon
+      points = _get_game_points_won(opp_points_when_talon_was_closed)
+    else:
+      winner = closed_the_talon.opponent()
+      points = max(2, _get_game_points_won(opp_points_when_talon_was_closed))
+  else:
+    if trick_points.one >= 66:
+      winner = PlayerId.ONE
+      points = _get_game_points_won(trick_points.two)
+    elif trick_points.two >= 66:
+      winner = PlayerId.TWO
+      points = _get_game_points_won(trick_points.one)
+    else:
+      assert trick_points.one + trick_points.two == 120
+      winner = won_last_trick
+      points = 1
+  result = PlayerPair(0, 0)
+  result[winner] = points
+  return result
+
+
 Trick = PlayerPair[Card]
 """
 A pair of cards, one played by each player. One or both the cards can be None,
@@ -79,7 +131,7 @@ class GameState:
   trick_points: PlayerPair[int] = PlayerPair(0, 0)
 
   # The Bummerl score. The first player to reach 7 points wins.
-  # TODO: Maybe move this to a Bummerl class.
+  # TODO(refactor): Maybe move this to a Bummerl class.
   game_points: PlayerPair[int] = PlayerPair(0, 0)
 
   # This stores the current, incomplete trick. This means we are waiting for
@@ -172,7 +224,7 @@ class GameState:
     if self.current_trick[self.next_player] is not None:
       raise InvalidGameStateError(
         f"current_trick already contains a card for {self.next_player}")
-    # TODO(valdiation): Check that next_player must have won a trick
+    # TODO(validation): Check that next_player must have won a trick
 
   def _validate_num_cards_in_hand(self):
     num_cards_player_one = len(self.cards_in_hand.one)
@@ -308,3 +360,14 @@ class GameState:
     if len(self.cards_in_hand.one) == 0:
       return True
     return False
+
+  # TODO(refactor): Rename this to game_points() after game_points are moved.
+  def score(self) -> PlayerPair[int]:
+    """
+    Returns the game points scored by each player after this game is over.
+    Can only be called after the game is over.
+    """
+    assert self.is_game_over()
+    return get_game_points(self.trick_points, self.next_player,
+                           self.player_that_closed_the_talon,
+                           self.opponent_points_when_talon_was_closed)
