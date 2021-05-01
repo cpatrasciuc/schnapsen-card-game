@@ -107,3 +107,54 @@ def get_game_state_with_empty_talon_for_tests() -> GameState:
                    trump_card=None, talon=talon, won_tricks=won_tricks,
                    marriage_suits=marriage_suits, trick_points=trick_points,
                    game_points=game_points, current_trick=current_trick)
+
+
+def get_game_state_with_all_tricks_played() -> GameState:
+  """
+  Generates a valid game state in which all the tricks were played and no player
+  could reach 66 points.
+
+  The game state is the following:
+    * cards_in_hand: [], []
+    * trump: ♣
+    * trump_card: None
+    * talon: []
+    * next_player: PlayerId.ONE
+    * won_tricks: [(K♠, Q♠), (A♠, X♥), (K♣, Q♣), (A♣, X♣), (J♣, J♠)],
+                  [(Q♥, K♥), (X♥, A♥), (Q♦, K♦), (X♦, A♦), (J♥, J♦)]
+    * marriage_suits: [], []
+    * trick_points: (60, 60)
+    * game_points: (0, 0)
+    * current_trick: (None, None)
+  """
+  cards_in_hand = PlayerPair([], [])
+  talon = []
+  won_tricks = PlayerPair(
+    one=[PlayerPair(Card(Suit.SPADES, CardValue.KING),
+                    Card(Suit.SPADES, CardValue.QUEEN)),
+         PlayerPair(Card(Suit.SPADES, CardValue.ACE),
+                    Card(Suit.SPADES, CardValue.TEN)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.KING),
+                    Card(Suit.CLUBS, CardValue.QUEEN)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.ACE),
+                    Card(Suit.CLUBS, CardValue.TEN)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.JACK),
+                    Card(Suit.SPADES, CardValue.JACK))],
+    two=[PlayerPair(Card(Suit.HEARTS, CardValue.QUEEN),
+                    Card(Suit.HEARTS, CardValue.KING)),
+         PlayerPair(Card(Suit.HEARTS, CardValue.TEN),
+                    Card(Suit.HEARTS, CardValue.ACE)),
+         PlayerPair(Card(Suit.DIAMONDS, CardValue.QUEEN),
+                    Card(Suit.DIAMONDS, CardValue.KING)),
+         PlayerPair(Card(Suit.DIAMONDS, CardValue.TEN),
+                    Card(Suit.DIAMONDS, CardValue.ACE)),
+         PlayerPair(Card(Suit.DIAMONDS, CardValue.JACK),
+                    Card(Suit.HEARTS, CardValue.JACK))])
+  marriage_suits = PlayerPair([], [])
+  trick_points = PlayerPair(one=60, two=60)
+  game_points = PlayerPair(one=0, two=0)
+  current_trick = PlayerPair(None, None)
+  return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
+                   trump_card=None, talon=talon, won_tricks=won_tricks,
+                   marriage_suits=marriage_suits, trick_points=trick_points,
+                   game_points=game_points, current_trick=current_trick)
