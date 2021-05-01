@@ -172,6 +172,7 @@ class GameState:
     if self.current_trick[self.next_player] is not None:
       raise InvalidGameStateError(
         f"current_trick already contains a card for {self.next_player}")
+    # TODO(valdiation): Check that next_player must have won a trick
 
   def _validate_num_cards_in_hand(self):
     num_cards_player_one = len(self.cards_in_hand.one)
@@ -184,6 +185,7 @@ class GameState:
         "The players cannot have more than 5 cards in hand: "
         + f"{num_cards_player_one}")
     if num_cards_player_one < 5:
+      # TODO(validation): Check if num cards in hand is > 5 - num_tricks_played
       if (not self.is_talon_closed) and (len(self.talon) > 0):
         raise InvalidGameStateError(
           f"The players should have 5 cards in hand: {num_cards_player_one}")
@@ -290,3 +292,19 @@ class GameState:
     return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                      trump_card=trump_card, talon=deck[11:],
                      next_player=dealer.opponent())
+
+  def is_game_over(self) -> bool:
+    """
+    Returns True if the game is over at this point in time. This means one
+    player reached 66 points or there are no more cards to be played (i.e., all
+    twenty cards were played or the talon was closed and all the cards from the
+    player's hands were played).
+    """
+    target_score = 66
+    if self.trick_points.one >= target_score:
+      return True
+    if self.trick_points.two >= target_score:
+      return True
+    if len(self.cards_in_hand.one) == 0:
+      return True
+    return False

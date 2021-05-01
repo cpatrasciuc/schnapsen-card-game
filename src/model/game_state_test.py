@@ -6,9 +6,10 @@ import copy
 import pprint
 import unittest
 
-from model.game_state import InvalidGameStateError, GameState
+from model.game_state import InvalidGameStateError, GameState, Trick
 from model.game_state_test_utils import get_game_state_for_tests, \
-  get_game_state_with_empty_talon_for_tests
+  get_game_state_with_empty_talon_for_tests, \
+  get_game_state_with_all_tricks_played
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -393,3 +394,71 @@ class GameStateTest(unittest.TestCase):
     self.assertTrue(game_state.must_follow_suit())
     game_state = get_game_state_with_empty_talon_for_tests()
     self.assertTrue(game_state.must_follow_suit())
+
+  def test_is_game_over_player_two_reaches_exactly_66(self):
+    game_state = get_game_state_for_tests()
+    self.assertFalse(game_state.is_game_over())
+
+    jack_clubs = game_state.cards_in_hand[PlayerId.TWO].pop(3)
+    ace_spades = game_state.cards_in_hand[PlayerId.ONE].pop(4)
+    trick = Trick(jack_clubs, ace_spades)
+    game_state.won_tricks[PlayerId.TWO].append(trick)
+    game_state.trick_points[PlayerId.TWO] += jack_clubs.card_value
+    game_state.trick_points[PlayerId.TWO] += ace_spades.card_value
+    game_state.next_player = PlayerId.TWO
+    game_state.cards_in_hand[PlayerId.TWO].append(game_state.talon.pop(0))
+    game_state.cards_in_hand[PlayerId.ONE].append(game_state.trump_card)
+    game_state.trump_card = None
+    game_state.validate()
+
+    self.assertEqual(66, game_state.trick_points[PlayerId.TWO])
+    self.assertTrue(game_state.is_game_over())
+
+  def test_is_game_over_player_one_goes_beyond_66(self):
+    game_state = get_game_state_for_tests()
+    self.assertFalse(game_state.is_game_over())
+
+    while len(game_state.won_tricks[PlayerId.TWO]) > 0:
+      trick = game_state.won_tricks[PlayerId.TWO].pop()
+      game_state.won_tricks[PlayerId.ONE].append(Trick(trick.two, trick.one))
+      game_state.trick_points[PlayerId.ONE] += trick.one.card_value
+      game_state.trick_points[PlayerId.ONE] += trick.two.card_value
+    game_state.trick_points[PlayerId.TWO] = 0
+
+    jack_clubs = game_state.cards_in_hand[PlayerId.TWO].pop(3)
+    ace_spades = game_state.cards_in_hand[PlayerId.ONE].pop(4)
+    trick = Trick(ace_spades, jack_clubs)
+    game_state.won_tricks[PlayerId.ONE].append(trick)
+    game_state.trick_points[PlayerId.ONE] += jack_clubs.card_value
+    game_state.trick_points[PlayerId.ONE] += ace_spades.card_value
+    game_state.next_player = PlayerId.TWO
+    game_state.cards_in_hand[PlayerId.TWO].append(game_state.talon.pop(0))
+    game_state.cards_in_hand[PlayerId.ONE].append(game_state.trump_card)
+    game_state.trump_card = None
+    game_state.validate()
+
+    self.assertEqual(68, game_state.trick_points[PlayerId.ONE])
+    self.assertTrue(game_state.is_game_over())
+
+  def test_is_game_over_no_more_cards_to_play_talon_is_closed(self):
+    game_state = get_game_state_for_tests()
+
+    jack_clubs = game_state.cards_in_hand[PlayerId.TWO].pop(3)
+    queen_hearts = game_state.cards_in_hand[PlayerId.ONE].pop(0)
+    trick = Trick(jack_clubs, queen_hearts)
+    game_state.won_tricks[PlayerId.TWO].append(trick)
+    game_state.trick_points[PlayerId.TWO] += jack_clubs.card_value
+    game_state.trick_points[PlayerId.TWO] += queen_hearts.card_value
+    game_state.talon.extend(game_state.cards_in_hand.one)
+    game_state.talon.extend(game_state.cards_in_hand.two)
+    game_state.cards_in_hand = PlayerPair([], [])
+    game_state.marriage_suits.two = []
+    game_state.trick_points = PlayerPair(22, 38)
+    game_state.close_talon()
+    game_state.validate()
+
+    self.assertTrue(game_state.is_game_over())
+
+  def test_is_game_over_no_more_cards_to_play(self):
+    game_state = get_game_state_with_all_tricks_played()
+    self.assertTrue(game_state.is_game_over())
