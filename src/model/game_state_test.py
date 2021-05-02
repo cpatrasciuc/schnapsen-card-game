@@ -487,6 +487,7 @@ class GetGamePointsTest(unittest.TestCase):
       ((PlayerPair(66, 0), PlayerId.ONE, None, None), PlayerPair(3, 0)),
       ((PlayerPair(70, 0), PlayerId.ONE, None, None), PlayerPair(3, 0)),
       ((PlayerPair(62, 58), PlayerId.ONE, None, None), PlayerPair(1, 0)),
+      ((PlayerPair(58, 62), PlayerId.ONE, None, None), PlayerPair(1, 0)),
 
       # Player.ONE closed the talon
       ((PlayerPair(66, 33), None, PlayerId.ONE, 33), PlayerPair(1, 0)),
