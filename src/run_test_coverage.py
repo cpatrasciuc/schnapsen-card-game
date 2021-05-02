@@ -17,6 +17,7 @@ def run_all_tests_with_coverage() -> float:
   tests_file_pattern = "*_test.py"
   cov = coverage.Coverage(branch=True, source=["./model"],
                           omit=[tests_file_pattern])
+  cov.exclude("def __repr__", "exclude")
   cov.start()
 
   # Discover and run all tests.
