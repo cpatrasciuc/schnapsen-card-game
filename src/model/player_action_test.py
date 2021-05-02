@@ -18,6 +18,18 @@ from model.suit import Suit
 class CloseTheTalonActionTest(unittest.TestCase):
   """Tests for the CloseTheTalonAction class."""
 
+  def test_equality(self):
+    self.assertEqual(CloseTheTalonAction(PlayerId.ONE),
+                     CloseTheTalonAction(PlayerId.ONE))
+    self.assertEqual(CloseTheTalonAction(PlayerId.TWO),
+                     CloseTheTalonAction(PlayerId.TWO))
+    self.assertNotEqual(CloseTheTalonAction(PlayerId.ONE),
+                        CloseTheTalonAction(PlayerId.TWO))
+    self.assertNotEqual(CloseTheTalonAction(PlayerId.TWO),
+                        CloseTheTalonAction(PlayerId.ONE))
+    self.assertNotEqual(CloseTheTalonAction(PlayerId.TWO),
+                        ExchangeTrumpCardAction(PlayerId.TWO))
+
   def test_empty_talon_cannot_be_closed(self):
     game_state = get_game_state_with_empty_talon_for_tests()
     action = CloseTheTalonAction(game_state.next_player)
@@ -67,6 +79,18 @@ class CloseTheTalonActionTest(unittest.TestCase):
 
 class ExchangeTrumpCardActionTest(unittest.TestCase):
   """Tests for the ExchangeTrumpCardAction class."""
+
+  def test_equality(self):
+    self.assertEqual(ExchangeTrumpCardAction(PlayerId.ONE),
+                     ExchangeTrumpCardAction(PlayerId.ONE))
+    self.assertEqual(ExchangeTrumpCardAction(PlayerId.TWO),
+                     ExchangeTrumpCardAction(PlayerId.TWO))
+    self.assertNotEqual(ExchangeTrumpCardAction(PlayerId.ONE),
+                        ExchangeTrumpCardAction(PlayerId.TWO))
+    self.assertNotEqual(ExchangeTrumpCardAction(PlayerId.TWO),
+                        ExchangeTrumpCardAction(PlayerId.ONE))
+    self.assertNotEqual(ExchangeTrumpCardAction(PlayerId.TWO),
+                        CloseTheTalonAction(PlayerId.TWO))
 
   def test_can_only_execute_before_leading_a_trick(self):
     # Other player is to lead, cannot exchange trump.
@@ -128,6 +152,25 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
 
 class AnnounceMarriageActionTest(unittest.TestCase):
   """Tests for the AnnounceMarriageAction class."""
+
+  def test_equality(self):
+    self.assertEqual(
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)),
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)))
+    self.assertNotEqual(
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)))
+    self.assertNotEqual(
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)),
+      AnnounceMarriageAction(PlayerId.ONE,
+                             Card(Suit.DIAMONDS, CardValue.QUEEN)))
+    self.assertNotEqual(
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)),
+      AnnounceMarriageAction(PlayerId.ONE,
+                             Card(Suit.DIAMONDS, CardValue.QUEEN)))
+    self.assertNotEqual(
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)))
 
   def test_can_only_instantiate_with_queen_or_king(self):
     for card in Card.get_all_cards():
@@ -217,6 +260,23 @@ class AnnounceMarriageActionTest(unittest.TestCase):
 
 class PlayCardActionTest(unittest.TestCase):
   """Tests for the PlayCardAction class."""
+
+  def test_equality(self):
+    self.assertEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE)))
+    self.assertNotEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.ACE)))
+    self.assertNotEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE)))
+    self.assertNotEqual(
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE)))
+    self.assertNotEqual(
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.KING)))
 
   def test_can_only_execute_on_players_turn(self):
     game_state = get_game_state_for_tests()

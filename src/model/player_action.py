@@ -178,6 +178,11 @@ class PlayCardAction(PlayerAction):
       # Update the next player
       game_state.next_player = winner
 
+  def __eq__(self, other):
+    if not isinstance(other, PlayCardAction):
+      return False
+    return self._player_id == other._player_id and self._card == other._card
+
 
 class AnnounceMarriageAction(PlayerAction):
   """Announces a marriage and plays one of the two cards."""
@@ -220,6 +225,11 @@ class AnnounceMarriageAction(PlayerAction):
     game_state.next_player = self.player_id.opponent()
     # TODO(game): Check if the player has more than 66 points and game is over.
 
+  def __eq__(self, other):
+    if not isinstance(other, AnnounceMarriageAction):
+      return False
+    return self._player_id == other._player_id and self._card == other._card
+
 
 class ExchangeTrumpCardAction(PlayerAction):
   """Exchanges the trump jack in the player's hand with the trump card."""
@@ -243,6 +253,11 @@ class ExchangeTrumpCardAction(PlayerAction):
     game_state.cards_in_hand[self.player_id].append(game_state.trump_card)
     game_state.trump_card = trump_jack
 
+  def __eq__(self, other):
+    if not isinstance(other, ExchangeTrumpCardAction):
+      return False
+    return self._player_id == other._player_id
+
 
 class CloseTheTalonAction(PlayerAction):
   """The player who is to lead closes the talon."""
@@ -259,3 +274,8 @@ class CloseTheTalonAction(PlayerAction):
   def execute(self, game_state: GameState):
     assert self.can_execute_on(game_state)
     game_state.close_talon()
+
+  def __eq__(self, other):
+    if not isinstance(other, CloseTheTalonAction):
+      return False
+    return self._player_id == other._player_id
