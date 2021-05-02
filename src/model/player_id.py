@@ -14,3 +14,6 @@ class PlayerId(enum.Enum):
   def opponent(self) -> "PlayerId":
     """Utility method that can be used to get the opponent of a given player."""
     return PlayerId.TWO if self == PlayerId.ONE else PlayerId.ONE
+
+  def __str__(self):
+    return self.name

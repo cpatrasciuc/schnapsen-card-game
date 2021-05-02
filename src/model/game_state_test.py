@@ -130,7 +130,7 @@ class GameStateValidationTest(unittest.TestCase):
   def test_valid_game_points_values(self):
     self.game_state.game_points.one = -1
     with self.assertRaisesRegex(InvalidGameStateError,
-                                "between 0 and 6: PlayerId.ONE has -1"):
+                                "between 0 and 6: ONE has -1"):
       self.game_state.validate()
     for points_one in range(7):
       for points_two in range(7):
@@ -139,7 +139,7 @@ class GameStateValidationTest(unittest.TestCase):
         self.game_state.validate()
     self.game_state.game_points.two = 7
     with self.assertRaisesRegex(InvalidGameStateError,
-                                "between 0 and 6: PlayerId.TWO has 7"):
+                                "between 0 and 6: TWO has 7"):
       self.game_state.validate()
 
   def test_empty_talon_cannot_be_closed(self):
