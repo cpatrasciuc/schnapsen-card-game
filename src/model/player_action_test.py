@@ -7,9 +7,10 @@ import unittest
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import \
-  get_game_state_with_empty_talon_for_tests, get_game_state_for_tests
+  get_game_state_with_empty_talon_for_tests, get_game_state_for_tests, \
+  get_game_state_with_all_tricks_played
 from model.player_action import CloseTheTalonAction, ExchangeTrumpCardAction, \
-  AnnounceMarriageAction, PlayCardAction
+  AnnounceMarriageAction, PlayCardAction, get_available_actions
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -622,3 +623,179 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.ONE])
     self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.TWO])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
+
+
+class AvailableActionsTest(unittest.TestCase):
+  """Tests for the get_available_actions() functions."""
+
+  def test_actions_when_player_is_to_lead(self):
+    game_state = get_game_state_for_tests()
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN)),
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)),
+      CloseTheTalonAction(PlayerId.ONE),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.QUEEN)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)),
+      ExchangeTrumpCardAction(PlayerId.TWO),
+      CloseTheTalonAction(PlayerId.TWO),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_actions_after_the_opponent_played_one_card(self):
+    game_state = get_game_state_for_tests()
+    PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.QUEEN)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state = get_game_state_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_actions_when_player_is_to_lead_talon_is_closed(self):
+    game_state = get_game_state_for_tests()
+    CloseTheTalonAction(PlayerId.ONE).execute(game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN)),
+      AnnounceMarriageAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state = get_game_state_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    CloseTheTalonAction(PlayerId.TWO).execute(game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.QUEEN)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_actions_after_the_opponent_played_one_card_talon_is_closed(self):
+    game_state = get_game_state_for_tests()
+    CloseTheTalonAction(PlayerId.ONE).execute(game_state)
+    PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state = get_game_state_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    CloseTheTalonAction(PlayerId.TWO).execute(game_state)
+    PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_actions_when_player_is_to_lead_talon_is_empty(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.ACE)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state = get_game_state_with_empty_talon_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.JACK)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)),
+      AnnounceMarriageAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.QUEEN)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_actions_after_the_opponent_played_one_card_talon_is_empty(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+    PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)),
+      PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.QUEEN)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+    game_state = get_game_state_with_empty_talon_for_tests()
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)).execute(
+      game_state)
+
+    actions = get_available_actions(game_state)
+    expected_actions = [
+      PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.ACE)),
+    ]
+    self.assertSetEqual(set(expected_actions), set(actions))
+
+  def test_no_actions_available_when_game_is_over(self):
+    game_state = get_game_state_with_all_tricks_played()
+    self.assertEqual([], get_available_actions(game_state))
+    game_state.next_player = PlayerId.TWO
+    game_state.validate()
+    self.assertEqual([], get_available_actions(game_state))

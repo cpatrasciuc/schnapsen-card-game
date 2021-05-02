@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import abc
+from typing import List
 
 from model.card import Card
 from model.card_value import CardValue
@@ -183,6 +184,12 @@ class PlayCardAction(PlayerAction):
       return False
     return self._player_id == other._player_id and self._card == other._card
 
+  def __hash__(self):
+    return hash((self._player_id, self._card))
+
+  def __repr__(self):
+    return f"PlayCardAction({self.player_id}, {self._card})"
+
 
 class AnnounceMarriageAction(PlayerAction):
   """Announces a marriage and plays one of the two cards."""
@@ -230,6 +237,12 @@ class AnnounceMarriageAction(PlayerAction):
       return False
     return self._player_id == other._player_id and self._card == other._card
 
+  def __hash__(self):
+    return hash((self._player_id, self._card))
+
+  def __repr__(self):
+    return f"AnnounceMarriageAction({self.player_id}, {self._card})"
+
 
 class ExchangeTrumpCardAction(PlayerAction):
   """Exchanges the trump jack in the player's hand with the trump card."""
@@ -258,6 +271,12 @@ class ExchangeTrumpCardAction(PlayerAction):
       return False
     return self._player_id == other._player_id
 
+  def __hash__(self):
+    return hash(self._player_id)
+
+  def __repr__(self):
+    return f"ExchangeTrumpCardAction({self.player_id})"
+
 
 class CloseTheTalonAction(PlayerAction):
   """The player who is to lead closes the talon."""
@@ -279,3 +298,37 @@ class CloseTheTalonAction(PlayerAction):
     if not isinstance(other, CloseTheTalonAction):
       return False
     return self._player_id == other._player_id
+
+  def __hash__(self):
+    return hash(self._player_id)
+
+  def __repr__(self):
+    return f"CloseTheTalonAction({self.player_id})"
+
+
+def get_available_actions(game_state: GameState) -> List[PlayerAction]:
+  """
+  Returns a list of all the valid actions that can be performed in a given game
+  state.
+  """
+  actions: List[PlayerAction] = []
+  player_id = game_state.next_player
+  is_to_lead = game_state.is_to_lead(player_id)
+  for card in game_state.cards_in_hand[player_id]:
+    # TODO(options): Allow Queen/King to be played without announcing marriage?
+    if card.card_value in [CardValue.QUEEN, CardValue.KING] and is_to_lead:
+      marriage = AnnounceMarriageAction(player_id, card)
+      if marriage.can_execute_on(game_state):
+        actions.append(marriage)
+        continue
+    play_card = PlayCardAction(player_id, card)
+    if play_card.can_execute_on(game_state):
+      actions.append(play_card)
+  if is_to_lead:
+    exchange_trump = ExchangeTrumpCardAction(player_id)
+    if exchange_trump.can_execute_on(game_state):
+      actions.append(exchange_trump)
+    close_talon = CloseTheTalonAction(player_id)
+    if close_talon.can_execute_on(game_state):
+      actions.append(close_talon)
+  return actions
