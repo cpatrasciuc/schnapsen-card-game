@@ -4,11 +4,9 @@
 
 import dataclasses
 import random
-from collections import Counter
 from typing import List, Optional
 
 from model.card import Card
-from model.card_value import CardValue
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -175,149 +173,6 @@ class GameState:
     self.player_that_closed_the_talon = self.next_player
     self.opponent_points_when_talon_was_closed = self.trick_points[
       self.player_that_closed_the_talon.opponent()]
-    self._validate_talon()
-
-  def validate(self) -> None:
-    """
-    Runs a series of check to validate the current game state (e.g., no
-    duplicate cards, the trick points are correct based on won tricks and
-    announced marriages).
-    It does not perform type checks directly.
-    :exception InvalidGameStateError if an inconsistency is found.
-    """
-    self._validate_trump_and_trump_card()
-    self._verify_there_are_twenty_unique_cards()
-    self._validate_num_cards_in_hand()
-    self._validate_current_trick_and_next_player()
-    self._validate_talon()
-    self._validate_marriage_suits()
-    self._validate_trick_points()
-    self._validate_won_tricks()
-    self._validate_game_points()
-
-  def _validate_game_points(self):
-    for player_id in PlayerId:
-      if not 0 <= self.game_points[player_id] < 7:
-        raise InvalidGameStateError(
-          "Game points should be between 0 and 6: %s has %d" % (
-            player_id, self.game_points[player_id]))
-
-  def _validate_talon(self):
-    if self.is_talon_closed and len(self.talon) == 0:
-      raise InvalidGameStateError("An empty talon cannot be closed")
-    player_is_set = self.player_that_closed_the_talon is not None
-    points_are_set = self.opponent_points_when_talon_was_closed is not None
-    if player_is_set != points_are_set:
-      raise InvalidGameStateError(
-        "player_that_closed_the_talon and opponent_points_when_talon_was_closed"
-        " must be either both set or both None: "
-        f"{self.player_that_closed_the_talon} "
-        f"{self.opponent_points_when_talon_was_closed}")
-    if player_is_set:
-      if self.opponent_points_when_talon_was_closed > self.trick_points[
-        self.player_that_closed_the_talon.opponent()]:
-        raise InvalidGameStateError(
-          "opponent_points_when_talon_was_closed is greater than the current "
-          "value of trick_points for that player")
-
-  def _validate_current_trick_and_next_player(self):
-    if self.current_trick[self.next_player] is not None:
-      raise InvalidGameStateError(
-        f"current_trick already contains a card for {self.next_player}")
-    # TODO(validation): Check that next_player must have won a trick
-
-  def _validate_num_cards_in_hand(self):
-    num_cards_player_one = len(self.cards_in_hand.one)
-    if num_cards_player_one != len(self.cards_in_hand.two):
-      raise InvalidGameStateError(
-        "The players must have an equal number of cards in their hands: "
-        + f"{num_cards_player_one} vs {len(self.cards_in_hand.two)}")
-    if num_cards_player_one > 5:
-      raise InvalidGameStateError(
-        "The players cannot have more than 5 cards in hand: "
-        + f"{num_cards_player_one}")
-    if num_cards_player_one < 5:
-      # TODO(validation): Check if num cards in hand is > 5 - num_tricks_played
-      if (not self.is_talon_closed) and (len(self.talon) > 0):
-        raise InvalidGameStateError(
-          f"The players should have 5 cards in hand: {num_cards_player_one}")
-
-  def _verify_there_are_twenty_unique_cards(self):
-    all_cards = [self.trump_card]
-    all_cards += self.cards_in_hand.one + self.cards_in_hand.two
-    all_cards += self.talon
-    all_cards += self._get_played_cards()
-    all_cards = [card for card in all_cards if card is not None]
-    if len(all_cards) != 20:
-      raise InvalidGameStateError(
-        f"Total number of cards must be 20, not {len(all_cards)}")
-    duplicated_card_names = [str(card) for card, count in
-                             Counter(all_cards).items() if count > 1]
-    if len(duplicated_card_names) != 0:
-      raise InvalidGameStateError(
-        "Duplicated cards: %s" % ",".join(duplicated_card_names))
-
-  def _validate_trump_and_trump_card(self):
-    if self.trump is None:
-      raise InvalidGameStateError("Trump suit cannot be None")
-    if self.trump_card is not None:
-      if self.trump_card.suit != self.trump:
-        raise InvalidGameStateError("trump and trump_card.suit do not match")
-    if self.trump_card is None and len(self.talon) > 0:
-      raise InvalidGameStateError("trump_card is missing")
-
-  def _validate_marriage_suits(self):
-    marriages = self.marriage_suits.one + self.marriage_suits.two
-    duplicated_marriages = [suit for suit, count in Counter(marriages).items()
-                            if count > 1]
-    if len(duplicated_marriages) > 0:
-      raise InvalidGameStateError("Duplicated marriage suits: %s" % (
-        ",".join(str(suit) for suit in duplicated_marriages)))
-
-    # Check if at least one card from the marriage suits was played and that the
-    # not-yet-played cards are in the player's hand.
-    tricks = self.won_tricks.one + self.won_tricks.two
-    for player_id in PlayerId:
-      for marriage_suit in self.marriage_suits[player_id]:
-        marriage = [Card(marriage_suit, CardValue.QUEEN),
-                    Card(marriage_suit, CardValue.KING)]
-        played_cards = [trick[player_id] for trick in tricks if
-                        trick[player_id] in marriage]
-        if len(played_cards) == 0:
-          raise InvalidGameStateError(
-            f"Marriage {marriage_suit} was announced, but no card was played")
-        if len(played_cards) == 1:
-          marriage.remove(played_cards[0])
-          if marriage[0] not in self.cards_in_hand[player_id]:
-            raise InvalidGameStateError(
-              f"{player_id} announced marriage {marriage_suit} and played one" +
-              " card. The other card is not in their hand.")
-
-  def _validate_trick_points(self):
-    expected_points = PlayerPair()
-    for player_id in PlayerId:
-      expected_points[player_id] = sum(
-        [card.card_value for trick in self.won_tricks[player_id] for card in
-         [trick.one, trick.two]])
-      if expected_points[player_id] > 0:
-        expected_points[player_id] += sum(
-          [20 if suit != self.trump else 40 for suit in
-           self.marriage_suits[player_id]])
-    if expected_points != self.trick_points:
-      raise InvalidGameStateError(
-        f"Invalid trick points. Expected {expected_points}, "
-        + f"actual {self.trick_points}")
-
-  def _validate_won_tricks(self):
-    for player_id in PlayerId:
-      for trick in self.won_tricks[player_id]:
-        if trick[player_id.opponent()].wins(trick[player_id], self.trump):
-          raise InvalidGameStateError(
-            f"{player_id} cannot win this trick: {trick.one}, {trick.two}")
-
-  def _get_played_cards(self):
-    return [card for trick in self.won_tricks.one + self.won_tricks.two for
-            card in [trick.one, trick.two]]
 
   @staticmethod
   def new_game(dealer: PlayerId = PlayerId.ONE,

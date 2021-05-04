@@ -7,6 +7,7 @@ import unittest
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests, \
   get_game_state_with_all_tricks_played
+from model.game_state_validation import validate
 
 
 class GameStateTestUtilsTest(unittest.TestCase):
@@ -14,7 +15,7 @@ class GameStateTestUtilsTest(unittest.TestCase):
   def test_get_simple_game_state_for_tests():
     """Verify that get_simple_game_state_for_tests() returns a valid state."""
     game_state = get_game_state_for_tests()
-    game_state.validate()
+    validate(game_state)
 
   @staticmethod
   def test_get_game_state_with_empty_talon_for_tests():
@@ -23,7 +24,7 @@ class GameStateTestUtilsTest(unittest.TestCase):
     game state.
     """
     game_state = get_game_state_with_empty_talon_for_tests()
-    game_state.validate()
+    validate(game_state)
 
   @staticmethod
   def test_get_game_state_with_all_tricks_played():
@@ -32,4 +33,4 @@ class GameStateTestUtilsTest(unittest.TestCase):
     state.
     """
     game_state = get_game_state_with_all_tricks_played()
-    game_state.validate()
+    validate(game_state)

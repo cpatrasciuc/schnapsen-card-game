@@ -9,6 +9,7 @@ from model.card_value import CardValue
 from model.game_state_test_utils import \
   get_game_state_with_empty_talon_for_tests, get_game_state_for_tests, \
   get_game_state_with_all_tricks_played
+from model.game_state_validation import GameStateValidator
 from model.player_action import CloseTheTalonAction, ExchangeTrumpCardAction, \
   AnnounceMarriageAction, PlayCardAction, get_available_actions
 from model.player_id import PlayerId
@@ -194,15 +195,16 @@ class AnnounceMarriageActionTest(unittest.TestCase):
 
   def test_both_cards_must_be_in_hand(self):
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = AnnounceMarriageAction(PlayerId.TWO, queen_diamonds)
     self.assertFalse(action.can_execute_on(game_state))
     # Swap the queen of spades with the trump card
-    queen_spades = game_state.cards_in_hand[PlayerId.TWO].pop()
-    game_state.cards_in_hand[PlayerId.TWO].append(game_state.trump_card)
-    game_state.trump_card = queen_spades
-    game_state.validate()
+    with GameStateValidator(game_state):
+      queen_spades = game_state.cards_in_hand[PlayerId.TWO].pop()
+      game_state.cards_in_hand[PlayerId.TWO].append(game_state.trump_card)
+      game_state.trump_card = queen_spades
     action = AnnounceMarriageAction(PlayerId.TWO, queen_spades)
     self.assertFalse(action.can_execute_on(game_state))
 
@@ -219,7 +221,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
 
   def test_announce_trump_marriage(self):
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     queen_clubs = Card(Suit.CLUBS, CardValue.QUEEN)
     action = AnnounceMarriageAction(PlayerId.TWO, queen_clubs)
     self.assertTrue(action.can_execute_on(game_state))
@@ -232,14 +235,14 @@ class AnnounceMarriageActionTest(unittest.TestCase):
 
   def test_announce_marriage_without_scoring_any_trick(self):
     game_state = get_game_state_for_tests()
-    won_tricks = game_state.won_tricks[PlayerId.ONE]
-    for trick in won_tricks:
-      game_state.talon.extend([trick.one, trick.two])
-    game_state.won_tricks[PlayerId.ONE] = []
-    game_state.trick_points[PlayerId.ONE] = 0
-    game_state.marriage_suits[PlayerId.TWO] = []
-    game_state.trick_points[PlayerId.TWO] = 33
-    game_state.validate()
+    with GameStateValidator(game_state):
+      won_tricks = game_state.won_tricks[PlayerId.ONE]
+      for trick in won_tricks:
+        game_state.talon.extend([trick.one, trick.two])
+      game_state.won_tricks[PlayerId.ONE] = []
+      game_state.trick_points[PlayerId.ONE] = 0
+      game_state.marriage_suits[PlayerId.TWO] = []
+      game_state.trick_points[PlayerId.TWO] = 33
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = AnnounceMarriageAction(PlayerId.ONE, queen_hearts)
@@ -315,19 +318,20 @@ class PlayCardActionTest(unittest.TestCase):
     """
     game_state = get_game_state_for_tests()
 
-    ten_spades = game_state.cards_in_hand.one[3]
-    jack_spades = game_state.cards_in_hand.two[3]
-    game_state.cards_in_hand.two[3] = ten_spades
-    game_state.cards_in_hand.one[3] = jack_spades
+    with GameStateValidator(game_state):
+      ten_spades = game_state.cards_in_hand.one[3]
+      jack_spades = game_state.cards_in_hand.two[3]
+      game_state.cards_in_hand.two[3] = ten_spades
+      game_state.cards_in_hand.one[3] = jack_spades
 
-    queen_hearts = game_state.cards_in_hand.one[0]
-    queen_clubs = game_state.cards_in_hand.two[4]
-    game_state.cards_in_hand.two[4] = queen_hearts
-    game_state.cards_in_hand.one[0] = queen_clubs
+      queen_hearts = game_state.cards_in_hand.one[0]
+      queen_clubs = game_state.cards_in_hand.two[4]
+      game_state.cards_in_hand.two[4] = queen_hearts
+      game_state.cards_in_hand.one[0] = queen_clubs
 
-    game_state.validate()
-    game_state.close_talon()
-    game_state.next_player = PlayerId.TWO
+      game_state.close_talon()
+      game_state.next_player = PlayerId.TWO
+
     self.assertTrue(game_state.must_follow_suit())
     action = PlayCardAction(PlayerId.TWO, ten_spades)
     self.assertTrue(action.can_execute_on(game_state))
@@ -350,14 +354,14 @@ class PlayCardActionTest(unittest.TestCase):
     """
     game_state = get_game_state_for_tests()
 
-    queen_hearts = game_state.cards_in_hand.one[0]
-    queen_clubs = game_state.cards_in_hand.two[4]
-    game_state.cards_in_hand.two[4] = queen_hearts
-    game_state.cards_in_hand.one[0] = queen_clubs
+    with GameStateValidator(game_state):
+      queen_hearts = game_state.cards_in_hand.one[0]
+      queen_clubs = game_state.cards_in_hand.two[4]
+      game_state.cards_in_hand.two[4] = queen_hearts
+      game_state.cards_in_hand.one[0] = queen_clubs
+      game_state.close_talon()
+      game_state.next_player = PlayerId.TWO
 
-    game_state.validate()
-    game_state.close_talon()
-    game_state.next_player = PlayerId.TWO
     self.assertTrue(game_state.must_follow_suit())
     jack_spades = Card(Suit.SPADES, CardValue.JACK)
     action = PlayCardAction(PlayerId.TWO, jack_spades)
@@ -380,19 +384,20 @@ class PlayCardActionTest(unittest.TestCase):
     """
     game_state = get_game_state_for_tests()
 
-    ace_spades = game_state.cards_in_hand.one[4]
-    jack_spades = game_state.cards_in_hand.two[3]
-    game_state.cards_in_hand.two[3] = ace_spades
-    game_state.cards_in_hand.one[4] = jack_spades
+    with GameStateValidator(game_state):
+      ace_spades = game_state.cards_in_hand.one[4]
+      jack_spades = game_state.cards_in_hand.two[3]
+      game_state.cards_in_hand.two[3] = ace_spades
+      game_state.cards_in_hand.one[4] = jack_spades
 
-    queen_hearts = game_state.cards_in_hand.one[0]
-    queen_clubs = game_state.cards_in_hand.two[4]
-    game_state.cards_in_hand.two[4] = queen_hearts
-    game_state.cards_in_hand.one[0] = queen_clubs
+      queen_hearts = game_state.cards_in_hand.one[0]
+      queen_clubs = game_state.cards_in_hand.two[4]
+      game_state.cards_in_hand.two[4] = queen_hearts
+      game_state.cards_in_hand.one[0] = queen_clubs
 
-    game_state.validate()
-    game_state.close_talon()
-    game_state.next_player = PlayerId.TWO
+      game_state.close_talon()
+      game_state.next_player = PlayerId.TWO
+
     self.assertTrue(game_state.must_follow_suit())
     action = PlayCardAction(PlayerId.TWO, ace_spades)
     self.assertTrue(action.can_execute_on(game_state))
@@ -432,12 +437,12 @@ class PlayCardActionTest(unittest.TestCase):
     """
     game_state = get_game_state_with_empty_talon_for_tests()
 
-    ace_clubs = game_state.cards_in_hand.one[0]
-    queen_clubs = game_state.cards_in_hand.two[3]
-    game_state.cards_in_hand.two[3] = ace_clubs
-    game_state.cards_in_hand.one[0] = queen_clubs
+    with GameStateValidator(game_state):
+      ace_clubs = game_state.cards_in_hand.one[0]
+      queen_clubs = game_state.cards_in_hand.two[3]
+      game_state.cards_in_hand.two[3] = ace_clubs
+      game_state.cards_in_hand.one[0] = queen_clubs
 
-    game_state.validate()
     action = PlayCardAction(PlayerId.ONE, queen_clubs)
     self.assertTrue(action.can_execute_on(game_state))
     action.execute(game_state)
@@ -454,9 +459,9 @@ class PlayCardActionTest(unittest.TestCase):
 
   def test_must_follow_trump_can_discard_any_card(self):
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.close_talon()
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+      game_state.close_talon()
     action = PlayCardAction(PlayerId.TWO,
                             game_state.cards_in_hand[PlayerId.TWO][0])
     action.execute(game_state)
@@ -516,11 +521,11 @@ class PlayCardActionTest(unittest.TestCase):
 
   def test_play_trick_talon_has_more_than_one_card(self):
     game_state = get_game_state_for_tests()
-    trick = game_state.won_tricks[PlayerId.TWO].pop()
-    game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
-    game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
-    game_state.talon.extend([trick.one, trick.two])
-    game_state.validate()
+    with GameStateValidator(game_state):
+      trick = game_state.won_tricks[PlayerId.TWO].pop()
+      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+      game_state.talon.extend([trick.one, trick.two])
 
     first_talon_card = game_state.talon[0]
     second_talon_card = game_state.talon[1]
@@ -592,13 +597,13 @@ class PlayCardActionTest(unittest.TestCase):
 
   def test_play_trick_winner_has_pending_marriage_points(self):
     game_state = get_game_state_for_tests()
-    for trick in game_state.won_tricks[PlayerId.TWO]:
-      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
-      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
-      game_state.talon.extend([trick.one, trick.two])
-    game_state.trick_points = PlayerPair(22, 0)
-    game_state.won_tricks[PlayerId.TWO] = []
-    game_state.validate()
+    with GameStateValidator(game_state):
+      for trick in game_state.won_tricks[PlayerId.TWO]:
+        game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+        game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+        game_state.talon.extend([trick.one, trick.two])
+      game_state.trick_points = PlayerPair(22, 0)
+      game_state.won_tricks[PlayerId.TWO] = []
 
     first_talon_card = game_state.talon[0]
     second_talon_card = game_state.talon[1]
@@ -642,8 +647,8 @@ class AvailableActionsTest(unittest.TestCase):
     ]
     self.assertSetEqual(set(expected_actions), set(actions))
 
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
 
     actions = get_available_actions(game_state)
     expected_actions = [
@@ -673,8 +678,8 @@ class AvailableActionsTest(unittest.TestCase):
     self.assertSetEqual(set(expected_actions), set(actions))
 
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN)).execute(
       game_state)
 
@@ -703,8 +708,8 @@ class AvailableActionsTest(unittest.TestCase):
     self.assertSetEqual(set(expected_actions), set(actions))
 
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     CloseTheTalonAction(PlayerId.TWO).execute(game_state)
 
     actions = get_available_actions(game_state)
@@ -730,8 +735,8 @@ class AvailableActionsTest(unittest.TestCase):
     self.assertSetEqual(set(expected_actions), set(actions))
 
     game_state = get_game_state_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     CloseTheTalonAction(PlayerId.TWO).execute(game_state)
     PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK)).execute(
       game_state)
@@ -756,8 +761,8 @@ class AvailableActionsTest(unittest.TestCase):
     self.assertSetEqual(set(expected_actions), set(actions))
 
     game_state = get_game_state_with_empty_talon_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
 
     actions = get_available_actions(game_state)
     expected_actions = [
@@ -782,8 +787,8 @@ class AvailableActionsTest(unittest.TestCase):
     self.assertSetEqual(set(expected_actions), set(actions))
 
     game_state = get_game_state_with_empty_talon_for_tests()
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK)).execute(
       game_state)
 
@@ -796,6 +801,6 @@ class AvailableActionsTest(unittest.TestCase):
   def test_no_actions_available_when_game_is_over(self):
     game_state = get_game_state_with_all_tricks_played()
     self.assertEqual([], get_available_actions(game_state))
-    game_state.next_player = PlayerId.TWO
-    game_state.validate()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
     self.assertEqual([], get_available_actions(game_state))
