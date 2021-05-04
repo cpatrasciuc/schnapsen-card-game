@@ -16,4 +16,4 @@ class PlayerId(enum.Enum):
     return PlayerId.TWO if self == PlayerId.ONE else PlayerId.ONE
 
   def __str__(self):
-    return self.name
+    return str(self.name)
