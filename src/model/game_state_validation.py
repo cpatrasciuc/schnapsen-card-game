@@ -210,7 +210,7 @@ def validate_game_states(func):
   It has no effect if __debug__ is False.
   """
   if __debug__:
-    @wraps(func)
+    @wraps(func)  # pragma: no cover
     def wrapper(*args, **kwds):
       game_states = []
       game_states += [arg for arg in args if isinstance(arg, GameState)]
@@ -224,4 +224,4 @@ def validate_game_states(func):
       return return_value
 
     return wrapper
-  return func
+  return func  # pragma: no cover

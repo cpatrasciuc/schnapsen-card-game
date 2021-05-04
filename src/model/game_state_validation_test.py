@@ -3,6 +3,9 @@
 #  found in the LICENSE file.
 
 import copy
+import os
+import subprocess
+import sys
 import unittest
 
 from model.game_state import InvalidGameStateError, GameState
@@ -380,3 +383,25 @@ class ValidateGameStatesDecoratorTest(unittest.TestCase):
       func(integer_arg=123, modified_game_state=get_game_state_for_tests(),
            str_arg="test",
            unmodified_game_state=GameState.new_game(PlayerId.ONE))
+
+  def test_decorator_has_no_effect_in_non_debug_mode(self):
+    # pylint: disable=subprocess-run-check
+    file_name = os.path.join(
+      os.path.dirname(__file__), "game_state_validation_test_module.py")
+
+    # Run in debug mode. It should raise InvalidGameStateError and crash.
+    completed_process = subprocess.run([sys.executable, file_name],
+                                       capture_output=True)
+    print(str(completed_process.stdout))
+    print(str(completed_process.stderr))
+    self.assertNotEqual(0, completed_process.returncode, msg=completed_process)
+    self.assertRegex(str(completed_process.stderr), "InvalidGameStateError")
+    self.assertNotRegex(str(completed_process.stdout), "Success")
+
+    # Run in non-debug mode. It should not raise InvalidGameStateError.
+    completed_process = subprocess.run([sys.executable, "-O", file_name],
+                                       capture_output=True)
+    print(str(completed_process.stdout))
+    print(str(completed_process.stderr))
+    self.assertEqual(0, completed_process.returncode)
+    self.assertRegex(str(completed_process.stdout), "Success")
