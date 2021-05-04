@@ -8,6 +8,7 @@ from typing import List
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
+from model.game_state_validation import validate_game_states
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -118,6 +119,7 @@ class PlayCardAction(PlayerAction):
           return False
     return True
 
+  @validate_game_states
   def execute(self, game_state: GameState):
     """
     Plays self._card and updates the game_state accordingly.
@@ -215,6 +217,7 @@ class AnnounceMarriageAction(PlayerAction):
       return False
     return True
 
+  @validate_game_states
   def execute(self, game_state: GameState):
     """
     Updates game_state to include the marriage announcement and plays
@@ -259,6 +262,7 @@ class ExchangeTrumpCardAction(PlayerAction):
       return False
     return True
 
+  @validate_game_states
   def execute(self, game_state: GameState):
     assert self.can_execute_on(game_state)
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
@@ -290,6 +294,7 @@ class CloseTheTalonAction(PlayerAction):
       return False
     return True
 
+  @validate_game_states
   def execute(self, game_state: GameState):
     assert self.can_execute_on(game_state)
     game_state.close_talon()
