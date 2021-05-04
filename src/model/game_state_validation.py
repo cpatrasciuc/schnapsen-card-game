@@ -114,6 +114,8 @@ def _validate_marriage_suits(game_state: GameState) -> None:
                   Card(marriage_suit, CardValue.KING)]
       played_cards = [trick[player_id] for trick in tricks if
                       trick[player_id] in marriage]
+      if game_state.current_trick[player_id] in marriage:
+        played_cards.append(game_state.current_trick[player_id])
       if len(played_cards) == 0:
         raise InvalidGameStateError(
           f"Marriage {marriage_suit} was announced, but no card was played")

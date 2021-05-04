@@ -206,12 +206,22 @@ class ValidateTest(unittest.TestCase):
                                 "♦ was announced, but no card was played"):
       validate(self.game_state)
 
-    # Both cards are still in the players hand.
+    # Both cards are still in the player's hand.
     self.game_state = get_game_state_for_tests()
     self.game_state.marriage_suits.one.append(Suit.HEARTS)
     with self.assertRaisesRegex(InvalidGameStateError,
                                 "♥ was announced, but no card was played"):
       validate(self.game_state)
+
+    # Both cards are still in the player's hand, but they just announced it and
+    # played one card.
+    self.game_state = get_game_state_for_tests()
+    king_hearts = self.game_state.cards_in_hand.one[1]
+    self.game_state.current_trick.one = king_hearts
+    self.game_state.marriage_suits.one.append(Suit.HEARTS)
+    self.game_state.trick_points.one += 20
+    self.game_state.next_player = PlayerId.TWO
+    validate(self.game_state)
 
     # Both cards were played, but by different players.
     self.game_state = get_game_state_for_tests()
