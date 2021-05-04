@@ -16,7 +16,8 @@ def run_all_tests_with_coverage() -> float:
   """
   tests_file_pattern = "*_test.py"
   cov = coverage.Coverage(branch=True, source=["./model"],
-                          omit=[tests_file_pattern])
+                          omit=[tests_file_pattern,
+                                "model/game_state_validation_test_module.py"])
   cov.exclude("def __repr__", "exclude")
   cov.start()
 
