@@ -5,10 +5,11 @@
 import copy
 import unittest
 
-from model.game_state import InvalidGameStateError
+from model.game_state import InvalidGameStateError, GameState
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests
-from model.game_state_validation import validate, GameStateValidator
+from model.game_state_validation import validate, GameStateValidator, \
+  validate_game_states
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -325,3 +326,47 @@ class GameStateValidatorTest(unittest.TestCase):
       with GameStateValidator(game_state):
         game_state.trick_points = PlayerPair(0, 0)
         raise ValueError("This will be replaced by InvalidGameStateError")
+
+
+class ValidateGameStatesDecoratorTest(unittest.TestCase):
+  """Tests for the @validate_game_states decorator."""
+
+  def test_function_with_valid_changes(self):
+    @validate_game_states
+    def func(game_state: GameState) -> int:
+      game_state.next_player = game_state.next_player.opponent()
+      return 42
+
+    self.assertEqual(42, func(get_game_state_for_tests()))
+
+  def test_function_with_invalid_changes(self):
+    @validate_game_states
+    def func(game_state: GameState) -> int:
+      game_state.trick_points = PlayerPair(0, 0)
+      return 42
+
+    self.assertEqual(42, func(GameState.new_game(PlayerId.ONE)))
+    with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
+      func(get_game_state_for_tests())
+
+  def test_function_with_invalid_changes_on_multiple_game_states(self):
+    @validate_game_states
+    def func(unmodified_game_state: GameState,
+             integer_arg: int,
+             str_arg: str,
+             modified_game_state: GameState) -> None:
+      print(unmodified_game_state, integer_arg, str_arg)
+      modified_game_state.trick_points = PlayerPair(0, 0)
+
+    func(get_game_state_for_tests(), 100, "test",
+         GameState.new_game(PlayerId.ONE))
+    with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
+      func(GameState.new_game(PlayerId.ONE), 100, "test",
+           get_game_state_for_tests())
+
+    func(integer_arg=123, modified_game_state=GameState.new_game(PlayerId.ONE),
+         str_arg="test", unmodified_game_state=get_game_state_for_tests())
+    with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
+      func(integer_arg=123, modified_game_state=get_game_state_for_tests(),
+           str_arg="test",
+           unmodified_game_state=GameState.new_game(PlayerId.ONE))

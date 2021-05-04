@@ -1,7 +1,9 @@
 #  Copyright (c) 2021 Cristian Patrasciuc. All rights reserved.
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
+
 from collections import Counter
+from functools import wraps
 from typing import List
 
 from model.card import Card
@@ -196,3 +198,28 @@ class GameStateValidator:
   def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
     validate(self._game_state)
     return False
+
+
+# noinspection PyUnreachableCode
+def validate_game_states(func):
+  """
+  Function decorator that calls validate() on all GameState arguments passed to
+  the decorated function before and after the decorated function is called.
+  It has no effect if __debug__ is False.
+  """
+  if __debug__:
+    @wraps(func)
+    def wrapper(*args, **kwds):
+      game_states = []
+      game_states += [arg for arg in args if isinstance(arg, GameState)]
+      game_states += [value for name, value in kwds.items() if
+                      isinstance(value, GameState)]
+      for game_state in game_states:
+        validate(game_state)
+      return_value = func(*args, **kwds)
+      for game_state in game_states:
+        validate(game_state)
+      return return_value
+
+    return wrapper
+  return func
