@@ -117,24 +117,29 @@ class GameState:
   opponent_points_when_talon_was_closed: Optional[int] = None
 
   # The list of tricks won by each player so far.
-  won_tricks: PlayerPair[List[Trick]] = PlayerPair([], [])
+  won_tricks: PlayerPair[List[Trick]] = dataclasses.field(
+    default_factory=lambda: PlayerPair([], []))
 
   # The suits for the marriages announced by each player.
   # The points corresponding to these marriages do not count if the player did
   # not win any trick.
-  marriage_suits: PlayerPair[List[Suit]] = PlayerPair([], [])
+  marriage_suits: PlayerPair[List[Suit]] = dataclasses.field(
+    default_factory=lambda: PlayerPair([], []))
 
   # The points earned by each player so far. It does not include the points
   # scored by announcing marriages, if the player did not win any trick.
-  trick_points: PlayerPair[int] = PlayerPair(0, 0)
+  trick_points: PlayerPair[int] = dataclasses.field(
+    default_factory=lambda: PlayerPair(0, 0))
 
   # The Bummerl score. The first player to reach 7 points wins.
   # TODO(refactor): Maybe move this to a Bummerl class.
-  game_points: PlayerPair[int] = PlayerPair(0, 0)
+  game_points: PlayerPair[int] = dataclasses.field(
+    default_factory=lambda: PlayerPair(0, 0))
 
   # This stores the current, incomplete trick. This means we are waiting for
   # either one of both players to play card.
-  current_trick: Trick = PlayerPair(None, None)
+  current_trick: Trick = dataclasses.field(
+    default_factory=lambda: Trick(None, None))
 
   def is_to_lead(self, player_id):
     """

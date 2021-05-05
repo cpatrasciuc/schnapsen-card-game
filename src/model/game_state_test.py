@@ -2,10 +2,15 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
+import dataclasses
+import enum
+import inspect
 import pprint
 import unittest
 from typing import List, Tuple, Optional
 
+from model.card import Card
 from model.game_state import GameState, Trick, get_game_points
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests, \
@@ -13,6 +18,7 @@ from model.game_state_test_utils import get_game_state_for_tests, \
 from model.game_state_validation import validate, GameStateValidator
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from model.suit import Suit
 
 
 class GameStateNewGameTest(unittest.TestCase):
@@ -31,6 +37,60 @@ class GameStateNewGameTest(unittest.TestCase):
     self.assertEqual(PlayerPair(0, 0), game_state.trick_points)
     self.assertEqual(PlayerPair(0, 0), game_state.game_points)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
+
+  def test_init_default_arguments(self):
+    """
+    Make sure that default arguments use factories instead of mutable instances.
+    """
+    fields = dataclasses.fields(GameState)
+    args_with_default = [
+      field.name for field in fields
+      if field.default != dataclasses.MISSING
+         or field.default_factory != dataclasses.MISSING]
+    self.assertEqual(8, len(args_with_default))
+    args_with_default_values = [
+      (field.name, field.default) for field in fields
+      if field.default != dataclasses.MISSING
+         and field.default is not None
+         and inspect.isclass(type(field.default))
+         and not issubclass(type(field.default), enum.Enum)]
+    self.assertEqual([], args_with_default_values)
+
+    deck = Card.get_all_cards()
+    cards_in_hand = PlayerPair(one=deck[:5], two=deck[5:10])
+    trump_card = deck[10]
+    init_args = {
+      "cards_in_hand": cards_in_hand,
+      "trump": trump_card.suit,
+      "trump_card": trump_card,
+      "talon": deck[11:],
+    }
+    # Make sure we are only passing mandatory arguments with no defaults.
+    mandatory_args = [
+      field.name for field in fields
+      if field.default == dataclasses.MISSING
+         and field.default_factory == dataclasses.MISSING]
+    for arg in init_args:
+      self.assertIn(arg, mandatory_args)
+
+    game_state = GameState(**copy.deepcopy(init_args))
+    expected_game_state = copy.deepcopy(game_state)
+
+    # Modify the fields with default values.
+    with GameStateValidator(game_state):
+      king_hearts = game_state.cards_in_hand.one.pop(2)
+      king_spades = game_state.cards_in_hand.two.pop(2)
+      game_state.won_tricks.one.append(PlayerPair(king_hearts, king_spades))
+      game_state.trick_points.one += 28
+      game_state.marriage_suits.one.append(Suit.HEARTS)
+      game_state.cards_in_hand.one.append(game_state.talon.pop(0))
+      game_state.cards_in_hand.two.append(game_state.talon.pop(0))
+      game_state.current_trick.one = game_state.cards_in_hand.one[0]
+      game_state.next_player = game_state.next_player.opponent()
+      game_state.game_points.two += 3
+
+    # Create a new game state and check that the defaults did not change.
+    self.assertEqual(expected_game_state, GameState(**copy.deepcopy(init_args)))
 
   def test_first_player_is_not_the_dealer(self):
     game_state = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
