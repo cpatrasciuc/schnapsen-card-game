@@ -142,7 +142,6 @@ class GameState:
     expected to make the next move.
     If a player is to lead, it can exchange the trump card or close the talon.
     """
-    # TODO(tests): add a test case for this.
     return self.next_player == player_id and self.current_trick == PlayerPair(
       None, None)
 
