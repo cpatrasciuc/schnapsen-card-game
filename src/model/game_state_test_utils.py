@@ -49,7 +49,6 @@ def get_game_state_for_tests() -> GameState:
                     Card(Suit.CLUBS, CardValue.TEN))])
   marriage_suits = PlayerPair(one=[], two=[Suit.DIAMONDS])
   trick_points = PlayerPair(one=22, two=53)
-  game_points = PlayerPair(one=0, two=0)
   current_trick = PlayerPair(None, None)
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                    trump_card=trump_card, talon=talon, won_tricks=won_tricks,
@@ -101,7 +100,6 @@ def get_game_state_with_empty_talon_for_tests() -> GameState:
                     Card(Suit.DIAMONDS, CardValue.QUEEN))])
   marriage_suits = PlayerPair(one=[], two=[Suit.DIAMONDS])
   trick_points = PlayerPair(one=35, two=59)
-  game_points = PlayerPair(one=0, two=0)
   current_trick = PlayerPair(None, None)
   return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
                    trump_card=None, talon=talon, won_tricks=won_tricks,
@@ -152,7 +150,6 @@ def get_game_state_with_all_tricks_played() -> GameState:
                     Card(Suit.HEARTS, CardValue.JACK))])
   marriage_suits = PlayerPair([], [])
   trick_points = PlayerPair(one=60, two=60)
-  game_points = PlayerPair(one=0, two=0)
   current_trick = PlayerPair(None, None)
   return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
                    trump_card=None, talon=talon, won_tricks=won_tricks,
