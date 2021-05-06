@@ -216,12 +216,11 @@ class GameState:
       return True
     return False
 
-  # TODO(refactor): Rename this to game_points() after game_points are moved.
-  # TODO(refactor): Maybe make this a property.
-  def score(self) -> PlayerPair[int]:
+  @property
+  def game_points(self) -> PlayerPair[int]:
     """
     Returns the game points scored by each player after this game is over.
-    Can only be called after the game is over.
+    It can only be accessed after the game is over.
     """
     assert self.is_game_over
     return get_game_points(self.trick_points, self.next_player,

@@ -69,7 +69,7 @@ class Bummerl:
     """
     assert self._game.game_state.is_game_over, "Current game is not over"
     self._completed_games.append(self._game)
-    game_points = self._game.game_state.score()
+    game_points = self._game.game_state.game_points
     self._game_points.one += game_points.one
     self._game_points.two += game_points.two
     self._game = None

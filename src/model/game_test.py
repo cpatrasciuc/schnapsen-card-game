@@ -52,7 +52,7 @@ class GameTest(unittest.TestCase):
 
     self.assertTrue(game.game_state.is_game_over)
     self.assertEqual(PlayerPair(13, 67), game.game_state.trick_points)
-    self.assertEqual(PlayerPair(0, 3), game.game_state.score())
+    self.assertEqual(PlayerPair(0, 3), game.game_state.game_points)
 
   def test_pickling(self):
     game = Game(PlayerId.ONE, seed=2)
@@ -103,4 +103,4 @@ class GameTest(unittest.TestCase):
 
     self.assertTrue(unpickled_game.game_state.is_game_over)
     self.assertEqual(PlayerPair(13, 67), unpickled_game.game_state.trick_points)
-    self.assertEqual(PlayerPair(0, 3), unpickled_game.game_state.score())
+    self.assertEqual(PlayerPair(0, 3), unpickled_game.game_state.game_points)
