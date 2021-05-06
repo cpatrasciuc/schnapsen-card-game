@@ -54,7 +54,7 @@ def get_game_state_for_tests() -> GameState:
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                    trump_card=trump_card, talon=talon, won_tricks=won_tricks,
                    marriage_suits=marriage_suits, trick_points=trick_points,
-                   game_points=game_points, current_trick=current_trick)
+                   current_trick=current_trick)
 
 
 def get_game_state_with_empty_talon_for_tests() -> GameState:
@@ -106,7 +106,7 @@ def get_game_state_with_empty_talon_for_tests() -> GameState:
   return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
                    trump_card=None, talon=talon, won_tricks=won_tricks,
                    marriage_suits=marriage_suits, trick_points=trick_points,
-                   game_points=game_points, current_trick=current_trick)
+                   current_trick=current_trick)
 
 
 def get_game_state_with_all_tricks_played() -> GameState:
@@ -157,4 +157,4 @@ def get_game_state_with_all_tricks_played() -> GameState:
   return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
                    trump_card=None, talon=talon, won_tricks=won_tricks,
                    marriage_suits=marriage_suits, trick_points=trick_points,
-                   game_points=game_points, current_trick=current_trick)
+                   current_trick=current_trick)

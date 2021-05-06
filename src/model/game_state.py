@@ -131,11 +131,6 @@ class GameState:
   trick_points: PlayerPair[int] = dataclasses.field(
     default_factory=lambda: PlayerPair(0, 0))
 
-  # The Bummerl score. The first player to reach 7 points wins.
-  # TODO(refactor): Maybe move this to a Bummerl class.
-  game_points: PlayerPair[int] = dataclasses.field(
-    default_factory=lambda: PlayerPair(0, 0))
-
   # This stores the current, incomplete trick. This means we are waiting for
   # either one of both players to play card.
   current_trick: Trick = dataclasses.field(

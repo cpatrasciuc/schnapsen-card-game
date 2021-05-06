@@ -29,14 +29,6 @@ def _validate_trump_and_trump_card(game_state: GameState) -> None:
     raise InvalidGameStateError("trump_card is missing")
 
 
-def _validate_game_points(game_state: GameState) -> None:
-  for player_id in PlayerId:
-    if not 0 <= game_state.game_points[player_id] < 7:
-      raise InvalidGameStateError(
-        "Game points should be between 0 and 6: %s has %d" % (
-          player_id, game_state.game_points[player_id]))
-
-
 def _validate_talon(game_state: GameState) -> None:
   if game_state.is_talon_closed and len(game_state.talon) == 0:
     raise InvalidGameStateError("An empty talon cannot be closed")
@@ -170,7 +162,6 @@ def validate(game_state: GameState) -> None:
   _validate_marriage_suits(game_state)
   _validate_trick_points(game_state)
   _validate_won_tricks(game_state)
-  _validate_game_points(game_state)
 
 
 class GameStateValidator:

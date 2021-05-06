@@ -128,21 +128,6 @@ class ValidateTest(unittest.TestCase):
                                 "current_trick already contains a card"):
       validate(self.game_state)
 
-  def test_valid_game_points_values(self):
-    self.game_state.game_points.one = -1
-    with self.assertRaisesRegex(InvalidGameStateError,
-                                "between 0 and 6: ONE has -1"):
-      validate(self.game_state)
-    for points_one in range(7):
-      for points_two in range(7):
-        self.game_state.game_points.one = points_one
-        self.game_state.game_points.two = points_two
-        validate(self.game_state)
-    self.game_state.game_points.two = 7
-    with self.assertRaisesRegex(InvalidGameStateError,
-                                "between 0 and 6: TWO has 7"):
-      validate(self.game_state)
-
   def test_empty_talon_cannot_be_closed(self):
     self.game_state = get_game_state_with_empty_talon_for_tests()
     with self.assertRaisesRegex(InvalidGameStateError,

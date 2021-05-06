@@ -35,7 +35,6 @@ class GameStateNewGameTest(unittest.TestCase):
     self.assertEqual(0, len(game_state.marriage_suits.one))
     self.assertEqual(0, len(game_state.marriage_suits.two))
     self.assertEqual(PlayerPair(0, 0), game_state.trick_points)
-    self.assertEqual(PlayerPair(0, 0), game_state.game_points)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
 
   def test_init_default_arguments(self):
@@ -47,7 +46,7 @@ class GameStateNewGameTest(unittest.TestCase):
       field.name for field in fields
       if field.default != dataclasses.MISSING
          or field.default_factory != dataclasses.MISSING]
-    self.assertEqual(8, len(args_with_default))
+    self.assertEqual(7, len(args_with_default))
     args_with_default_values = [
       (field.name, field.default) for field in fields
       if field.default != dataclasses.MISSING
@@ -87,7 +86,6 @@ class GameStateNewGameTest(unittest.TestCase):
       game_state.cards_in_hand.two.append(game_state.talon.pop(0))
       game_state.current_trick.one = game_state.cards_in_hand.one[0]
       game_state.next_player = game_state.next_player.opponent()
-      game_state.game_points.two += 3
 
     # Create a new game state and check that the defaults did not change.
     self.assertEqual(expected_game_state, GameState(**copy.deepcopy(init_args)))
