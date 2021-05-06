@@ -193,6 +193,7 @@ class GameState:
     game states will be equal.
     :return: the new game state.
     """
+    # TODO(refactor): Rename this to new().
     deck = Card.get_all_cards()
     rng = random.Random(x=random_seed)
     rng.shuffle(deck)
@@ -212,6 +213,7 @@ class GameState:
     twenty cards were played or the talon was closed and all the cards from the
     player's hands were played).
     """
+    # TODO(refactor): Make this a property, similar to Bummerl.is_over.
     target_score = 66
     if self.trick_points.one >= target_score:
       return True
@@ -222,6 +224,7 @@ class GameState:
     return False
 
   # TODO(refactor): Rename this to game_points() after game_points are moved.
+  # TODO(refactor): Maybe make this a property.
   def score(self) -> PlayerPair[int]:
     """
     Returns the game points scored by each player after this game is over.
