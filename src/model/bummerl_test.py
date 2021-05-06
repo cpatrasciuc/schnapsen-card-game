@@ -71,7 +71,7 @@ class BummerlTest(unittest.TestCase):
     self.assertEqual([], bummerl.completed_games)
     self.assertIsNotNone(game)
     self.assertEqual(game.game_state,
-                     GameState.new_game(dealer=PlayerId.ONE, random_seed=456))
+                     GameState.new(dealer=PlayerId.ONE, random_seed=456))
 
   def test_play_a_complete_bummerl(self):
     bummerl = Bummerl(next_dealer=PlayerId.ONE)

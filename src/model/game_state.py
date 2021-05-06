@@ -174,8 +174,8 @@ class GameState:
       self.player_that_closed_the_talon.opponent()]
 
   @staticmethod
-  def new_game(dealer: PlayerId = PlayerId.ONE,
-               random_seed: Optional[int] = None) -> "GameState":
+  def new(dealer: PlayerId = PlayerId.ONE,
+          random_seed: Optional[int] = None) -> "GameState":
     """
     Creates and returns a new game state representing the beginning of a new
     game.
@@ -187,7 +187,6 @@ class GameState:
     game states will be equal.
     :return: the new game state.
     """
-    # TODO(refactor): Rename this to new().
     deck = Card.get_all_cards()
     rng = random.Random(x=random_seed)
     rng.shuffle(deck)

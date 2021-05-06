@@ -20,8 +20,7 @@ class Game:
   def __init__(self, dealer: PlayerId, seed: int):
     self._dealer = dealer
     self._seed = seed
-    self._game_state: GameState = GameState.new_game(dealer=dealer,
-                                                     random_seed=seed)
+    self._game_state: GameState = GameState.new(dealer=dealer, random_seed=seed)
     self._actions: List[PlayerAction] = []
 
   @property
@@ -53,7 +52,7 @@ class Game:
     the player actions.
     """
     self.__dict__.update(state)
-    self._game_state: GameState = GameState.new_game(dealer=self._dealer,
-                                                     random_seed=self._seed)
+    self._game_state: GameState = GameState.new(dealer=self._dealer,
+                                                random_seed=self._seed)
     for action in self._actions:
       action.execute(self._game_state)

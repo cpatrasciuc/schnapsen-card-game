@@ -23,7 +23,7 @@ from model.suit import Suit
 
 class GameStateNewGameTest(unittest.TestCase):
   def test_new_game_is_valid(self):
-    game_state = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    game_state = GameState.new(dealer=PlayerId.ONE, random_seed=321)
     validate(game_state)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
     self.assertEqual(5, len(game_state.cards_in_hand.one))
@@ -91,16 +91,16 @@ class GameStateNewGameTest(unittest.TestCase):
     self.assertEqual(expected_game_state, GameState(**copy.deepcopy(init_args)))
 
   def test_first_player_is_not_the_dealer(self):
-    game_state = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    game_state = GameState.new(dealer=PlayerId.ONE, random_seed=321)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
-    game_state = GameState.new_game(dealer=PlayerId.TWO, random_seed=321)
+    game_state = GameState.new(dealer=PlayerId.TWO, random_seed=321)
     self.assertEqual(PlayerId.ONE, game_state.next_player)
 
   def test_same_seed_returns_same_state(self):
-    game_state_1 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
-    game_state_2 = GameState.new_game(dealer=PlayerId.ONE, random_seed=321)
+    game_state_1 = GameState.new(dealer=PlayerId.ONE, random_seed=321)
+    game_state_2 = GameState.new(dealer=PlayerId.ONE, random_seed=321)
     self.assertEqual(game_state_1, game_state_2)
-    game_state_3 = GameState.new_game(dealer=PlayerId.TWO, random_seed=321)
+    game_state_3 = GameState.new(dealer=PlayerId.TWO, random_seed=321)
     self.assertNotEqual(game_state_1, game_state_3)
     self.assertEqual(game_state_1.cards_in_hand.one,
                      game_state_3.cards_in_hand.two)
@@ -119,7 +119,7 @@ class GameStateNewGameTest(unittest.TestCase):
     denom = [0 for _ in range(5)]
     num_games = 10000
     for _ in range(num_games):
-      game_state = GameState.new_game()
+      game_state = GameState.new()
 
       def count_trumps(hand):
         return len([card for card in hand if card.suit == game_state.trump])

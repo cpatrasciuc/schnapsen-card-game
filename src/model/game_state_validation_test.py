@@ -343,7 +343,7 @@ class ValidateGameStatesDecoratorTest(unittest.TestCase):
       game_state.trick_points = PlayerPair(0, 0)
       return 42
 
-    self.assertEqual(42, func(GameState.new_game(PlayerId.ONE)))
+    self.assertEqual(42, func(GameState.new(PlayerId.ONE)))
     with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
       func(get_game_state_for_tests())
 
@@ -356,18 +356,15 @@ class ValidateGameStatesDecoratorTest(unittest.TestCase):
       print(unmodified_game_state, integer_arg, str_arg)
       modified_game_state.trick_points = PlayerPair(0, 0)
 
-    func(get_game_state_for_tests(), 100, "test",
-         GameState.new_game(PlayerId.ONE))
+    func(get_game_state_for_tests(), 100, "test", GameState.new(PlayerId.ONE))
     with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
-      func(GameState.new_game(PlayerId.ONE), 100, "test",
-           get_game_state_for_tests())
+      func(GameState.new(PlayerId.ONE), 100, "test", get_game_state_for_tests())
 
-    func(integer_arg=123, modified_game_state=GameState.new_game(PlayerId.ONE),
+    func(integer_arg=123, modified_game_state=GameState.new(PlayerId.ONE),
          str_arg="test", unmodified_game_state=get_game_state_for_tests())
     with self.assertRaisesRegex(InvalidGameStateError, "Invalid trick points"):
       func(integer_arg=123, modified_game_state=get_game_state_for_tests(),
-           str_arg="test",
-           unmodified_game_state=GameState.new_game(PlayerId.ONE))
+           str_arg="test", unmodified_game_state=GameState.new(PlayerId.ONE))
 
   def test_decorator_has_no_effect_in_non_debug_mode(self):
     # pylint: disable=subprocess-run-check
