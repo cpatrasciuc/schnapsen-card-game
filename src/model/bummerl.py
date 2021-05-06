@@ -67,7 +67,7 @@ class Bummerl:
     updates the Bummerl score. It cannot be called if the current game is not
     over. It does not create a new game automatically.
     """
-    assert self._game.game_state.is_game_over(), "Current game is not over"
+    assert self._game.game_state.is_game_over, "Current game is not over"
     self._completed_games.append(self._game)
     game_points = self._game.game_state.score()
     self._game_points.one += game_points.one

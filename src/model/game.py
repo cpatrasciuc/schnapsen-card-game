@@ -32,7 +32,7 @@ class Game:
     Executes the given player action. The action must be a legal action in the
     current state of the game.
     """
-    assert not self._game_state.is_game_over()
+    assert not self._game_state.is_game_over
     self._actions.append(action)
     action.execute(self._game_state)
 

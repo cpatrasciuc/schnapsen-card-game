@@ -190,7 +190,7 @@ class GameStateTest(unittest.TestCase):
 
   def test_is_game_over_player_two_reaches_exactly_66(self):
     game_state = get_game_state_for_tests()
-    self.assertFalse(game_state.is_game_over())
+    self.assertFalse(game_state.is_game_over)
 
     with GameStateValidator(game_state):
       jack_clubs = game_state.cards_in_hand[PlayerId.TWO].pop(3)
@@ -205,12 +205,12 @@ class GameStateTest(unittest.TestCase):
       game_state.trump_card = None
 
     self.assertEqual(66, game_state.trick_points[PlayerId.TWO])
-    self.assertTrue(game_state.is_game_over())
+    self.assertTrue(game_state.is_game_over)
     self.assertEqual(PlayerPair(0, 2), game_state.score())
 
   def test_is_game_over_player_one_goes_beyond_66(self):
     game_state = get_game_state_for_tests()
-    self.assertFalse(game_state.is_game_over())
+    self.assertFalse(game_state.is_game_over)
 
     with GameStateValidator(game_state):
       while len(game_state.won_tricks[PlayerId.TWO]) > 0:
@@ -232,7 +232,7 @@ class GameStateTest(unittest.TestCase):
       game_state.trump_card = None
 
     self.assertEqual(68, game_state.trick_points[PlayerId.ONE])
-    self.assertTrue(game_state.is_game_over())
+    self.assertTrue(game_state.is_game_over)
     self.assertEqual(PlayerPair(3, 0), game_state.score())
 
   def test_is_game_over_no_more_cards_to_play_talon_is_closed(self):
@@ -252,12 +252,12 @@ class GameStateTest(unittest.TestCase):
       game_state.trick_points = PlayerPair(22, 38)
       game_state.close_talon()
 
-    self.assertTrue(game_state.is_game_over())
+    self.assertTrue(game_state.is_game_over)
     self.assertEqual(PlayerPair(0, 2), game_state.score())
 
   def test_is_game_over_no_more_cards_to_play(self):
     game_state = get_game_state_with_all_tricks_played()
-    self.assertTrue(game_state.is_game_over())
+    self.assertTrue(game_state.is_game_over)
     self.assertEqual(PlayerPair(1, 0), game_state.score())
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO

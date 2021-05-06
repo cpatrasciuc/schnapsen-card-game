@@ -50,7 +50,7 @@ class GameTest(unittest.TestCase):
     for action in actions:
       game.play_action(action)
 
-    self.assertTrue(game.game_state.is_game_over())
+    self.assertTrue(game.game_state.is_game_over)
     self.assertEqual(PlayerPair(13, 67), game.game_state.trick_points)
     self.assertEqual(PlayerPair(0, 3), game.game_state.score())
 
@@ -88,19 +88,19 @@ class GameTest(unittest.TestCase):
     ]
     for action in actions[:8]:
       game.play_action(action)
-    self.assertFalse(game.game_state.is_game_over())
+    self.assertFalse(game.game_state.is_game_over)
     self.assertEqual(PlayerPair(0, 31), game.game_state.trick_points)
     self.assertFalse(game.game_state.is_to_lead(PlayerId.ONE))
     self.assertFalse(game.game_state.is_to_lead(PlayerId.TWO))
 
     unpickled_game: Game = loads(dumps(game))
     self.assertEqual(unpickled_game.game_state, game.game_state)
-    self.assertFalse(unpickled_game.game_state.is_game_over())
+    self.assertFalse(unpickled_game.game_state.is_game_over)
     self.assertFalse(unpickled_game.game_state.is_to_lead(PlayerId.ONE))
 
     for action in actions[8:]:
       unpickled_game.play_action(action)
 
-    self.assertTrue(unpickled_game.game_state.is_game_over())
+    self.assertTrue(unpickled_game.game_state.is_game_over)
     self.assertEqual(PlayerPair(13, 67), unpickled_game.game_state.trick_points)
     self.assertEqual(PlayerPair(0, 3), unpickled_game.game_state.score())

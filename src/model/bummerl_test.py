@@ -133,7 +133,7 @@ class BummerlTest(unittest.TestCase):
   def test_cannot_finalize_the_current_game_if_it_is_not_over(self):
     bummerl = Bummerl()
     bummerl.start_game()
-    self.assertFalse(bummerl.game.game_state.is_game_over())
+    self.assertFalse(bummerl.game.game_state.is_game_over)
     with self.assertRaisesRegex(AssertionError, "Current game is not over"):
       bummerl.finalize_game()
 

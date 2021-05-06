@@ -199,6 +199,7 @@ class GameState:
                      trump_card=trump_card, talon=deck[11:],
                      next_player=dealer.opponent())
 
+  @property
   def is_game_over(self) -> bool:
     """
     Returns True if the game is over at this point in time. This means one
@@ -206,7 +207,6 @@ class GameState:
     twenty cards were played or the talon was closed and all the cards from the
     player's hands were played).
     """
-    # TODO(refactor): Make this a property, similar to Bummerl.is_over.
     target_score = 66
     if self.trick_points.one >= target_score:
       return True
@@ -223,7 +223,7 @@ class GameState:
     Returns the game points scored by each player after this game is over.
     Can only be called after the game is over.
     """
-    assert self.is_game_over()
+    assert self.is_game_over
     return get_game_points(self.trick_points, self.next_player,
                            self.player_that_closed_the_talon,
                            self.opponent_points_when_talon_was_closed)
