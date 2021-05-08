@@ -104,6 +104,45 @@ class ValidateTest(unittest.TestCase):
     self.game_state.close_talon()
     validate(self.game_state)
 
+  def test_minimum_cards_in_hand(self):
+    self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
+    self.game_state.talon.append(self.game_state.cards_in_hand.two.pop())
+    trick = self.game_state.won_tricks.two.pop()
+    self.game_state.talon.extend([trick.one, trick.two])
+    self.game_state.trick_points.two -= trick.one.card_value
+    self.game_state.trick_points.two -= trick.two.card_value
+    self.game_state.close_talon()
+
+    self.assertEqual(4, len(self.game_state.cards_in_hand.one))
+    validate(self.game_state)
+
+    self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
+    self.game_state.talon.append(self.game_state.cards_in_hand.two.pop())
+    self.assertEqual(3, len(self.game_state.cards_in_hand.one))
+    validate(self.game_state)
+
+    self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
+    self.game_state.talon.append(self.game_state.cards_in_hand.two.pop())
+    self.assertEqual(2, len(self.game_state.cards_in_hand.one))
+    validate(self.game_state)
+
+    self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
+    self.game_state.talon.append(self.game_state.cards_in_hand.two.pop())
+    self.assertEqual(1, len(self.game_state.cards_in_hand.one))
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "at least 2 cards in hand, not 1"):
+      validate(self.game_state)
+
+    # At the beginning, both players must have 5 cards, even if the talon is
+    # closed.
+    self.game_state = GameState.new()
+    self.game_state.talon.append(self.game_state.cards_in_hand.one.pop())
+    self.game_state.talon.append(self.game_state.cards_in_hand.two.pop())
+    self.game_state.close_talon()
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "at least 5 cards in hand, not 4"):
+      validate(self.game_state)
+
   def test_at_most_five_cards_in_hand(self):
     trick = self.game_state.won_tricks.one.pop()
     self.game_state.cards_in_hand.one.append(trick.one)

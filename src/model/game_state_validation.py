@@ -67,10 +67,17 @@ def _validate_num_cards_in_hand(game_state: GameState) -> None:
       "The players cannot have more than 5 cards in hand: "
       + f"{num_cards_player_one}")
   if num_cards_player_one < 5:
-    # TODO(validation): Check if num cards in hand is > 5 - num_tricks_played
     if (not game_state.is_talon_closed) and (len(game_state.talon) > 0):
       raise InvalidGameStateError(
         f"The players should have 5 cards in hand: {num_cards_player_one}")
+    if game_state.is_talon_closed:
+      num_tricks_played = len(game_state.won_tricks.one) + len(
+        game_state.won_tricks.two)
+      min_cards_in_hand = 5 - num_tricks_played
+      if num_cards_player_one < min_cards_in_hand:
+        raise InvalidGameStateError(
+          f"Players must have at least {min_cards_in_hand} cards in hand, not" +
+          f" {num_cards_player_one}")
 
 
 def _verify_there_are_twenty_unique_cards(game_state: GameState) -> None:
