@@ -167,6 +167,25 @@ class ValidateTest(unittest.TestCase):
                                 "current_trick already contains a card"):
       validate(self.game_state)
 
+  def test_the_player_to_lead_must_have_won_a_trick(self):
+    for trick in self.game_state.won_tricks.two:
+      self.game_state.talon.extend([trick.one, trick.two])
+      self.game_state.trick_points.two -= trick.one.card_value
+      self.game_state.trick_points.two -= trick.two.card_value
+    self.game_state.won_tricks.two = []
+    self.game_state.trick_points.two = 0
+    validate(self.game_state)
+    self.game_state.next_player = PlayerId.TWO
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "player that is to lead did not win any trick"):
+      validate(self.game_state)
+
+    # At the beginning of a game, any player can lead without winning any trick.
+    self.game_state = GameState.new(PlayerId.ONE)
+    validate(self.game_state)
+    self.game_state = GameState.new(PlayerId.TWO)
+    validate(self.game_state)
+
   def test_empty_talon_cannot_be_closed(self):
     self.game_state = get_game_state_with_empty_talon_for_tests()
     with self.assertRaisesRegex(InvalidGameStateError,

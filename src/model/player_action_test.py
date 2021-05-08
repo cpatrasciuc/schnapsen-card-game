@@ -236,13 +236,13 @@ class AnnounceMarriageActionTest(unittest.TestCase):
   def test_announce_marriage_without_scoring_any_trick(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
-      won_tricks = game_state.won_tricks[PlayerId.ONE]
-      for trick in won_tricks:
+      for trick in game_state.won_tricks[PlayerId.ONE]:
         game_state.talon.extend([trick.one, trick.two])
-      game_state.won_tricks[PlayerId.ONE] = []
-      game_state.trick_points[PlayerId.ONE] = 0
+      for trick in game_state.won_tricks[PlayerId.TWO]:
+        game_state.talon.extend([trick.one, trick.two])
+      game_state.won_tricks = PlayerPair([], [])
+      game_state.trick_points = PlayerPair(0, 0)
       game_state.marriage_suits[PlayerId.TWO] = []
-      game_state.trick_points[PlayerId.TWO] = 33
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = AnnounceMarriageAction(PlayerId.ONE, queen_hearts)

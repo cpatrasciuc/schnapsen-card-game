@@ -226,7 +226,6 @@ class GameStateTest(unittest.TestCase):
       game_state.won_tricks[PlayerId.ONE].append(trick)
       game_state.trick_points[PlayerId.ONE] += jack_clubs.card_value
       game_state.trick_points[PlayerId.ONE] += ace_spades.card_value
-      game_state.next_player = PlayerId.TWO
       game_state.cards_in_hand[PlayerId.TWO].append(game_state.talon.pop(0))
       game_state.cards_in_hand[PlayerId.ONE].append(game_state.trump_card)
       game_state.trump_card = None
