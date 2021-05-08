@@ -233,7 +233,6 @@ class AnnounceMarriageAction(PlayerAction):
     if game_state.trick_points[self.player_id] > 0:
       _add_marriage_points(game_state, self.player_id, self._card.suit)
     game_state.next_player = self.player_id.opponent()
-    # TODO(game): Check if the player has more than 66 points and game is over.
 
   def __eq__(self, other):
     if not isinstance(other, AnnounceMarriageAction):
