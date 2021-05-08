@@ -21,6 +21,8 @@ from model.suit import Suit
 class ValidateTest(unittest.TestCase):
   """Tests for validate(). They should call validate() directly."""
 
+  # pylint: disable=too-many-public-methods
+
   def setUp(self):
     self.game_state = get_game_state_for_tests()
 

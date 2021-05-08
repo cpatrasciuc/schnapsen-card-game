@@ -53,13 +53,12 @@ def _validate_current_trick_and_next_player(game_state: GameState) -> None:
   if game_state.current_trick[game_state.next_player] is not None:
     raise InvalidGameStateError(
       f"current_trick already contains a card for {game_state.next_player}")
-  else:
-    if game_state.is_to_lead(game_state.next_player):
-      opp_tricks = len(game_state.won_tricks[game_state.next_player.opponent()])
-      next_player_tricks = len(game_state.won_tricks[game_state.next_player])
-      if next_player_tricks == 0 and opp_tricks > 0:
-        raise InvalidGameStateError(
-          "The player that is to lead did not win any trick")
+  if game_state.is_to_lead(game_state.next_player):
+    opp_tricks = len(game_state.won_tricks[game_state.next_player.opponent()])
+    next_player_tricks = len(game_state.won_tricks[game_state.next_player])
+    if next_player_tricks == 0 and opp_tricks > 0:
+      raise InvalidGameStateError(
+        "The player that is to lead did not win any trick")
 
 
 def _validate_num_cards_in_hand(game_state: GameState) -> None:
