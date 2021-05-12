@@ -1,0 +1,110 @@
+#:kivy 1.0.9
+
+<GameWidget>:
+  size: 500, 500
+  canvas:
+    Color:
+      rgba: 0.1, 0.1, 0.1, 1
+    Rectangle:
+      pos:self.pos
+      size:self.size
+
+  AnchorLayout:
+    anchor_x: "left"
+    anchor_y: "center"
+
+    BoxLayout:
+      canvas:
+        Color:
+          rgba: 0.1, 0.1, 0.1, 1
+        Rectangle:
+          pos:self.pos
+          size:self.size
+      orientation: 'vertical'
+      size_hint: 0.65, 1
+
+      BoxLayout:
+        id: computer_cards_box
+        size_hint_y: 0.1
+
+      BoxLayout:
+        size_hint_y: 0.1
+        Label:
+          text: "Game points: 5\nTrick points: 45"
+          font_size: self.height / 4
+          text_size: self.size
+          halign: 'left'
+          valign: 'top'
+        Label:
+          text: "Marriages: None "
+          font_size: self.height / 4
+          text_size: self.size
+          halign: 'right'
+          valign: 'top'
+
+      AnchorLayout:
+        anchor_x: "center"
+        anchor_y: "center"
+        size_hint: 1.0, 1 - 0.1 - 0.35 - 0.1 - 0.1
+        BoxLayout:
+          canvas:
+            Color:
+              rgba: 1, 0, 0, 1
+            Line:
+              rectangle: self.x + 1, self.y + 1, self.width - 1, self.height - 1
+              dash_offset: 5
+              dash_length: 5
+          size_hint: 0.8, 1
+
+      BoxLayout:
+        size_hint_y: 0.1
+        Label:
+          text: "Game points: 3\nTrick points: 27"
+          font_size: self.height / 4
+          text_size: self.size
+          halign: 'left'
+          valign: 'bottom'
+        Label:
+          text: "Marriages: None "
+          font_size: self.height / 4
+          text_size: self.size
+          halign: 'right'
+          valign: 'bottom'
+
+      BoxLayout:
+        id: player_cards_box
+        size_hint_y: 0.35
+
+  AnchorLayout:
+    anchor_x: "right"
+    anchor_y: "center"
+    BoxLayout:
+      id: left_side
+      orientation: 'vertical'
+      size_hint: 0.35, 1
+      BoxLayout:
+        id: computer_tricks
+        size_hint: 1, 0.25
+      BoxLayout:
+        id: talon
+        size_hint: None, None
+
+      BoxLayout:
+        id: buttons
+        size_hint: 1, None
+        Label:
+          text: "Buttons"
+
+      BoxLayout:
+        id: player_tricks
+        size_hint: 1, None
+        #padding: self.width * 0.05
+
+      BoxLayout:
+        id: fill_area
+        size_hint: 1, None
+        Label:
+          text: "Fill area"
+
+
+
