@@ -3,11 +3,11 @@
 #  found in the LICENSE file.
 from kivy.base import runTouchApp
 from kivy.lang import Builder
-from kivy.properties import StringProperty
 from kivy.uix.widget import Widget
 
 Builder.load_string("""
 <DebuggableWidget>:
+  debug_text: ""
   canvas:
     Color:
       # TODO: Make this dynamic.
@@ -25,7 +25,6 @@ Builder.load_string("""
 
 
 class DebuggableWidget(Widget):
-  debug_text = StringProperty()
   pass
 
 
