@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.core.window import Window
 
 from ui.game_widget import GameWidget
@@ -11,6 +12,8 @@ from ui.game_widget import GameWidget
 class SchnapsenApp(App):
   def build(self):
     game_widget = GameWidget()
+    game_widget.size = 1000, 800
+    Clock.schedule_once(lambda x: game_widget.init_cards(), 1)
 
     def trigger_layout():
       game_widget.trigger_layout()
