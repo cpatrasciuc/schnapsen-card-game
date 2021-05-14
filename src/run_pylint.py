@@ -11,6 +11,9 @@ def get_all_python_files():
   py_files = []
   for root, _, files in os.walk("."):
     for file in files:
+      # TODO(uidemo): Remove this up after deleting the UI demo.
+      if os.path.basename(root) == "uidemo":
+        continue
       if file.endswith(".py"):
         py_files.append(os.path.join(root, file))
   return py_files
