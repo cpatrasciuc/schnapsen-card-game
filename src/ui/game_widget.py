@@ -15,6 +15,7 @@ from ui.talon_widget import TalonWidget
 class GameWidget(FloatLayout):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
+    self._is_moving = False
 
     tricks_top = CardSlotsLayout(rows=2, cols=8, debug=True, spacing=-0.2,
                                  align_top=True)
@@ -88,7 +89,8 @@ class GameWidget(FloatLayout):
 
   def _do_layout_cards(self):
     for i, card_widget in enumerate(self._player_cards):
-      card_widget.pos = self._cards_bot.get_relative_pos(0, i)
+      if not self.ids.play_area.collide_point(*card_widget.center):
+        card_widget.pos = self._cards_bot.get_relative_pos(0, i)
       card_widget.size = self._cards_bot.get_card_size()
     for i, card_widget in enumerate(self._computer_cards):
       rel_x, rel_y = self._cards_top.get_relative_pos(0, i)
@@ -120,8 +122,49 @@ class GameWidget(FloatLayout):
     width, _ = self.ids.computer_tricks.children[0].get_card_size()
     rel_x, _ = self.ids.computer_tricks.children[0].get_relative_pos(0, 7)
     self.ids.talon.width = rel_x + width
-    self._do_layout_cards()
+    if not self._is_moving:
+      self._do_layout_cards()
     super().do_layout(*args, **kwargs)
 
   def trigger_layout(self):
     self._trigger_layout()
+
+  def on_touch_down(self, touch):
+    if self.collide_point(*touch.pos):
+      self._is_moving = True
+    # push the current coordinate, to be able to restore it later
+    touch.push()
+
+    # transform the touch coordinate to local space
+    touch.apply_transform_2d(self.to_local)
+
+    # dispatch the touch as usual to children
+    # the coordinate in the touch is now in local space
+    ret = super().on_touch_down(touch)
+
+    # whatever the result, don't forget to pop your transformation
+    # after the call, so the coordinate will be back in parent space
+    touch.pop()
+
+    # return the result (depending what you want.)
+    return ret
+
+  def on_touch_up(self, touch):
+    touch.push()
+
+    # transform the touch coordinate to local space
+    touch.apply_transform_2d(self.to_local)
+
+    # dispatch the touch as usual to children
+    # the coordinate in the touch is now in local space
+    ret = super().on_touch_up(touch)
+
+    # whatever the result, don't forget to pop your transformation
+    # after the call, so the coordinate will be back in parent space
+    touch.pop()
+
+    self._is_moving = False
+    self._do_layout_cards()
+
+    # return the result (depending what you want.)
+    return ret

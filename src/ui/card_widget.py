@@ -42,23 +42,19 @@ Builder.load_string("""
 class CardWidget(Scatter):
   def __init__(self, aspect_ratio=24 / 37, **kwargs):
     super().__init__(**kwargs)
+    self.moving = False
     self._ratio = aspect_ratio
     self.width = self.height * self._ratio
     self.size_hint = None, None
 
   def on_size(self, obj, size):
     assert abs(size[0] / size[1] - self._ratio) <= 1e-10, (
-    size[0] / size[1], self._ratio)
+      size[0] / size[1], self._ratio)
     self.children[0].center = self.width / 2, self.height / 2
 
   # def on_touch_up(self, touch):
-  #   if not self.do_collide_after_children:
-  #     if not self.collide_point(touch.x, touch.y):
-  #       return False
-  #   if super().on_touch_up(touch):
-  #     print("click")
-  #     return True
-  #   return False
+  #   super().on_touch_up(touch)
+  #   self.moving = False
 
   def set_visible(self, visible):
     self.visible = visible
