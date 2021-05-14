@@ -8,7 +8,7 @@ from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 
-from ui.debuggable_widget import DebuggableWidget
+from uidemo.debuggable_widget import DebuggableWidget
 
 Builder.load_string("""
 <TricksWidget>:

@@ -4,7 +4,7 @@
 from kivy.base import runTouchApp
 from kivy.uix.floatlayout import FloatLayout
 
-from ui.debuggable_widget import DebuggableWidget
+from uidemo.debuggable_widget import DebuggableWidget
 
 
 class TalonWidget(FloatLayout, DebuggableWidget):

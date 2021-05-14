@@ -7,9 +7,9 @@ from kivy.graphics.transformation import Matrix
 from kivy.uix.floatlayout import FloatLayout
 
 from model.card import Card
-from ui.card_slots_layout import CardSlotsLayout
-from ui.card_widget import CardWidget
-from ui.talon_widget import TalonWidget
+from uidemo.card_slots_layout import CardSlotsLayout
+from uidemo.card_widget import CardWidget
+from uidemo.talon_widget import TalonWidget
 
 
 class GameWidget(FloatLayout):

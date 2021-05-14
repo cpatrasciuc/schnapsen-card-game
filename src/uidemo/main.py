@@ -6,7 +6,7 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
 
-from ui.game_widget import GameWidget
+from uidemo.game_widget import GameWidget
 
 
 class SchnapsenApp(App):
