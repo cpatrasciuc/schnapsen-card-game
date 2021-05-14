@@ -43,7 +43,6 @@ class DebuggableWidget(Widget):
   line around the widget and displaying a debug message in the middle of the
   widget.
   """
-  pass
 
 
 if __name__ == "__main__":
