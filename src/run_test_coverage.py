@@ -15,10 +15,12 @@ def run_all_tests_with_coverage() -> float:
   :return The coverage percentage.
   """
   tests_file_pattern = "*_test.py"
-  cov = coverage.Coverage(branch=True, source=["./model"],
+  cov = coverage.Coverage(branch=True, source=["./model", "./ui"],
                           omit=[tests_file_pattern,
                                 "model/game_state_validation_test_module.py"])
   cov.exclude("def __repr__", "exclude")
+  cov.exclude('if __name__ == "__main__"', "exclude")
+  cov.exclude("if __name__ == '__main__'", "exclude")
   cov.start()
 
   # Discover and run all tests.
