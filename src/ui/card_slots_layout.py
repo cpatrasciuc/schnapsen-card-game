@@ -97,8 +97,8 @@ class CardSlotsLayout(Layout, DebuggableWidget):
     else:
       width = self.width / ((1 + self._spacing) * (self._cols - 1) + 1)
       height = width / self._ratio
+    assert abs(width / height - self._ratio) < 1e-10
     self._card_size = int(width), int(height)
-    assert abs(self._card_size[0] / self.card_size[1] - self._ratio) < 1e10
 
   @property
   def card_size(self) -> Tuple[int, int]:
