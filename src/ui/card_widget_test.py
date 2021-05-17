@@ -19,8 +19,12 @@ class CardWidgetTest(unittest.TestCase):
     card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
     card_widget.size = 10, 20
     card_widget.size = 25, 50
-    with self.assertRaisesRegex(AssertionError, r"\(\[26, 50\], 0.5\)"):
-      card_widget.size = 26, 50
+    card_widget.size = 26, 50
+    card_widget.size = 24, 50
+    with self.assertRaisesRegex(AssertionError, r"\(\[23, 50\], 0.5\)"):
+      card_widget.size = 23, 50
+    with self.assertRaisesRegex(AssertionError, r"\(\[27, 50\], 0.5\)"):
+      card_widget.size = 27, 50
 
   def test_visibility(self):
     card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)

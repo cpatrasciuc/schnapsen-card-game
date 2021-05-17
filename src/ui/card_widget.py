@@ -30,6 +30,7 @@ def _get_card_back_filename() -> str:
 
 
 # TODO(ui): Add an atlas with all card images.
+# TODO(ui): Add a drop shadow.
 class CardWidget(Scatter):
   """
   A widget that represents a playing card. It can be moved, scaled and rotated
@@ -65,7 +66,7 @@ class CardWidget(Scatter):
     # pylint: enable=no-member
 
   def _assert_aspect_ratio(self, _, size):
-    assert abs(size[0] / size[1] - self._ratio) <= 1e-10, (size, self._ratio)
+    assert abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)
 
   @property
   def visible(self):
@@ -86,7 +87,8 @@ class CardWidget(Scatter):
   @staticmethod
   def create_widgets_for_all_cards() -> Dict[Card, "CardWidget"]:
     """Creates a CardWidget for each of the 20 possible cards."""
-    return {card: CardWidget(card) for card in Card.get_all_cards()}
+    kwargs = {'do_rotation': False, 'do_scale': False, 'do_translation': False}
+    return {card: CardWidget(card, **kwargs) for card in Card.get_all_cards()}
 
 
 if __name__ == "__main__":
