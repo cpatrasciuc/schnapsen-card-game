@@ -22,6 +22,8 @@ class TalonWidget(Layout, DebuggableWidget):
   divides the width of this widget in half.
   """
 
+  # pylint: disable=too-many-instance-attributes
+
   def __init__(self, aspect_ratio: float = 24 / 37, **kwargs):
     """
     Instantiates a new TalonWidget.
@@ -92,8 +94,8 @@ class TalonWidget(Layout, DebuggableWidget):
     width = height * self._ratio
     self._talon_size = width, height
     assert abs(self._talon_size[0] / self._talon_size[1] - self._ratio) < 1e-10
-    self._talon_pos = self.to_window(self.width / 2.0,
-                                     (self.height - height) / 2.0, False, True)
+    self._talon_pos = self.to_parent(self.width / 2.0,
+                                     (self.height - height) / 2.0, True)
 
     # Update the size and position for the cards in the talon.
     for card in self._talon:
@@ -104,14 +106,14 @@ class TalonWidget(Layout, DebuggableWidget):
     if self._trump_card is not None:
       self._trump_card.size = self._talon_size
       self._trump_card.rotation = 90
-      self._trump_card.pos = self.to_window((self.width - height) / 2.0,
-                                            (self.height - width) / 2.0,
-                                            False, True)
+      self._trump_card.pos = self.to_parent((self.width - height) / 2.0,
+                                            (self.height - width) / 2.0, True)
 
 
 if __name__ == "__main__":
   RATIO = 10
   talon_widget = TalonWidget(RATIO)
+  talon_widget.pos = 50, 50
   talon_widget.size = 1000, 1000
   talon_widget.size_hint = None, None
 

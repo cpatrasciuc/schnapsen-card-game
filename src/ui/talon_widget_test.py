@@ -5,6 +5,8 @@
 import unittest
 
 from kivy.tests.common import GraphicUnitTest
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.relativelayout import RelativeLayout
 
 from model.card import Card
 from model.card_value import CardValue
@@ -227,3 +229,79 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
       self.assertEqual(trump_pos, trump_card.pos, msg=i)
       self.assertEqual(card_size, trump_card.size, msg=i)
       self.assertEqual(90, trump_card.rotation, msg=i)
+
+  def test_coordinate_systems(self):
+    # TODO(ui): Revisit this. It doesn't work properly without a window?
+    for layout_class in [RelativeLayout, FloatLayout]:
+      msg = str(layout_class.__name__)
+
+      talon_widget = TalonWidget(aspect_ratio=0.5)
+      talon_widget.size = 100, 800
+      talon_widget.size_hint = None, None
+      talon_widget.pos = 0, 0
+
+      layout = layout_class()
+      layout.size = 200, 800
+      layout.pos = 37, 37
+      layout.size_hint = None, None
+      layout.add_widget(talon_widget)
+
+      talon_card = _get_test_card()
+      talon_card.pos = 12, 34
+      talon_card.size = 56, 112
+      trump_card = _get_test_card()
+      trump_card.pos = 98, 76
+      trump_card.size = 54, 108
+
+      self.assertEqual((12, 34), talon_card.pos, msg=msg)
+      self.assertEqual([56, 112], talon_card.size, msg=msg)
+      self.assertEqual(0, talon_card.rotation, msg=msg)
+      self.assertEqual((98, 76), trump_card.pos, msg=msg)
+      self.assertEqual([54, 108], trump_card.size, msg=msg)
+      self.assertEqual(0, trump_card.rotation, msg=msg)
+
+      talon_widget.push_card(talon_card)
+      talon_widget.set_trump_card(trump_card)
+      self.advance_frames(1)
+      self.assertEqual((50, 350), talon_card.pos, msg=msg)
+      self.assertEqual([50, 100], talon_card.size, msg=msg)
+      self.assertEqual(0, talon_card.rotation, msg=msg)
+      self.assertEqual((0, 375), trump_card.pos, msg=msg)
+      self.assertEqual([50, 100], trump_card.size, msg=msg)
+      self.assertEqual(90, trump_card.rotation, msg=msg)
+
+      talon_widget.pos = 50, 50
+      self.advance_frames(1)
+      # The bottom left corner of the talon_card is at:
+      #   (100, 400) inside the talon_widget;
+      #   (150, 450) inside the layout;
+      #   (187, 487) inside the window.
+      self.assertEqual((100, 400), talon_card.pos, msg=msg)
+      self.assertEqual((100, 400), talon_card.to_parent(0, 0), msg=msg)
+      self.assertEqual((150, 450),
+                       talon_widget.to_parent(*talon_card.pos, True), msg=msg)
+      self.assertEqual((187, 487), talon_card.to_window(0, 0, False, True),
+                       msg=msg)
+      self.assertEqual((187, 487),
+                       talon_widget.to_window(*talon_card.pos, False, True),
+                       msg=msg)
+      self.assertEqual((187, 487), layout.to_parent(
+        *talon_widget.to_parent(*talon_card.pos, True), relative=True), msg=msg)
+      self.assertEqual([50, 100], talon_card.size, msg=msg)
+      self.assertEqual(0, talon_card.rotation, msg=msg)
+
+      # The bottom left corner of the trump card (after it is rotated) is at:
+      #   (50, 425) inside the talon_widget;
+      #   (100, 475) inside the layout;
+      #   (137, 512) inside the window.
+      self.assertEqual((50, 425), trump_card.pos)
+      self.assertEqual((100, 475),
+                       talon_widget.to_parent(*trump_card.pos, True))
+      # In local coordinates we have to specify the top-left corner of the card,
+      # which will be the bottom-left corner after the rotation.
+      self.assertEqual((137, 512),
+                       trump_card.to_window(0, trump_card.size[1], False, True))
+      self.assertEqual((137, 512),
+                       talon_widget.to_window(*trump_card.pos, False, True))
+      self.assertEqual([50, 100], trump_card.size)
+      self.assertEqual(90, trump_card.rotation)
