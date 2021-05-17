@@ -5,21 +5,20 @@
 import unittest
 
 from kivy.tests.common import GraphicUnitTest
-from kivy.uix.scatter import Scatter
-from kivy.uix.widget import Widget
 
+from model.card import Card
+from model.card_value import CardValue
+from model.suit import Suit
+from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
 
 
-# TODO(ui): Remove this once a CardWidget class is available.
-def get_test_card():
-  scatter = Scatter()
-  scatter.do_rotation = False
-  scatter.do_translation = False
-  scatter.do_scaling = False
-  widget = Widget()
-  scatter.add_widget(widget)
-  return scatter
+def _get_test_card(ratio=0.5):
+  card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=ratio)
+  card_widget.do_rotation = False
+  card_widget.do_translation = False
+  card_widget.do_scaling = False
+  return card_widget
 
 
 class TalonWidgetTest(unittest.TestCase):
@@ -31,10 +30,10 @@ class TalonWidgetTest(unittest.TestCase):
                                 "Trump card cannot be set to None"):
       # noinspection PyTypeChecker
       talon_widget.set_trump_card(None)
-    trump_card = get_test_card()
+    trump_card = _get_test_card()
     talon_widget.set_trump_card(trump_card)
     with self.assertRaisesRegex(AssertionError, "Trump card is already set"):
-      talon_widget.set_trump_card(get_test_card())
+      talon_widget.set_trump_card(_get_test_card())
     self.assertIs(trump_card, talon_widget.remove_trump_card())
     with self.assertRaisesRegex(AssertionError, "No trump card set"):
       talon_widget.remove_trump_card()
@@ -46,11 +45,11 @@ class TalonWidgetTest(unittest.TestCase):
     with self.assertRaisesRegex(AssertionError, "Card widget cannot be None"):
       # noinspection PyTypeChecker
       talon_widget.push_card(None)
-    card_1 = get_test_card()
+    card_1 = _get_test_card()
     talon_widget.push_card(card_1)
-    card_2 = get_test_card()
+    card_2 = _get_test_card()
     talon_widget.push_card(card_2)
-    card_3 = get_test_card()
+    card_3 = _get_test_card()
     talon_widget.push_card(card_3)
     self.assertIs(card_3, talon_widget.pop_card())
     self.assertIs(card_2, talon_widget.pop_card())
@@ -66,18 +65,18 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     talon_widget.size = 800, 100
     talon_widget.pos = 0, 0
 
-    talon_card = get_test_card()
+    talon_card = _get_test_card()
     talon_card.pos = 12, 34
-    talon_card.size = 56, 78
-    trump_card = get_test_card()
+    talon_card.size = 56, 112
+    trump_card = _get_test_card()
     trump_card.pos = 98, 76
-    trump_card.size = 54, 32
+    trump_card.size = 54, 108
 
     self.assertEqual((12, 34), talon_card.pos)
-    self.assertEqual([56, 78], talon_card.size)
+    self.assertEqual([56, 112], talon_card.size)
     self.assertEqual(0, talon_card.rotation)
     self.assertEqual((98, 76), trump_card.pos)
-    self.assertEqual([54, 32], trump_card.size)
+    self.assertEqual([54, 108], trump_card.size)
     self.assertEqual(0, trump_card.rotation)
 
     talon_widget.push_card(talon_card)
@@ -86,7 +85,7 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([50, 100], talon_card.size)
     self.assertEqual(0, talon_card.rotation)
     self.assertEqual((98, 76), trump_card.pos)
-    self.assertEqual([54, 32], trump_card.size)
+    self.assertEqual([54, 108], trump_card.size)
     self.assertEqual(0, trump_card.rotation)
 
     talon_widget.set_trump_card(trump_card)
@@ -133,18 +132,18 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     talon_widget.size = 100, 800
     talon_widget.pos = 0, 0
 
-    talon_card = get_test_card()
+    talon_card = _get_test_card()
     talon_card.pos = 12, 34
-    talon_card.size = 56, 78
-    trump_card = get_test_card()
+    talon_card.size = 56, 112
+    trump_card = _get_test_card()
     trump_card.pos = 98, 76
-    trump_card.size = 54, 32
+    trump_card.size = 54, 108
 
     self.assertEqual((12, 34), talon_card.pos)
-    self.assertEqual([56, 78], talon_card.size)
+    self.assertEqual([56, 112], talon_card.size)
     self.assertEqual(0, talon_card.rotation)
     self.assertEqual((98, 76), trump_card.pos)
-    self.assertEqual([54, 32], trump_card.size)
+    self.assertEqual([54, 108], trump_card.size)
     self.assertEqual(0, trump_card.rotation)
 
     talon_widget.push_card(talon_card)
@@ -153,7 +152,7 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([50, 100], talon_card.size)
     self.assertEqual(0, talon_card.rotation)
     self.assertEqual((98, 76), trump_card.pos)
-    self.assertEqual([54, 32], trump_card.size)
+    self.assertEqual([54, 108], trump_card.size)
     self.assertEqual(0, trump_card.rotation)
 
     talon_widget.set_trump_card(trump_card)
@@ -212,12 +211,12 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
       talon_widget = TalonWidget(aspect_ratio=ratio)
       talon_widget.size = size
 
-      talon_card = get_test_card()
+      talon_card = _get_test_card(ratio)
       talon_card.pos = 12, 34
-      talon_card.size = 56, 78
-      trump_card = get_test_card()
+      talon_card.size = 56, 56 / ratio
+      trump_card = _get_test_card(ratio)
       trump_card.pos = 98, 76
-      trump_card.size = 54, 32
+      trump_card.size = 54, 54 / ratio
 
       talon_widget.set_trump_card(trump_card)
       talon_widget.push_card(talon_card)
