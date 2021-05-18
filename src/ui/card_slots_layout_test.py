@@ -5,6 +5,7 @@
 import unittest
 
 from kivy.tests.common import GraphicUnitTest
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 
 from ui.card_slots_layout import CardSlotsLayout
@@ -113,6 +114,24 @@ class CardSlotsLayoutTest(unittest.TestCase):
     cards_layout.add_card(Widget(), 0, 0)
     with self.assertRaises(AssertionError):
       cards_layout.add_card(Widget(), 0, 0)
+
+  def test_coordinates_are_relative_to_parent(self):
+    """
+    Checks that the coordinates returned by get_card_pos() do not change even if
+    the parent of the CardSlotsLayout moves to a different position.
+    """
+    cards_layout = CardSlotsLayout(aspect_ratio=1 / 3, rows=1, cols=3)
+    cards_layout.size = 100, 100
+
+    parent = FloatLayout()
+    parent.add_widget(cards_layout)
+    parent.pos = 0, 0
+    parent.do_layout()
+    self.compute_layout(cards_layout, (33, 100), [[(0, 0), (33, 0), (66, 0)]])
+
+    parent.pos = 50, 50
+    parent.do_layout()
+    self.compute_layout(cards_layout, (33, 100), [[(0, 0), (33, 0), (66, 0)]])
 
 
 class CardSlotsLayoutGraphicTest(GraphicUnitTest):

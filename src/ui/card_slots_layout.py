@@ -18,6 +18,7 @@ class CardSlotsLayout(Layout, DebuggableWidget):
   """
 
   # pylint: disable=too-many-instance-attributes
+
   def __init__(self, aspect_ratio: float = 24 / 37, rows: int = 1,
                cols: int = 1, align_top: bool = False, spacing: float = 0.0,
                **kwargs):
@@ -117,10 +118,10 @@ class CardSlotsLayout(Layout, DebuggableWidget):
 
   def get_card_pos(self, row, col):
     """
-    Returns the position of the grid slot specified by row and col, in window
+    Returns the position of the grid slot specified by row and col, in parent
     coordinates.
     """
-    return self.to_window(*self._get_local_card_pos(row, col), False, True)
+    return self.to_parent(*self._get_local_card_pos(row, col), True)
 
   def do_layout(self, *_):
     """
