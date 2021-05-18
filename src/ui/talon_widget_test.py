@@ -157,7 +157,7 @@ class TalonWidgetTest(unittest.TestCase):
     self.assertGreater(_get_children_index(talon_widget, trump_card),
                        _get_children_index(talon_widget, talon_card))
     self.assertEqual(talon_card.center, trump_card.center)
-    self.assertEqual(30, trump_card.rotation)
+    self.assertEqual(10, trump_card.rotation)
 
     talon_widget.closed = False
     self.assertFalse(talon_widget.closed)

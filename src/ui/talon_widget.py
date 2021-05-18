@@ -134,7 +134,7 @@ class TalonWidget(Layout, DebuggableWidget):
     if self._trump_card is not None:
       self._trump_card.size = self._talon_size
       if self._closed:
-        self._trump_card.rotation = 30
+        self._trump_card.rotation = 10
         self._trump_card.center = self.to_parent(
           local_talon_pos[0] + self._talon_size[0] / 2,
           local_talon_pos[1] + self._talon_size[1] / 2, True)
