@@ -4,6 +4,7 @@
 
 import unittest
 
+from kivy.base import EventLoop
 from kivy.tests.common import GraphicUnitTest
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
@@ -138,6 +139,10 @@ class CardSlotsLayoutGraphicTest(GraphicUnitTest):
   def test_children_are_resized_and_repositioned(self):
     cards_layout = CardSlotsLayout(aspect_ratio=1 / 3, rows=1, cols=3)
     cards_layout.size = 100, 100
+    cards_layout.size_hint = None, None
+
+    EventLoop.ensure_window()
+    self.render(cards_layout)
 
     # Create a widget at random coordinates with a random size.
     widget = Widget()
