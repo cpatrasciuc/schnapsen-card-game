@@ -25,8 +25,8 @@ def _get_test_card(ratio=0.5):
   return card_widget
 
 
-def _get_children_index(parent: TalonWidget, child: CardWidget) -> Optional[
-  int]:
+def _get_children_index(parent: TalonWidget,
+                        child: CardWidget) -> Optional[int]:
   for index, widget in enumerate(parent.walk(restrict=True, loopback=False)):
     if widget is child:
       return index
@@ -35,7 +35,7 @@ def _get_children_index(parent: TalonWidget, child: CardWidget) -> Optional[
 
 class TalonWidgetTest(unittest.TestCase):
   def test_set_and_remove_trump_card(self):
-    talon_widget = TalonWidget(aspect_ratio=0.5)
+    talon_widget = TalonWidget()
     with self.assertRaisesRegex(AssertionError, "No trump card set"):
       talon_widget.remove_trump_card()
     with self.assertRaisesRegex(AssertionError,
@@ -51,7 +51,7 @@ class TalonWidgetTest(unittest.TestCase):
       talon_widget.remove_trump_card()
 
   def test_add_and_remove_cards(self):
-    talon_widget = TalonWidget(aspect_ratio=0.5)
+    talon_widget = TalonWidget()
     with self.assertRaisesRegex(AssertionError, "The talon is empty"):
       talon_widget.pop_card()
     with self.assertRaisesRegex(AssertionError, "Card widget cannot be None"):
@@ -68,6 +68,71 @@ class TalonWidgetTest(unittest.TestCase):
     self.assertIs(card_1, talon_widget.pop_card())
     with self.assertRaisesRegex(AssertionError, "The talon is empty"):
       talon_widget.pop_card()
+
+  def test_trump_card_z_index_relative_to_other_talon_cards(self):
+    talon_widget = TalonWidget()
+    card_1 = _get_test_card()
+    talon_widget.push_card(card_1)
+    trump_card = _get_test_card()
+    talon_widget.set_trump_card(trump_card)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_1))
+    card_2 = _get_test_card()
+    talon_widget.push_card(card_2)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_1))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_2))
+    card_3 = _get_test_card()
+    talon_widget.push_card(card_3)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_1))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_2))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_3))
+    talon_widget.remove_trump_card()
+    talon_widget.set_trump_card(trump_card)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_1))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_2))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_3))
+    talon_widget.closed = True
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_1))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_2))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_3))
+    talon_widget.remove_trump_card()
+    talon_widget.set_trump_card(trump_card)
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_1))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_2))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_3))
+    talon_widget.pop_card()
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_1))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_2))
+    talon_widget.push_card(card_3)
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_1))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_2))
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, card_3))
+    talon_widget.closed = False
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_1))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_2))
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, card_3))
 
   def test_close_talon(self):
     talon_widget = TalonWidget(aspect_ratio=0.5)

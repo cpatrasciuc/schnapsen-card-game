@@ -56,26 +56,34 @@ class TalonWidget(Layout, DebuggableWidget):
     if self._closed == closed:
       return
     self._closed = closed
-    # TODO(ui): Check the order of the trump card.
+    self._update_trump_card_position()
+    self._trigger_layout()
+
+  def _update_trump_card_position(self) -> None:
+    """
+    If the talon is closed, the trump card is placed on top of it; otherwise it
+    is placed under it. We remove the widget from the children list and insert
+    it back at the beginning or at the end depending on the situation.
+    """
     if self._trump_card is None:
       return
-    self.remove_widget(self._trump_card)
+    if self._trump_card.parent is self:
+      self.remove_widget(self._trump_card)
     if self._closed:
-      self.add_widget(self._trump_card)
+      self.add_widget(self._trump_card, index=0)
     else:
       self.add_widget(self._trump_card, index=len(self.children))
-    self._trigger_layout()
 
   def set_trump_card(self, widget: CardWidget) -> None:
     assert widget is not None, "Trump card cannot be set to None"
     assert self._trump_card is None, "Trump card is already set"
     self._trump_card = widget
-    super().add_widget(widget)
+    self._update_trump_card_position()
 
   def remove_trump_card(self) -> CardWidget:
     assert self._trump_card is not None, "No trump card set"
     widget = self._trump_card
-    super().remove_widget(widget)
+    self.remove_widget(widget)
     self._trump_card = None
     return widget
 
@@ -83,13 +91,13 @@ class TalonWidget(Layout, DebuggableWidget):
     """Add a new card on top of the existing talon."""
     assert widget is not None, "Card widget cannot be None"
     self._talon.append(widget)
-    super().add_widget(widget)
+    self.add_widget(widget, index=1 if self._closed else 0)
 
   def pop_card(self) -> CardWidget:
     """Remove and return a card from the top of the talon."""
     assert len(self._talon) > 0, "The talon is empty"
     widget = self._talon.pop()
-    super().remove_widget(widget)
+    self.remove_widget(widget)
     return widget
 
   def do_layout(self, *_, **__):
