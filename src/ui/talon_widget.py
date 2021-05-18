@@ -36,6 +36,7 @@ class TalonWidget(Layout, DebuggableWidget):
     self._talon: List[Optional[CardWidget]] = []
     self._talon_size: Tuple[int, int] = 0, 0
     self._talon_pos: Tuple[int, int] = 0, 0
+    self._closed = False
 
     # Trigger a call to do_layout() whenever position, size or children change.
     # pylint: disable=no-member
@@ -45,6 +46,25 @@ class TalonWidget(Layout, DebuggableWidget):
     self.fbind('size', self._trigger_layout)
     self.fbind('size_hint', self._trigger_layout)
     # pylint: enable=no-member
+
+  @property
+  def closed(self) -> bool:
+    return self._closed
+
+  @closed.setter
+  def closed(self, closed) -> None:
+    if self._closed == closed:
+      return
+    self._closed = closed
+    # TODO(ui): Check the order of the trump card.
+    if self._trump_card is None:
+      return
+    self.remove_widget(self._trump_card)
+    if self._closed:
+      self.add_widget(self._trump_card)
+    else:
+      self.add_widget(self._trump_card, index=len(self.children))
+    self._trigger_layout()
 
   def set_trump_card(self, widget: CardWidget) -> None:
     assert widget is not None, "Trump card cannot be set to None"
@@ -94,8 +114,8 @@ class TalonWidget(Layout, DebuggableWidget):
     width = height * self._ratio
     self._talon_size = width, height
     assert abs(self._talon_size[0] / self._talon_size[1] - self._ratio) < 1e-10
-    self._talon_pos = self.to_parent(self.width / 2.0,
-                                     (self.height - height) / 2.0, True)
+    local_talon_pos = self.width / 2.0, (self.height - height) / 2.0
+    self._talon_pos = self.to_parent(*local_talon_pos, True)
 
     # Update the size and position for the cards in the talon.
     for card in self._talon:
@@ -105,9 +125,15 @@ class TalonWidget(Layout, DebuggableWidget):
     # Update the size and position for the trump card.
     if self._trump_card is not None:
       self._trump_card.size = self._talon_size
-      self._trump_card.rotation = 90
-      self._trump_card.pos = self.to_parent((self.width - height) / 2.0,
-                                            (self.height - width) / 2.0, True)
+      if self._closed:
+        self._trump_card.rotation = 30
+        self._trump_card.center = self.to_parent(
+          local_talon_pos[0] + self._talon_size[0] / 2,
+          local_talon_pos[1] + self._talon_size[1] / 2, True)
+      else:
+        self._trump_card.rotation = 90
+        self._trump_card.pos = self.to_parent((self.width - height) / 2.0,
+                                              (self.height - width) / 2.0, True)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,8 @@
 #  found in the LICENSE file.
 
 import unittest
+from typing import Optional
+from unittest.mock import Mock
 
 from kivy.tests.common import GraphicUnitTest
 from kivy.uix.floatlayout import FloatLayout
@@ -21,6 +23,14 @@ def _get_test_card(ratio=0.5):
   card_widget.do_translation = False
   card_widget.do_scaling = False
   return card_widget
+
+
+def _get_children_index(parent: TalonWidget, child: CardWidget) -> Optional[
+  int]:
+  for index, widget in enumerate(parent.walk(restrict=True, loopback=False)):
+    if widget is child:
+      return index
+  return None
 
 
 class TalonWidgetTest(unittest.TestCase):
@@ -58,6 +68,68 @@ class TalonWidgetTest(unittest.TestCase):
     self.assertIs(card_1, talon_widget.pop_card())
     with self.assertRaisesRegex(AssertionError, "The talon is empty"):
       talon_widget.pop_card()
+
+  def test_close_talon(self):
+    talon_widget = TalonWidget(aspect_ratio=0.5)
+    # pylint: disable=protected-access
+    talon_widget._trigger_layout = talon_widget.do_layout
+    # pylint: enable=protected-access
+
+    trump_card = _get_test_card()
+    talon_widget.set_trump_card(trump_card)
+    talon_card = _get_test_card()
+    talon_widget.push_card(talon_card)
+    talon_widget.do_layout()
+
+    self.assertFalse(talon_widget.closed)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, talon_card))
+    self.assertNotEqual(talon_card.center, trump_card.center)
+    self.assertEqual(90, trump_card.rotation)
+
+    talon_widget.closed = True
+    self.assertTrue(talon_widget.closed)
+    self.assertGreater(_get_children_index(talon_widget, trump_card),
+                       _get_children_index(talon_widget, talon_card))
+    self.assertEqual(talon_card.center, trump_card.center)
+    self.assertEqual(30, trump_card.rotation)
+
+    talon_widget.closed = False
+    self.assertFalse(talon_widget.closed)
+    self.assertLess(_get_children_index(talon_widget, trump_card),
+                    _get_children_index(talon_widget, talon_card))
+    self.assertNotEqual(talon_card.center, trump_card.center)
+    self.assertEqual(90, trump_card.rotation)
+
+  def test_setting_closed_to_the_current_value_does_not_trigger_layout(self):
+    talon_widget = TalonWidget(aspect_ratio=0.5)
+    trump_card = _get_test_card()
+    talon_widget.set_trump_card(trump_card)
+    talon_card = _get_test_card()
+    talon_widget.push_card(talon_card)
+    talon_widget.do_layout()
+
+    mock = Mock()
+    # pylint: disable=protected-access
+    talon_widget._trigger_layout = mock
+    # pylint: enable=protected-access
+    mock.assert_not_called()
+    self.assertFalse(talon_widget.closed)
+    talon_widget.closed = False
+    mock.assert_not_called()
+    talon_widget.closed = True
+    mock.assert_called_once()
+    mock.reset_mock()
+    talon_widget.closed = True
+    mock.assert_not_called()
+    talon_widget.closed = False
+    mock.assert_called_once()
+
+  @staticmethod
+  def test_can_close_talon_widget_without_setting_a_trump_card():
+    talon_widget = TalonWidget(aspect_ratio=0.5)
+    talon_widget.closed = True
+    talon_widget.closed = False
 
 
 class TalonWidgetGraphicTest(GraphicUnitTest):
