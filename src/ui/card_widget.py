@@ -105,11 +105,26 @@ class CardWidget(Scatter):
     checks whether a double tap/click was performed on this widget. If that is
     the case, it triggers the on_double_tap event.
     """
-    return_value = super().on_touch_up(touch)
-    if touch.is_double_tap and touch.grab_current is self:
+    if not touch.is_double_tap:
+      return super().on_touch_up(touch)
+
+    # If transformations are enabled, the parent class (Scatter) will grab the
+    # touch if it is on the widget. Since we can receive the same touch multiple
+    # times, we only process the 'grabbed' one.
+    is_touch_on_this_widget = touch.grab_current is self
+
+    # If no transformation is enabled, the parent class (Scatter) does not grab
+    # the touch even if it is on the widget. So we have to check that ourselves.
+    if not is_touch_on_this_widget:
+      has_transformations = self.do_translation_x or self.do_translation_y or \
+                            self.do_rotation or self.do_scale
+      if not has_transformations:
+        is_touch_on_this_widget = self.collide_point(touch.x, touch.y)
+
+    if is_touch_on_this_widget:
       self.dispatch("on_double_tap")
-      return True
-    return return_value
+
+    return super().on_touch_up(touch)
 
   def on_double_tap(self):
     """

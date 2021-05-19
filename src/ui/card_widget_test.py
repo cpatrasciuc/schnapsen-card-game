@@ -118,12 +118,16 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     touch.touch_up()
     self.assertEqual(window_center, card_widget.center)
 
-  def test_on_double_tap(self):
+  def _run_test_on_double_tap_with_init_args(self, *args, **kwargs):
+    """
+    The args passed to this function are forwarded to the constructor of the
+    CardWidget used in the test.
+    """
     EventLoop.ensure_window()
     window = EventLoop.window
 
     # Place the card in the center of the window.
-    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+    card_widget = CardWidget(*args, **kwargs)
     min_dimension = min(window.width, window.height)
     card_widget.size = min_dimension / 4, min_dimension / 2
     window_center = window.width / 2, window.height / 2
@@ -169,3 +173,12 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     touch.touch_down()
     touch.touch_up()
     on_double_tap_handler.assert_called_once_with(card_widget_2)
+
+  def test_on_double_tap_with_enabled_transformations(self):
+    self._run_test_on_double_tap_with_init_args(
+      Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+
+  def test_on_double_tap_with_disabled_transformations(self):
+    self._run_test_on_double_tap_with_init_args(
+      Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5, do_translation=False,
+      do_rotation=False, do_scale=False)
