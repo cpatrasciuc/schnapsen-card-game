@@ -50,13 +50,11 @@ class CardSlotsLayout(Layout, DebuggableWidget):
     self._card_size = 0, 0
 
     # Trigger a call to do_layout() whenever position, size or children change.
-    # pylint: disable=no-member
     self.fbind('children', self._trigger_layout)
     self.fbind('pos', self._trigger_layout)
     self.fbind('pos_hint', self._trigger_layout)
     self.fbind('size_hint', self._trigger_layout)
     self.fbind('size', self._trigger_layout)
-    # pylint: enable=no-member
 
   @property
   def rows(self) -> int:

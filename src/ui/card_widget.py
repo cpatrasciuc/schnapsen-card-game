@@ -59,13 +59,11 @@ class CardWidget(Scatter):
     self._ratio = aspect_ratio
     self.width = self.height * self._ratio
     self.size_hint = None, None
-    # pylint: disable=no-member
     self.register_event_type("on_double_tap")
     self.fbind("size", image.setter("size"))
     # noinspection PyUnreachableCode
     if __debug__:
       self.fbind("size", self._assert_aspect_ratio)
-    # pylint: enable=no-member
 
   def _assert_aspect_ratio(self, _, size):
     assert abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)

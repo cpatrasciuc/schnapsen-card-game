@@ -27,8 +27,17 @@ def run_pylint():
     "fixme",
     "locally-disabled"
   ]
+  generated_members = [
+    r"kivy.*setter",
+    r"ui\..*(Widget|Layout)\.bind",
+    r"ui\..*(Widget|Layout)\.dispatch",
+    r"ui\..*(Widget|Layout)\.fbind",
+    r"ui\..*(Widget|Layout)\.register_event_type",
+    r"ui\..*(Widget|Layout)\.setter",
+  ]
   pylint_opts = [
     "--indent-string='  '",
+    "--generated-members=" + ",".join(generated_members),
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
   ]
