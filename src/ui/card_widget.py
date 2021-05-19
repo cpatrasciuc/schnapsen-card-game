@@ -4,9 +4,10 @@
 
 import os.path
 import random
-from typing import Dict
+from typing import Dict, Tuple, Optional
 
 from kivy.base import runTouchApp
+from kivy.input import MotionEvent
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.scatter import Scatter
@@ -51,6 +52,7 @@ class CardWidget(Scatter):
     self._card = card
     self._visible = True
     self._grayed_out = False
+    self._touch_down_pos: Optional[Tuple[int, int]] = None
     self.auto_bring_to_front = False
     image = Image(source=_get_card_filename(card))
     image.keep_ratio = False
@@ -60,6 +62,7 @@ class CardWidget(Scatter):
     self.width = self.height * self._ratio
     self.size_hint = None, None
     self.register_event_type("on_double_tap")
+    self.register_event_type("on_card_moved")
     self.fbind("size", image.setter("size"))
     # noinspection PyUnreachableCode
     if __debug__:
@@ -99,19 +102,43 @@ class CardWidget(Scatter):
     kwargs = {'do_rotation': False, 'do_scale': False, 'do_translation': False}
     return {card: CardWidget(card, **kwargs) for card in Card.get_all_cards()}
 
-  def on_touch_up(self, touch):
+  def on_touch_down(self, touch: MotionEvent) -> bool:
+    """
+    In addition to the handling performed by the base class (Scatter), it also
+    checks if translations are enabled and if the touch is on the card. If that
+    is the case, it saves the current position of the widget. Later, when the
+    corresponding touch up event occurs we compare the position of the widget
+    with the saved one, in order to detect whether the user dragged it.
+    """
+    if self.do_translation_x or self.do_translation_y:
+      if self.collide_point(touch.x, touch.y):
+        assert self._touch_down_pos is None
+        self._touch_down_pos = self.pos
+    return super().on_touch_down(touch)
+
+  def on_touch_up(self, touch: MotionEvent) -> bool:
     """
     In addition to the handling performed by the base class (Scatter), it also
     checks whether a double tap/click was performed on this widget. If that is
     the case, it triggers the on_double_tap event.
     """
-    if not touch.is_double_tap:
-      return super().on_touch_up(touch)
-
     # If transformations are enabled, the parent class (Scatter) will grab the
     # touch if it is on the widget. Since we can receive the same touch multiple
     # times, we only process the 'grabbed' one.
     is_touch_on_this_widget = touch.grab_current is self
+
+    # Check if the card was dragged by the used to a new position. If that is
+    # the case, trigger the on_card_moved event with the new card center as the
+    # argument.
+    if is_touch_on_this_widget:
+      if self.do_translation_x or self.do_translation_y:
+        assert self._touch_down_pos is not None
+        if self.pos != self._touch_down_pos:
+          self.dispatch('on_card_moved', self.center)
+        self._touch_down_pos = None
+
+    if not touch.is_double_tap:
+      return super().on_touch_up(touch)
 
     # If no transformation is enabled, the parent class (Scatter) does not grab
     # the touch even if it is on the widget. So we have to check that ourselves.
@@ -130,6 +157,13 @@ class CardWidget(Scatter):
     """
     Default handler for the on_double_tap event. This event is triggered
     whenever there is a double tap or double click on the card itself.
+    """
+
+  def on_card_moved(self, center: Tuple[int, int]) -> None:
+    """
+    Default handler for the on_card_moved event. This event is triggered when
+    the user has finished dragging the card to a new location.
+    :param center: The new center coordinates of this widget.
     """
 
 
