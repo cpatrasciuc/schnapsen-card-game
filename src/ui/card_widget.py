@@ -60,6 +60,7 @@ class CardWidget(Scatter):
     self.width = self.height * self._ratio
     self.size_hint = None, None
     # pylint: disable=no-member
+    self.register_event_type("on_double_tap")
     self.fbind("size", image.setter("size"))
     # noinspection PyUnreachableCode
     if __debug__:
@@ -100,24 +101,42 @@ class CardWidget(Scatter):
     kwargs = {'do_rotation': False, 'do_scale': False, 'do_translation': False}
     return {card: CardWidget(card, **kwargs) for card in Card.get_all_cards()}
 
+  def on_touch_up(self, touch):
+    """
+    In addition to the handling performed by the base class (Scatter), it also
+    checks whether a double tap/click was performed on this widget. If that is
+    the case, it triggers the on_double_tap event.
+    """
+    return_value = super().on_touch_up(touch)
+    if touch.is_double_tap and touch.grab_current is self:
+      self.dispatch("on_double_tap")
+      return True
+    return return_value
+
+  def on_double_tap(self):
+    """
+    Default handler for the on_double_tap event. This event is triggered
+    whenever there is a double tap or double click on the card itself.
+    """
+
 
 if __name__ == "__main__":
+  def toggle_visible(clicked_card_widget):
+    clicked_card_widget.visible = not clicked_card_widget.visible
+
+
   float_layout = FloatLayout()
   float_layout.size = 1000, 1000
   deck = Card.get_all_cards()
   random.shuffle(deck)
+
   for _card in deck:
     card_widget = CardWidget(_card)
     card_widget.size = 240, 370
     card_widget.grayed_out = random.random() > 0.5
     card_widget.pos = random.randint(100, 900), random.randint(100, 900)
     card_widget.rotation = random.randint(0, 180)
+    card_widget.bind(on_double_tap=toggle_visible)
     float_layout.add_widget(card_widget)
-  # One card is flipped
-  card_widget = CardWidget(deck[0])
-  card_widget.size = 240, 370
-  card_widget.pos = random.randint(100, 900), random.randint(100, 900)
-  card_widget.rotation = random.randint(0, 180)
-  card_widget.visible = False
-  float_layout.add_widget(card_widget)
+
   runTouchApp(float_layout)

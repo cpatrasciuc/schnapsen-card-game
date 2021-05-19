@@ -3,9 +3,11 @@
 #  found in the LICENSE file.
 
 import unittest
+from unittest.mock import Mock
 
 from kivy.base import EventLoop
 from kivy.tests.common import UnitTestTouch, GraphicUnitTest
+from kivy.uix.floatlayout import FloatLayout
 
 from model.card import Card
 from model.card_value import CardValue
@@ -115,3 +117,55 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     # Touch up. Nothing happens to the card.
     touch.touch_up()
     self.assertEqual(window_center, card_widget.center)
+
+  def test_on_double_tap(self):
+    EventLoop.ensure_window()
+    window = EventLoop.window
+
+    # Place the card in the center of the window.
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+    min_dimension = min(window.width, window.height)
+    card_widget.size = min_dimension / 4, min_dimension / 2
+    window_center = window.width / 2, window.height / 2
+    card_widget.center = window_center
+
+    float_layout = FloatLayout()
+    float_layout.add_widget(card_widget)
+    self.render(float_layout)
+
+    on_double_tap_handler = Mock()
+    card_widget.bind(on_double_tap=on_double_tap_handler)
+
+    # Normal click on the card does not trigger on_double_tap.
+    touch = UnitTestTouch(*card_widget.center)
+    touch.touch_down()
+    touch.touch_up()
+    on_double_tap_handler.assert_not_called()
+
+    # Double click on the card triggers on_double_tap.
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    on_double_tap_handler.assert_called_once_with(card_widget)
+    on_double_tap_handler.reset_mock()
+
+    # Double click outside of the card does not trigger on_double_tap.
+    touch = UnitTestTouch(0, 0)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    on_double_tap_handler.assert_not_called()
+
+    # Two cards on top of each other. Only the top one triggers on_double_tap.
+    card_widget_2 = CardWidget(Card(Suit.SPADES, CardValue.ACE),
+                               aspect_ratio=0.5)
+    card_widget_2.size = card_widget.size
+    card_widget_2.center = card_widget.center
+    card_widget_2.bind(on_double_tap=on_double_tap_handler)
+    float_layout.add_widget(card_widget_2)
+
+    touch = UnitTestTouch(*card_widget.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    on_double_tap_handler.assert_called_once_with(card_widget_2)
