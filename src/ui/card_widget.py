@@ -50,6 +50,7 @@ class CardWidget(Scatter):
     super().__init__(**kwargs)
     self._card = card
     self._visible = True
+    self._grayed_out = False
     self.auto_bring_to_front = False
     image = Image(source=_get_card_filename(card))
     image.keep_ratio = False
@@ -69,7 +70,7 @@ class CardWidget(Scatter):
     assert abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)
 
   @property
-  def visible(self):
+  def visible(self) -> bool:
     """
     Specifies whether the player can see this card or not (i.e., the player can
     only see the back of the card).
@@ -83,6 +84,15 @@ class CardWidget(Scatter):
       self.children[0].source = _get_card_filename(self._card)
     else:
       self.children[0].source = _get_card_back_filename()
+
+  @property
+  def grayed_out(self) -> bool:
+    return self._grayed_out
+
+  @grayed_out.setter
+  def grayed_out(self, grayed_out: bool) -> None:
+    self._grayed_out = grayed_out
+    self.opacity = 0.5 if self._grayed_out else 1.0
 
   @staticmethod
   def create_widgets_for_all_cards() -> Dict[Card, "CardWidget"]:
@@ -99,6 +109,7 @@ if __name__ == "__main__":
   for _card in deck:
     card_widget = CardWidget(_card)
     card_widget.size = 240, 370
+    card_widget.grayed_out = random.random() > 0.5
     card_widget.pos = random.randint(100, 900), random.randint(100, 900)
     card_widget.rotation = random.randint(0, 180)
     float_layout.add_widget(card_widget)

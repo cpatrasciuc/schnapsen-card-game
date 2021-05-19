@@ -41,6 +41,23 @@ class CardWidgetTest(unittest.TestCase):
     self.assertTrue(card_widget.visible)
     self.assertEqual(card_front_filename, card_widget.children[0].source)
 
+  def test_grayed_out(self):
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+    self.assertFalse(card_widget.grayed_out)
+    self.assertEqual(1.0, card_widget.opacity)
+    card_widget.grayed_out = False
+    self.assertFalse(card_widget.grayed_out)
+    self.assertEqual(1.0, card_widget.opacity)
+    card_widget.grayed_out = True
+    self.assertTrue(card_widget.grayed_out)
+    self.assertEqual(0.5, card_widget.opacity)
+    card_widget.grayed_out = True
+    self.assertTrue(card_widget.grayed_out)
+    self.assertEqual(0.5, card_widget.opacity)
+    card_widget.grayed_out = False
+    self.assertFalse(card_widget.grayed_out)
+    self.assertEqual(1.0, card_widget.opacity)
+
 
 class CardWidgetGraphicTest(GraphicUnitTest):
   def test_dragging_a_card_with_the_mouse(self):
