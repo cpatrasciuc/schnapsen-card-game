@@ -77,6 +77,10 @@ class PlayCardAction(PlayerAction):
     super().__init__(player_id)
     self._card = card
 
+  @property
+  def card(self) -> Card:
+    return self._card
+
   def can_execute_on(self, game_state: GameState) -> bool:
     if game_state.next_player != self.player_id:
       return False
@@ -205,6 +209,10 @@ class AnnounceMarriageAction(PlayerAction):
     assert card.card_value in [CardValue.QUEEN, CardValue.KING]
     super().__init__(player_id)
     self._card = card
+
+  @property
+  def card(self) -> Card:
+    return self._card
 
   def can_execute_on(self, game_state: GameState) -> bool:
     if not game_state.is_to_lead(self.player_id):

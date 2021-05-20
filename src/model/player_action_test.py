@@ -155,6 +155,11 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
 class AnnounceMarriageActionTest(unittest.TestCase):
   """Tests for the AnnounceMarriageAction class."""
 
+  def test_card_property(self):
+    action = AnnounceMarriageAction(PlayerId.ONE,
+                                    Card(Suit.DIAMONDS, CardValue.KING))
+    self.assertEqual(Card(Suit.DIAMONDS, CardValue.KING), action.card)
+
   def test_equality(self):
     self.assertEqual(
       AnnounceMarriageAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.KING)),
@@ -275,6 +280,10 @@ class AnnounceMarriageActionTest(unittest.TestCase):
 
 class PlayCardActionTest(unittest.TestCase):
   """Tests for the PlayCardAction class."""
+
+  def test_card_property(self):
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.DIAMONDS, CardValue.ACE))
+    self.assertEqual(Card(Suit.DIAMONDS, CardValue.ACE), action.card)
 
   def test_equality(self):
     self.assertEqual(
