@@ -85,6 +85,10 @@ class TalonWidget(Layout, DebuggableWidget):
     self._trump_card = None
     return widget
 
+  @property
+  def trump_card(self) -> Optional[CardWidget]:
+    return self._trump_card
+
   def push_card(self, widget: CardWidget) -> None:
     """Add a new card on top of the existing talon."""
     assert widget is not None, "Card widget cannot be None"

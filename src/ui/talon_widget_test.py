@@ -36,6 +36,7 @@ def _get_children_index(parent: TalonWidget,
 class TalonWidgetTest(unittest.TestCase):
   def test_set_and_remove_trump_card(self):
     talon_widget = TalonWidget()
+    self.assertIsNone(talon_widget.trump_card)
     with self.assertRaisesRegex(AssertionError, "No trump card set"):
       talon_widget.remove_trump_card()
     with self.assertRaisesRegex(AssertionError,
@@ -44,9 +45,11 @@ class TalonWidgetTest(unittest.TestCase):
       talon_widget.set_trump_card(None)
     trump_card = _get_test_card()
     talon_widget.set_trump_card(trump_card)
+    self.assertEqual(trump_card, talon_widget.trump_card)
     with self.assertRaisesRegex(AssertionError, "Trump card is already set"):
       talon_widget.set_trump_card(_get_test_card())
     self.assertIs(trump_card, talon_widget.remove_trump_card())
+    self.assertIsNone(talon_widget.trump_card)
     with self.assertRaisesRegex(AssertionError, "No trump card set"):
       talon_widget.remove_trump_card()
 
