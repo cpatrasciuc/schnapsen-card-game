@@ -151,6 +151,25 @@ class CardSlotsLayoutTest(unittest.TestCase):
     cards_layout.add_card(Widget(), 1, 2)
     self.assertEqual((None, None), cards_layout.first_free_slot)
 
+  def test_add_card_at_row_col(self):
+    cards_layout = CardSlotsLayout(rows=2, cols=3)
+    with self.assertRaises(AssertionError):
+      cards_layout.add_card(Widget(), None, 0)
+    with self.assertRaises(AssertionError):
+      cards_layout.add_card(Widget(), 0, None)
+    widget = Widget()
+    cards_layout.add_card(widget, 1, 1)
+    for _ in range(5):
+      cards_layout.add_card(Widget())
+    with self.assertRaisesRegex(AssertionError, "Slot not empty"):
+      cards_layout.add_card(Widget(), 1, 0)
+    with self.assertRaisesRegex(AssertionError, "No empty slot"):
+      cards_layout.add_card(Widget())
+    self.assertIs(widget, cards_layout.remove_card(1, 1))
+    cards_layout.add_card(Widget())
+    with self.assertRaisesRegex(AssertionError, "Out of bounds"):
+      cards_layout.add_card(Widget(), 10, 10)
+
 
 class CardSlotsLayoutGraphicTest(GraphicUnitTest):
   def test_children_are_resized_and_repositioned(self):

@@ -77,13 +77,21 @@ class CardSlotsLayout(Layout, DebuggableWidget):
           return row, col
     return None, None
 
-  def add_card(self, widget: Widget, row: int, col: int) -> None:
+  def add_card(self, widget: Widget, row: Optional[int] = None,
+               col: Optional[int] = None) -> None:
     """
     Adds a widget to the slot specified by row and col. The slot must be empty
-    (i.e., not already occupied by another widget).
+    (i.e., not already occupied by another widget). If row and col are None,
+    the next free slot is used. Row and col must be either both not None or both
+    None.
     """
-    assert row < self._rows and col < self._cols, (row, col)
-    assert self._slots[row][col] is None, (self._slots[row][col], row, col)
+    assert (row is None) == (col is None), (row, col)
+    if row is None:
+      row, col = self.first_free_slot
+      assert row is not None, "No empty slot"
+    assert row < self._rows and col < self._cols, f"Out of bounds: {row}, {col}"
+    assert self._slots[row][col] is None, (
+      f"Slot not empty: {self._slots[row][col]}", row, col)
     self._slots[row][col] = widget
     super().add_widget(widget)
 
