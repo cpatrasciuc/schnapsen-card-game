@@ -95,9 +95,13 @@ class TalonWidget(Layout, DebuggableWidget):
     self._talon.append(widget)
     self.add_widget(widget, index=1 if self._closed else 0)
 
-  def pop_card(self) -> CardWidget:
-    """Remove and return a card from the top of the talon."""
-    assert len(self._talon) > 0, "The talon is empty"
+  def pop_card(self) -> Optional[CardWidget]:
+    """
+    Remove and return a card from the top of the talon. If the talon is empty,
+    it returns None.
+    """
+    if len(self._talon) == 0:
+      return None
     widget = self._talon.pop()
     self.remove_widget(widget)
     return widget
