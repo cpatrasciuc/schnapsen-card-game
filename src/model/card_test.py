@@ -111,3 +111,12 @@ class CardTest(unittest.TestCase):
     card2 = Card(Suit.SPADES, CardValue.QUEEN)
     self.assertFalse(card1.wins(card2, trump_suit=Suit.SPADES))
     self.assertTrue(card2.wins(card1, trump_suit=Suit.SPADES))
+
+  def test_marriage_pair(self):
+    for suit in Suit:
+      king = Card(suit, CardValue.KING)
+      queen = Card(suit, CardValue.QUEEN)
+      self.assertEqual(king, queen.marriage_pair)
+      self.assertEqual(queen, king.marriage_pair)
+    with self.assertRaises(AssertionError):
+      _ = Card(Suit.DIAMONDS, CardValue.TEN).marriage_pair

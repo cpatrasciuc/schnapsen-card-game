@@ -55,3 +55,17 @@ class Card:
     if self.suit == other.suit:
       return self.card_value > other.card_value
     return self.suit == trump_suit
+
+  @property
+  def marriage_pair(self) -> "Card":
+    """
+    If this card is part of a marriage (i.e., it is a queen or a king), this
+    property returns the other card from the marriage. This property should not
+    be accessed for cards that cannot be part of a marriage (jacks, tens, aces).
+    """
+    assert self.card_value in [CardValue.QUEEN, CardValue.KING], self
+    if self.card_value == CardValue.KING:
+      pair_card_value = CardValue.QUEEN
+    else:
+      pair_card_value = CardValue.KING
+    return Card(suit=self.suit, card_value=pair_card_value)
