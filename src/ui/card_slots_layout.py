@@ -95,7 +95,7 @@ class CardSlotsLayout(Layout, DebuggableWidget):
     self._slots[row][col] = widget
     super().add_widget(widget)
 
-  def remove_card(self, row: int, col: int) -> Optional[Widget]:
+  def remove_card_at(self, row: int, col: int) -> Optional[Widget]:
     """
     Removes a widget from the slot specified by row and col. If the slot is not
     empty, it returns the widget that got removed.

@@ -100,8 +100,8 @@ class CardSlotsLayoutTest(unittest.TestCase):
     cards_layout = CardSlotsLayout(rows=1, cols=3)
     widget = Widget()
     cards_layout.add_card(widget, 0, 0)
-    self.assertIs(widget, cards_layout.remove_card(0, 0))
-    self.assertIsNone(cards_layout.remove_card(0, 0))
+    self.assertIs(widget, cards_layout.remove_card_at(0, 0))
+    self.assertIsNone(cards_layout.remove_card_at(0, 0))
 
   def test_cannot_add_outside_of_the_grid(self):
     cards_layout = CardSlotsLayout(rows=2, cols=3)
@@ -143,7 +143,7 @@ class CardSlotsLayoutTest(unittest.TestCase):
     self.assertEqual((0, 2), cards_layout.first_free_slot)
     cards_layout.add_card(Widget(), 0, 2)
     self.assertEqual((1, 0), cards_layout.first_free_slot)
-    cards_layout.remove_card(0, 1)
+    cards_layout.remove_card_at(0, 1)
     self.assertEqual((0, 1), cards_layout.first_free_slot)
     cards_layout.add_card(Widget(), 0, 1)
     cards_layout.add_card(Widget(), 1, 0)
@@ -165,7 +165,7 @@ class CardSlotsLayoutTest(unittest.TestCase):
       cards_layout.add_card(Widget(), 1, 0)
     with self.assertRaisesRegex(AssertionError, "No empty slot"):
       cards_layout.add_card(Widget())
-    self.assertIs(widget, cards_layout.remove_card(1, 1))
+    self.assertIs(widget, cards_layout.remove_card_at(1, 1))
     cards_layout.add_card(Widget())
     with self.assertRaisesRegex(AssertionError, "Out of bounds"):
       cards_layout.add_card(Widget(), 10, 10)
@@ -211,7 +211,7 @@ class CardSlotsLayoutGraphicTest(GraphicUnitTest):
 
     # Remove the widget from the CardSlotsLayout, move the CardSlotsLayout and
     # check that the size and position of the widget are not affected.
-    self.assertIs(widget, cards_layout.remove_card(0, 1))
+    self.assertIs(widget, cards_layout.remove_card_at(0, 1))
     cards_layout.pos = 30, 40
     self.advance_frames(1)
     self.assertEqual([310, 20], widget.pos)
