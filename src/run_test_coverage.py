@@ -28,7 +28,12 @@ def run_all_tests_with_coverage() -> float:
   loader = unittest.TestLoader()
   tests = loader.discover(os.getcwd(), pattern=tests_file_pattern)
   test_runner = unittest.runner.TextTestRunner()
-  test_runner.run(tests)
+  result = test_runner.run(tests)
+  if not result.wasSuccessful():
+    print(result.errors)
+    print(result.failures)
+    print("\nTests failed. Coverage report will not be generated.")
+    return -1
 
   cov.stop()
   cov.save()
