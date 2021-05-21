@@ -170,6 +170,18 @@ class CardSlotsLayoutTest(unittest.TestCase):
     with self.assertRaisesRegex(AssertionError, "Out of bounds"):
       cards_layout.add_card(Widget(), 10, 10)
 
+  def test_remove_card(self):
+    cards_layout = CardSlotsLayout(rows=2, cols=3)
+    card = Widget()
+    self.assertEqual((None, None), cards_layout.remove_card(card))
+    cards_layout.add_card(card)
+    self.assertEqual((0, 0), cards_layout.remove_card(card))
+    cards_layout.add_card(card, 1, 2)
+    self.assertEqual((1, 2), cards_layout.remove_card(card))
+    with self.assertRaisesRegex(AssertionError, "Card cannot be None"):
+      # noinspection PyTypeChecker
+      self.assertEqual((None, None), cards_layout.remove_card(None))
+
 
 class CardSlotsLayoutGraphicTest(GraphicUnitTest):
   def test_children_are_resized_and_repositioned(self):

@@ -107,6 +107,20 @@ class CardSlotsLayout(Layout, DebuggableWidget):
       self._slots[row][col] = None
     return widget
 
+  def remove_card(self, card: Widget) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Removes the given card from this CardSlotsLayout widget and returns the row
+    and col where this card was found before it was removed. If the given card
+    is not found in any slot, this method returns (None, None).
+    """
+    assert card is not None, "Card cannot be None"
+    for row in range(self._rows):
+      for col in range(self._cols):
+        if self._slots[row][col] == card:
+          self.remove_card_at(row, col)
+          return row, col
+    return None, None
+
   def _update_card_size(self) -> None:
     slot_height = self.height / ((1 + self._spacing) * (self._rows - 1) + 1)
     width_if_height_is_fixed = slot_height * self._ratio
