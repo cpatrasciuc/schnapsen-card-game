@@ -218,6 +218,14 @@ class GameWidget(FloatLayout):
     """
     return PlayerPair(one=self._human_cards, two=self._computer_cards)
 
+  @property
+  def play_area(self) -> FloatLayout:
+    """
+    Returns a reference to the widget representing the area where the cards are
+    played during a trick.
+    """
+    return self.ids.play_area
+
   def init_from_game_state(self, game_state: GameState) -> None:
     # TODO(ui): maybe reset all widgets and cards.
     # noinspection PyTypeChecker
