@@ -72,6 +72,10 @@ class CardWidget(Scatter):
     assert abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)
 
   @property
+  def card(self) -> Card:
+    return self._card
+
+  @property
   def visible(self) -> bool:
     """
     Specifies whether the player can see this card or not (i.e., the player can

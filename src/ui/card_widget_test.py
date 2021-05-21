@@ -17,8 +17,10 @@ from ui.card_widget import CardWidget
 
 class CardWidgetTest(unittest.TestCase):
   def test_create_widgets_for_all_cards(self):
-    card_widgets = CardWidget.create_widgets_for_all_cards()
-    self.assertEqual(20, len(card_widgets.keys()))
+    card_dict = CardWidget.create_widgets_for_all_cards()
+    self.assertEqual(20, len(card_dict.keys()))
+    for card, card_widget in card_dict.items():
+      self.assertEqual(card, card_widget.card)
 
   def test_aspect_ratio_is_enforced(self):
     card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
