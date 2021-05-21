@@ -8,8 +8,12 @@ from typing import List
 from kivy.base import EventLoop
 from kivy.tests.common import GraphicUnitTest
 
+from model.card import Card
+from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
+from model.player_action import ExchangeTrumpCardAction
 from model.player_id import PlayerId
+from model.suit import Suit
 from ui.game_widget import GameWidget
 
 
@@ -84,6 +88,21 @@ class GameWidgetTest(unittest.TestCase):
                      game_widget.ids.human_trick_score_label.text)
     self.assertEqual("Trick points: 53",
                      game_widget.ids.computer_trick_score_label.text)
+
+  def test_on_action_exchange_trump_card(self):
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+    trump_card_widget = game_widget.talon_widget.trump_card
+    self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
+    trump_jack_widget = game_widget.cards[Card(Suit.CLUBS, CardValue.JACK)]
+    self.assertIs(game_widget.player_card_widgets.two, trump_jack_widget.parent)
+    with self.assertRaisesRegex(AssertionError,
+                                "Trump Jack not in player's hand"):
+      game_widget.on_action(ExchangeTrumpCardAction(PlayerId.ONE))
+    game_widget.on_action(ExchangeTrumpCardAction(PlayerId.TWO))
+    self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
+                     game_widget.talon_widget.trump_card.card)
+    self.assertIs(game_widget.player_card_widgets.two, trump_card_widget.parent)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):

@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import logging
 from textwrap import dedent
 from typing import Dict
 
@@ -13,6 +14,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
+from model.player_action import PlayerAction, ExchangeTrumpCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
@@ -284,6 +286,35 @@ class GameWidget(FloatLayout):
     self.ids.menu_placeholder.height = self.height * (
         1 - 0.25 - 0.25 - 0.1 - 0.3)
     super().do_layout(*args, **kwargs)
+
+  def _get_trump_jack_widget(self) -> CardWidget:
+    trump_jack = Card(suit=self._talon.trump_card.card.suit,
+                      card_value=CardValue.JACK)
+    trump_jack_widget = self._cards[trump_jack]
+    return trump_jack_widget
+
+  def _exchange_trump_card(self, player: PlayerId) -> None:
+    trump_jack_widget = self._get_trump_jack_widget()
+    trump_jack_widget.visible = True
+    card_slots_widget = self._player_card_widgets[player]
+    row, col = card_slots_widget.remove_card(trump_jack_widget)
+    assert row is not None and col is not None, \
+      "Trump Jack not in player's hand"
+    trump_card_widget = self._talon.remove_trump_card()
+    trump_card_widget.rotation = 0
+    # TODO(ui): Sort the cards in hand.
+    card_slots_widget.add_card(trump_card_widget, row, col)
+    self._talon.set_trump_card(trump_jack_widget)
+
+  def on_action(self, action: PlayerAction) -> None:
+    """
+    This method should be called whenever a new player action was performed in a
+    game of Schnapsen, in order to update the state of the widget accordingly.
+    :param action: The latest action performed by one of the players.
+    """
+    logging.info("GameWidget: on_action: %s", action)
+    if isinstance(action, ExchangeTrumpCardAction):
+      self._exchange_trump_card(action.player_id)
 
 
 if __name__ == "__main__":
