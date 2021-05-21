@@ -13,6 +13,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
+from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
@@ -177,24 +178,26 @@ class GameWidget(FloatLayout):
     self.ids.talon_placeholder.add_widget(self._talon)
 
   def _init_cards_in_hand_widgets(self):
-    self._computer_cards = CardSlotsLayout(rows=1, cols=5, spacing=0.1,
-                                           align_top=False)
-    self.ids.computer_cards_placeholder.add_widget(self._computer_cards)
-    self._computer_cards.size_hint = None, None
-    self._human_cards = CardSlotsLayout(rows=1, cols=5, spacing=0.1,
-                                        align_top=True)
-    self.ids.human_cards_placeholder.add_widget(self._human_cards)
-    self._human_cards.bind(size=self._computer_cards.setter('size'))
+    computer_cards = CardSlotsLayout(rows=1, cols=5, spacing=0.1,
+                                     align_top=False)
+    self.ids.computer_cards_placeholder.add_widget(computer_cards)
+    computer_cards.size_hint = None, None
+    human_cards = CardSlotsLayout(rows=1, cols=5, spacing=0.1,
+                                  align_top=True)
+    self.ids.human_cards_placeholder.add_widget(human_cards)
+    human_cards.bind(size=computer_cards.setter('size'))
+    self._player_card_widgets = PlayerPair(one=human_cards, two=computer_cards)
 
   def _init_tricks_widgets(self):
-    self._computer_tricks = CardSlotsLayout(rows=2, cols=8, spacing=-0.2,
-                                            align_top=True)
-    self._computer_tricks.size_hint = 1, 1
-    self.ids.computer_tricks_placeholder.add_widget(self._computer_tricks)
-    self._human_tricks = CardSlotsLayout(rows=2, cols=8, spacing=-0.2,
-                                         align_top=True)
-    self._human_tricks.size_hint = 1, 1
-    self.ids.human_tricks_placeholder.add_widget(self._human_tricks)
+    computer_tricks = CardSlotsLayout(rows=2, cols=8, spacing=-0.2,
+                                      align_top=True)
+    computer_tricks.size_hint = 1, 1
+    self.ids.computer_tricks_placeholder.add_widget(computer_tricks)
+    human_tricks = CardSlotsLayout(rows=2, cols=8, spacing=-0.2,
+                                   align_top=True)
+    human_tricks.size_hint = 1, 1
+    self.ids.human_tricks_placeholder.add_widget(human_tricks)
+    self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
   @property
   def cards(self) -> Dict[Card, CardWidget]:
@@ -209,14 +212,14 @@ class GameWidget(FloatLayout):
     """
     Returns the pair of widgets used to display the tricks won by each player.
     """
-    return PlayerPair(one=self._human_tricks, two=self._computer_tricks)
+    return self._tricks_widgets
 
   @property
   def player_card_widgets(self) -> PlayerPair[CardSlotsLayout]:
     """
     Returns the pair of widgets used to display the cards held by each player.
     """
-    return PlayerPair(one=self._human_cards, two=self._computer_cards)
+    return self._player_card_widgets
 
   @property
   def play_area(self) -> FloatLayout:
@@ -228,23 +231,19 @@ class GameWidget(FloatLayout):
 
   def init_from_game_state(self, game_state: GameState) -> None:
     # TODO(ui): maybe reset all widgets and cards.
-    # noinspection PyTypeChecker
-    for i, card in enumerate(sorted(game_state.cards_in_hand.one)):
-      self._human_cards.add_card(self._cards[card], 0, i)
-    # noinspection PyTypeChecker
-    for i, card in enumerate(sorted(game_state.cards_in_hand.two)):
-      self._cards[card].visible = False
-      self._computer_cards.add_card(self._cards[card], 0, i)
-    for i, trick in enumerate(game_state.won_tricks.one):
-      row = i // 4
-      col = (2 * i) % 8
-      self._human_tricks.add_card(self._cards[trick.one], row, col)
-      self._human_tricks.add_card(self._cards[trick.two], row, col + 1)
-    for i, trick in enumerate(game_state.won_tricks.two):
-      row = i // 4
-      col = (2 * i) % 8
-      self._computer_tricks.add_card(self._cards[trick.one], row, col)
-      self._computer_tricks.add_card(self._cards[trick.two], row, col + 1)
+    for player in PlayerId:
+      # noinspection PyTypeChecker
+      for i, card in enumerate(sorted(game_state.cards_in_hand[player])):
+        self._cards[card].visible = player == PlayerId.ONE
+        self._player_card_widgets[player].add_card(self._cards[card], 0, i)
+
+    for player in PlayerId:
+      for trick in game_state.won_tricks[player]:
+        self._cards[trick.one].visible = True
+        self._tricks_widgets[player].add_card(self._cards[trick.one])
+        self._cards[trick.two].visible = True
+        self._tricks_widgets[player].add_card(self._cards[trick.two])
+
     self._talon.set_trump_card(self._cards[game_state.trump_card])
     for card in reversed(game_state.talon):
       self._cards[card].visible = False
