@@ -230,6 +230,12 @@ class GameWidget(FloatLayout):
     return self.ids.play_area
 
   def init_from_game_state(self, game_state: GameState) -> None:
+    """
+    Updates this GameWidget such that it represents the game state provided as
+    an argument. It does not hold a reference to the game_state object. This
+    GameWidget will not update itself automatically if subsequent changes are
+    performed on the game_state object.
+    """
     # TODO(ui): maybe reset all widgets and cards.
     for player in PlayerId:
       # noinspection PyTypeChecker
@@ -264,7 +270,11 @@ class GameWidget(FloatLayout):
     self.ids.human_trick_score_label.text = f"Trick points: {score.one}"
     self.ids.computer_trick_score_label.text = f"Trick points: {score.two}"
 
-  def do_layout(self, *args, **kwargs):
+  def do_layout(self, *args, **kwargs) -> None:
+    """
+    This function is called when a layout is called by a trigger. That means
+    whenever the position, the size or the children of this layout change.
+    """
     self.ids.computer_tricks_placeholder.height = 0.25 * self.height
     self.ids.human_tricks_placeholder.height = \
       self.ids.computer_tricks_placeholder.height
