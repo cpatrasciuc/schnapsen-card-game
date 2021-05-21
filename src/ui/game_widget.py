@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 from textwrap import dedent
+from typing import Dict
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
@@ -12,6 +13,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
+from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
@@ -156,12 +158,19 @@ Builder.load_string(dedent("""
 
 
 class GameWidget(FloatLayout):
+  """The main widget used to view/play a game of Schnapsen."""
+
   def __init__(self, **kwargs):
+    """
+    Instantiates a new GameWidget and all its children widgets. All the widgets
+    are empty (i.e., no cards).
+    """
     super().__init__(**kwargs)
     self._cards = CardWidget.create_widgets_for_all_cards()
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
+    self.do_layout()
 
   def _init_talon_widget(self):
     self._talon = TalonWidget()
@@ -188,8 +197,26 @@ class GameWidget(FloatLayout):
     self.ids.human_tricks_placeholder.add_widget(self._human_tricks)
 
   @property
-  def cards(self):
+  def cards(self) -> Dict[Card, CardWidget]:
     return self._cards
+
+  @property
+  def talon_widget(self) -> TalonWidget:
+    return self._talon
+
+  @property
+  def tricks_widgets(self) -> PlayerPair[CardSlotsLayout]:
+    """
+    Returns the pair of widgets used to display the tricks won by each player.
+    """
+    return PlayerPair(one=self._human_tricks, two=self._computer_tricks)
+
+  @property
+  def player_card_widgets(self) -> PlayerPair[CardSlotsLayout]:
+    """
+    Returns the pair of widgets used to display the cards held by each player.
+    """
+    return PlayerPair(one=self._human_cards, two=self._computer_cards)
 
   def init_from_game_state(self, game_state: GameState) -> None:
     # TODO(ui): maybe reset all widgets and cards.
