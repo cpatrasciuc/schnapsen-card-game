@@ -48,13 +48,23 @@ Builder.load_string(dedent("""
         # Scores for the computer player.
         BoxLayout:
           size_hint_y: 0.1
+          orientation: 'vertical'
           Label:
-            id: computer_score_label
-            text: "Game points: 5\\nTrick points: 45"
-            font_size: self.height / 4
+            id: computer_game_score_label
+            text: "Game points: 5"
+            font_size: self.height / 2
+            text_size: self.size
+            halign: 'left'
+            valign: 'bottom'
+            size_hint_y: 0.5
+          Label:
+            id: computer_trick_score_label
+            text: "Trick points: 45"
+            font_size: self.height / 2
             text_size: self.size
             halign: 'left'
             valign: 'top'
+            size_hint_y: 0.5
           
         # The area where the player can drag and drop cards in order to play
         # them.
@@ -77,13 +87,23 @@ Builder.load_string(dedent("""
         # Scores for the human player.
         BoxLayout:
           size_hint_y: 0.1
+          orientation: 'vertical'
           Label:
-            id: human_score_label
-            text: "Game points: 3\\nTrick points: 27"
-            font_size: self.height / 4
+            id: human_trick_score_label
+            text: "Trick points: 27"
+            font_size: self.height / 2
             text_size: self.size
             halign: 'left'
             valign: 'bottom'
+            size_hint_y: 0.5
+          Label:
+            id: human_game_score_label
+            text: "Game points: 3"
+            font_size: self.height / 2
+            text_size: self.size
+            halign: 'left'
+            valign: 'top'
+            size_hint_y: 0.5
   
         # Placeholder for the widget that displays the human player's cards.
         BoxLayout:
@@ -195,10 +215,10 @@ class GameWidget(FloatLayout):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
 
-    self.ids.human_score_label.text = \
-      f"Game points: 0\nTrick points: {game_state.trick_points.one}"
-    self.ids.computer_score_label.text = \
-      f"Game points: 0\nTrick points: {game_state.trick_points.two}"
+    self.ids.human_trick_score_label.text = \
+      f"Trick points: {game_state.trick_points.one}"
+    self.ids.computer_trick_score_label.text = \
+      f"Trick points: {game_state.trick_points.two}"
 
     for suit in game_state.marriage_suits.one + game_state.marriage_suits.two:
       self._cards[Card(suit, CardValue.QUEEN)].visible = True
