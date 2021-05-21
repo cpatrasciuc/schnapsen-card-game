@@ -106,6 +106,15 @@ class TalonWidget(Layout, DebuggableWidget):
     self.remove_widget(widget)
     return widget
 
+  def top_card(self) -> Optional[CardWidget]:
+    """
+    Returns a reference to the top CardWidget in the talon. If the talon is
+    empty, it returns None.
+    """
+    if len(self._talon) > 0:
+      return self._talon[-1]
+    return None
+
   def do_layout(self, *_, **__):
     """
     This function is called when a layout is called by a trigger. That means

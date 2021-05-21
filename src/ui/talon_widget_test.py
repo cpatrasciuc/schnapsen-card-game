@@ -55,19 +55,28 @@ class TalonWidgetTest(unittest.TestCase):
 
   def test_add_and_remove_cards(self):
     talon_widget = TalonWidget()
+    self.assertIsNone(talon_widget.top_card())
     self.assertIsNone(talon_widget.pop_card())
     with self.assertRaisesRegex(AssertionError, "Card widget cannot be None"):
       # noinspection PyTypeChecker
       talon_widget.push_card(None)
+
     card_1 = _get_test_card()
     talon_widget.push_card(card_1)
+    self.assertIs(card_1, talon_widget.top_card())
     card_2 = _get_test_card()
     talon_widget.push_card(card_2)
+    self.assertIs(card_2, talon_widget.top_card())
     card_3 = _get_test_card()
     talon_widget.push_card(card_3)
+    self.assertIs(card_3, talon_widget.top_card())
+
     self.assertIs(card_3, talon_widget.pop_card())
+    self.assertIs(card_2, talon_widget.top_card())
     self.assertIs(card_2, talon_widget.pop_card())
+    self.assertIs(card_1, talon_widget.top_card())
     self.assertIs(card_1, talon_widget.pop_card())
+    self.assertIsNone(talon_widget.top_card())
     self.assertIsNone(talon_widget.pop_card())
 
   def test_trump_card_z_index_relative_to_other_talon_cards(self):
