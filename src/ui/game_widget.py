@@ -14,7 +14,8 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
-from model.player_action import PlayerAction, ExchangeTrumpCardAction
+from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
+  CloseTheTalonAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
@@ -315,6 +316,8 @@ class GameWidget(FloatLayout):
     logging.info("GameWidget: on_action: %s", action)
     if isinstance(action, ExchangeTrumpCardAction):
       self._exchange_trump_card(action.player_id)
+    elif isinstance(action, CloseTheTalonAction):
+      self._talon.closed = True
 
 
 if __name__ == "__main__":

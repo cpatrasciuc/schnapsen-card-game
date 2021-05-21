@@ -11,7 +11,7 @@ from kivy.tests.common import GraphicUnitTest
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
-from model.player_action import ExchangeTrumpCardAction
+from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction
 from model.player_id import PlayerId
 from model.suit import Suit
 from ui.game_widget import GameWidget
@@ -103,6 +103,13 @@ class GameWidgetTest(unittest.TestCase):
     self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
                      game_widget.talon_widget.trump_card.card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card_widget.parent)
+
+  def test_on_action_close_the_talon(self):
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+    self.assertFalse(game_widget.talon_widget.closed)
+    game_widget.on_action(CloseTheTalonAction(PlayerId.ONE))
+    self.assertTrue(game_widget.talon_widget.closed)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
