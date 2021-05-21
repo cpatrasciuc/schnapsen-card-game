@@ -134,6 +134,23 @@ class CardSlotsLayoutTest(unittest.TestCase):
     parent.do_layout()
     self.compute_layout(cards_layout, (33, 100), [[(0, 0), (33, 0), (66, 0)]])
 
+  def test_first_free_slot(self):
+    cards_layout = CardSlotsLayout(rows=2, cols=3)
+    self.assertEqual((0, 0), cards_layout.first_free_slot)
+    cards_layout.add_card(Widget(), 0, 1)
+    self.assertEqual((0, 0), cards_layout.first_free_slot)
+    cards_layout.add_card(Widget(), 0, 0)
+    self.assertEqual((0, 2), cards_layout.first_free_slot)
+    cards_layout.add_card(Widget(), 0, 2)
+    self.assertEqual((1, 0), cards_layout.first_free_slot)
+    cards_layout.remove_card(0, 1)
+    self.assertEqual((0, 1), cards_layout.first_free_slot)
+    cards_layout.add_card(Widget(), 0, 1)
+    cards_layout.add_card(Widget(), 1, 0)
+    cards_layout.add_card(Widget(), 1, 1)
+    cards_layout.add_card(Widget(), 1, 2)
+    self.assertEqual((None, None), cards_layout.first_free_slot)
+
 
 class CardSlotsLayoutGraphicTest(GraphicUnitTest):
   def test_children_are_resized_and_repositioned(self):

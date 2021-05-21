@@ -64,6 +64,19 @@ class CardSlotsLayout(Layout, DebuggableWidget):
   def cols(self) -> int:
     return self._cols
 
+  @property
+  def first_free_slot(self) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Iterates through the available slots starting with (0, 0) and returns the
+    row and col for the first empty slot. If there is no empty slot it returns
+    (None, None).
+    """
+    for row in range(self._rows):
+      for col in range(self._cols):
+        if self._slots[row][col] is None:
+          return row, col
+    return None, None
+
   def add_card(self, widget: Widget, row: int, col: int) -> None:
     """
     Adds a widget to the slot specified by row and col. The slot must be empty
