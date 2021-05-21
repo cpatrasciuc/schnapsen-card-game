@@ -250,14 +250,20 @@ class GameWidget(FloatLayout):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
 
-    self.ids.human_trick_score_label.text = \
-      f"Trick points: {game_state.trick_points.one}"
-    self.ids.computer_trick_score_label.text = \
-      f"Trick points: {game_state.trick_points.two}"
+    self.on_score_modified(game_state.trick_points)
 
+    # TODO(ui): Remove this hack once Card.visible is available.
     for suit in game_state.marriage_suits.one + game_state.marriage_suits.two:
       self._cards[Card(suit, CardValue.QUEEN)].visible = True
       self._cards[Card(suit, CardValue.KING)].visible = True
+
+  def on_score_modified(self, score: PlayerPair[int]) -> None:
+    """
+    This method should be called whenever the trick points need to be updated.
+    :param score: The updated value for trick points.
+    """
+    self.ids.human_trick_score_label.text = f"Trick points: {score.one}"
+    self.ids.computer_trick_score_label.text = f"Trick points: {score.two}"
 
   def do_layout(self, *args, **kwargs):
     self.ids.computer_tricks_placeholder.height = 0.25 * self.height

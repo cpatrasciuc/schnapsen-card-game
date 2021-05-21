@@ -2,28 +2,20 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import unittest
 from typing import List
 
 from kivy.base import EventLoop
 from kivy.tests.common import GraphicUnitTest
 
+from model.game_state_test_utils import get_game_state_for_tests
+from model.player_id import PlayerId
 from ui.game_widget import GameWidget
 
 
-class GameWidgetGraphicTest(GraphicUnitTest):
-  # pylint: disable=invalid-name
-  def assertListAlmostEqual(self, first: List, second: List,
-                            places: int = 7, msg: str = ""):
-    self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
-    for i, item in enumerate(first):
-      self.assertAlmostEqual(item, second[i],
-                             msg=msg + f"\nFirst diff at index {i}.",
-                             places=places)
-
+class GameWidgetTest(unittest.TestCase):
   def test_create_empty_widget(self):
-    EventLoop.ensure_window()
     game_widget = GameWidget()
-    self.render(game_widget)
 
     # Creates all the cards without a parent widget.
     self.assertEqual(20, len(game_widget.cards.keys()))
@@ -51,6 +43,58 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     # No cards in the talon widget.
     self.assertIsNone(game_widget.talon_widget.pop_card())
     self.assertIsNone(game_widget.talon_widget.trump_card)
+
+  def test_init_from_game_state(self):
+    game_widget = GameWidget()
+
+    game_state = get_game_state_for_tests()
+    game_widget.init_from_game_state(game_state)
+    card_widgets = game_widget.cards
+
+    # Cards for each player are in the right widgets.
+    # TODO(tests): Check the visibility of the cards after adding Card.visible.
+    player_card_widgets = game_widget.player_card_widgets
+    for player in PlayerId:
+      for card in game_state.cards_in_hand[player]:
+        self.assertIs(player_card_widgets[player], card_widgets[card].parent)
+
+    # Cards for already played tricks are in the right widgets.
+    tricks_widgets = game_widget.tricks_widgets
+    for player in PlayerId:
+      for trick in game_state.won_tricks[player]:
+        self.assertIs(tricks_widgets[player], card_widgets[trick.one].parent)
+        self.assertTrue(card_widgets[trick.one].visible)
+        self.assertIs(tricks_widgets[player], card_widgets[trick.two].parent)
+        self.assertTrue(card_widgets[trick.two].visible)
+
+    # Trump card is correctly set.
+    self.assertIs(game_widget.talon_widget.trump_card,
+                  card_widgets[game_state.trump_card])
+    self.assertTrue(card_widgets[game_state.trump_card].visible)
+
+    # Remaining cards are in the talon.
+    for card in game_state.talon:
+      card_widget = game_widget.talon_widget.pop_card()
+      self.assertEqual(card, card_widget.card)
+      self.assertFalse(card_widget.visible)
+    self.assertIsNone(game_widget.talon_widget.pop_card())
+
+    # The trick points are correctly displayed.
+    self.assertEqual("Trick points: 22",
+                     game_widget.ids.human_trick_score_label.text)
+    self.assertEqual("Trick points: 53",
+                     game_widget.ids.computer_trick_score_label.text)
+
+
+class GameWidgetGraphicTest(GraphicUnitTest):
+  # pylint: disable=invalid-name
+  def assertListAlmostEqual(self, first: List, second: List,
+                            places: int = 7, msg: str = ""):
+    self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
+    for i, item in enumerate(first):
+      self.assertAlmostEqual(item, second[i],
+                             msg=msg + f"\nFirst diff at index {i}.",
+                             places=places)
 
   # pylint: disable=too-many-statements
   def test_do_layout(self):
