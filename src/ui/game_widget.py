@@ -4,7 +4,7 @@
 
 import logging
 from textwrap import dedent
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
@@ -247,6 +247,8 @@ class GameWidget(FloatLayout):
     performed on the game_state object.
     """
     # TODO(ui): maybe reset all widgets and cards.
+
+    # TODO(ui): Maybe unify this with self._update_cards_in_hand().
     for player in PlayerId:
       # noinspection PyTypeChecker
       for i, card in enumerate(sorted(game_state.cards_in_hand[player])):
@@ -407,6 +409,36 @@ class GameWidget(FloatLayout):
       self._play_area.remove_widget(card_widget)
       self._player_card_widgets[player].add_card(card_widget)
       self._marriage_card = None
+
+  def on_new_cards_drawn(self, cards_in_hand: PlayerPair[List[Card]]) -> None:
+    """
+    This method should be called every time new cards are drawn from the talon
+    after a trick is completed, in order to update the state of this GameWidget
+    accordingly.
+    :param cards_in_hand: The updated list of cards that each play holds.
+    """
+    self._talon.pop_card()
+    if self._talon.pop_card() is None:
+      # TODO(ui): Leave an image with the trump suit.
+      # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
+      trump_card = self._talon.remove_trump_card()
+      trump_card.rotation = 0
+    self._update_cards_in_hand(cards_in_hand)
+
+  def _update_cards_in_hand(self,
+                            cards_in_hand: PlayerPair[List[Card]]) -> None:
+    for player in PlayerId:
+      for col in range(5):
+        self._player_card_widgets[player].remove_card_at(0, col)
+
+      # noinspection PyTypeChecker
+      for i, card in enumerate(sorted(cards_in_hand[player])):
+        # TODO(ui): Sort this by visibility and then randomize the hidden ones.
+        card_widget = self._cards[card]
+        self._player_card_widgets[player].add_card(card_widget, 0, i)
+        card_widget.do_translation = False
+        if player == PlayerId.ONE:
+          card_widget.visible = True
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from kivy.tests.common import GraphicUnitTest
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
+from model.game_state_validation import GameStateValidator
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
   PlayCardAction, AnnounceMarriageAction, PlayerAction
 from model.player_id import PlayerId
@@ -191,6 +192,149 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.player_card_widgets.one,
                   queen_hearts_widget.parent)
     self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
+
+  def test_on_new_cards_drawn_last_talon_card_player_one_wins(self):
+    game_widget = GameWidget()
+    game_state = get_game_state_for_tests()
+    game_widget.init_from_game_state(game_state)
+
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    action = PlayCardAction(PlayerId.ONE, ace_spades)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, ace_spades_widget.parent)
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
+
+    trick = PlayerPair(ace_spades, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.TWO)
+    self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
+    self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
+
+    last_talon_card = game_widget.talon_widget.top_card()
+    self.assertIsNotNone(last_talon_card)
+    trump_card = game_widget.talon_widget.trump_card
+    self.assertIsNotNone(trump_card)
+    game_widget.on_new_cards_drawn(game_state.cards_in_hand)
+    self.assertIsNone(game_widget.talon_widget.top_card())
+    self.assertIsNone(game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, last_talon_card.parent)
+    self.assertTrue(last_talon_card.visible)
+    self.assertIs(game_widget.player_card_widgets.two, trump_card.parent)
+    self.assertTrue(trump_card.visible)
+
+  def test_on_new_cards_drawn_last_talon_card_player_two_wins(self):
+    game_widget = GameWidget()
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+    game_widget.init_from_game_state(game_state)
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
+
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    action = PlayCardAction(PlayerId.ONE, ace_spades)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, ace_spades_widget.parent)
+
+    trick = PlayerPair(ace_spades, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.ONE)
+    self.assertIs(game_widget.tricks_widgets.one, ace_spades_widget.parent)
+    self.assertIs(game_widget.tricks_widgets.one, queen_diamonds_widget.parent)
+
+    last_talon_card = game_widget.talon_widget.top_card()
+    self.assertIsNotNone(last_talon_card)
+    trump_card = game_widget.talon_widget.trump_card
+    self.assertIsNotNone(trump_card)
+    game_widget.on_new_cards_drawn(game_state.cards_in_hand)
+    self.assertIsNone(game_widget.talon_widget.top_card())
+    self.assertIsNone(game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.two, last_talon_card.parent)
+    self.assertFalse(last_talon_card.visible)
+    self.assertIs(game_widget.player_card_widgets.one, trump_card.parent)
+    self.assertTrue(trump_card.visible)
+
+  def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trick = game_state.won_tricks[PlayerId.TWO].pop()
+      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+      game_state.talon.extend([trick.one, trick.two])
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+
+    first_talon_card = game_widget.cards[game_state.talon[0]]
+    second_talon_card = game_widget.cards[game_state.talon[1]]
+
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    trick = PlayerPair(queen_hearts, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.ONE)
+
+    self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
+    self.assertIs(game_widget.talon_widget, second_talon_card.parent)
+    game_widget.on_new_cards_drawn(game_state.cards_in_hand)
+    self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
+    self.assertIs(game_widget.player_card_widgets.one, first_talon_card.parent)
+    self.assertTrue(first_talon_card.visible)
+    self.assertIs(game_widget.player_card_widgets.two, second_talon_card.parent)
+    self.assertFalse(second_talon_card.visible)
+
+  def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trick = game_state.won_tricks[PlayerId.TWO].pop()
+      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+      game_state.talon.extend([trick.one, trick.two])
+      game_state.next_player = PlayerId.TWO
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+
+    first_talon_card = game_widget.cards[game_state.talon[0]]
+    second_talon_card = game_widget.cards[game_state.talon[1]]
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    action = PlayCardAction(PlayerId.ONE, queen_hearts)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    trick = PlayerPair(queen_hearts, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.TWO)
+
+    self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
+    self.assertIs(game_widget.talon_widget, second_talon_card.parent)
+    game_widget.on_new_cards_drawn(game_state.cards_in_hand)
+    self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
+    self.assertIs(game_widget.player_card_widgets.two, first_talon_card.parent)
+    self.assertFalse(first_talon_card.visible)
+    self.assertIs(game_widget.player_card_widgets.one, second_talon_card.parent)
+    self.assertTrue(second_talon_card.visible)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
