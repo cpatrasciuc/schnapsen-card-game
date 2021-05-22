@@ -171,6 +171,7 @@ class GameWidget(FloatLayout):
     """
     super().__init__(**kwargs)
     self._cards = CardWidget.create_widgets_for_all_cards()
+    self._play_area = self.ids.play_area.__self__
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
@@ -230,8 +231,7 @@ class GameWidget(FloatLayout):
     Returns a reference to the widget representing the area where the cards are
     played during a trick.
     """
-    # TODO(ui): Fix this by saving a non-weak reference in the constructor.
-    return self.ids.play_area.__self__
+    return self._play_area
 
   def init_from_game_state(self, game_state: GameState) -> None:
     """
@@ -317,7 +317,7 @@ class GameWidget(FloatLayout):
     slightly between the two players, so the cards will not overlap.
     """
     # TODO(ui): Maybe reposition played cards if widget size changes.
-    center = self.ids.play_area.center
+    center = self._play_area.center
     delta = self._player_card_widgets[player].card_size
     if player == PlayerId.ONE:
       delta = -delta[0], -delta[1]
@@ -334,13 +334,13 @@ class GameWidget(FloatLayout):
     """
     card_widget = self._cards[card]
     # TODO(tests): Add a test where the users drag the cards onto the play area.
-    if card_widget.parent != self.ids.play_area:
+    if card_widget.parent != self._play_area:
       logging.info("GameWidget: Moving %s to play area.", card)
       card_slots_widget = self._player_card_widgets[player]
       row, col = card_slots_widget.remove_card(card_widget)
       assert row is not None, "Player %s does not hold %s" % (player, card)
       card_widget.visible = True
-      self.ids.play_area.add_widget(card_widget)
+      self._play_area.add_widget(card_widget)
       if center is None:
         center = self._get_default_play_location(player)
       card_widget.size = self.player_card_widgets.one.card_size
