@@ -3,13 +3,12 @@
 #  found in the LICENSE file.
 
 from kivy.base import runTouchApp
-
+from kivy.lang import Builder
 from kivy.uix.widget import Widget
 
 # noinspection PyUnreachableCode
 if __debug__:
   from textwrap import dedent
-  from kivy.lang import Builder
 
   # Based on this article:
   # http://robertour.com/2013/10/02/easy-way-debugging-kivy-interfaces/
@@ -49,6 +48,7 @@ if __debug__:
     of the widget.
     """
 else:
+  Builder.load_string("<DebuggableWidget@Widget>:")
   DebuggableWidget = Widget
 
 if __name__ == "__main__":
