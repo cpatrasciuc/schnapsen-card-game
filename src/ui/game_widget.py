@@ -172,6 +172,12 @@ class GameWidget(FloatLayout):
     super().__init__(**kwargs)
     self._cards = CardWidget.create_widgets_for_all_cards()
     self._play_area = self.ids.play_area.__self__
+
+    # When a marriage is announced, this stores the details of the card that is
+    # only shown and not played, in order to return it to the player's hand when
+    # the trick is completed.
+    self._marriage_card: Optional[Tuple[PlayerId, CardWidget]] = None
+
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
@@ -371,6 +377,8 @@ class GameWidget(FloatLayout):
       center = self._play_area.center
       delta = self._get_card_pos_delta(action.player_id)
       new_center = center[0] + 2 * delta[1], center[1] + 2 * delta[1]
+      self._marriage_card = (action.player_id,
+                             self._cards[action.card.marriage_pair])
       self._move_player_card_to_play_area(action.player_id,
                                           action.card.marriage_pair, new_center)
     else:
@@ -391,6 +399,14 @@ class GameWidget(FloatLayout):
       card_widget = self._cards[card]
       self._play_area.remove_widget(card_widget)
       tricks_widget.add_card(card_widget)
+
+    # In case there was a marriage, move the card that was not played back to
+    # the player's hand.
+    if self._marriage_card is not None:
+      player, card_widget = self._marriage_card
+      self._play_area.remove_widget(card_widget)
+      self._player_card_widgets[player].add_card(card_widget)
+      self._marriage_card = None
 
 
 if __name__ == "__main__":

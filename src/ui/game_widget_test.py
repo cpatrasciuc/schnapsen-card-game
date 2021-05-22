@@ -163,6 +163,35 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
     self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
 
+  def test_on_trick_completed_after_marriage_announced(self):
+    game_widget = GameWidget()
+    game_state = get_game_state_for_tests()
+    game_widget.init_from_game_state(game_state)
+
+    king_hearts = Card(Suit.HEARTS, CardValue.KING)
+    king_hearts_widget = game_widget.cards[king_hearts]
+    queen_hearts_widget = game_widget.cards[king_hearts.marriage_pair]
+    action = AnnounceMarriageAction(PlayerId.ONE, king_hearts)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, king_hearts_widget.parent)
+    self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    action = PlayCardAction(PlayerId.TWO, queen_diamonds)
+    action.execute(game_state)
+    game_widget.on_action(action)
+    self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
+    self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
+
+    trick = PlayerPair(king_hearts, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.TWO)
+    self.assertIs(game_widget.tricks_widgets.two, king_hearts_widget.parent)
+    self.assertIs(game_widget.player_card_widgets.one,
+                  queen_hearts_widget.parent)
+    self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
+
 
 class GameWidgetGraphicTest(GraphicUnitTest):
   # pylint: disable=invalid-name
