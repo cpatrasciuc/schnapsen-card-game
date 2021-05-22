@@ -12,7 +12,7 @@ from kivy.uix.floatlayout import FloatLayout
 
 from model.card import Card
 from model.card_value import CardValue
-from model.game_state import GameState
+from model.game_state import GameState, Trick
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
   CloseTheTalonAction, PlayCardAction, AnnounceMarriageAction
@@ -375,6 +375,22 @@ class GameWidget(FloatLayout):
                                           action.card.marriage_pair, new_center)
     else:
       assert False, "Should not reach this code"
+
+  def on_trick_completed(self, trick: Trick, winner: PlayerId) -> None:
+    """
+    This method should be called whenever a trick is completed in a game of
+    Schnapsen, in order to update the state of this GameWidget accordingly.
+    :param trick: The trick that just got completed.
+    :param winner: The player that won the trick.
+    """
+    tricks_widget = self._tricks_widgets[winner]
+
+    # TODO(ui): Make sure translations are disabled after the card is dropped on
+    # the play area.
+    for card in [trick.one, trick.two]:
+      card_widget = self._cards[card]
+      self._play_area.remove_widget(card_widget)
+      tricks_widget.add_card(card_widget)
 
 
 if __name__ == "__main__":

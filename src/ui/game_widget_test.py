@@ -14,6 +14,7 @@ from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
   PlayCardAction, AnnounceMarriageAction, PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.game_widget import GameWidget
 
@@ -123,6 +124,44 @@ class GameWidgetTest(unittest.TestCase):
     game_widget = GameWidget()
     with self.assertRaisesRegex(AssertionError, "Should not reach this code"):
       game_widget.on_action(UnsupportedAction(PlayerId.ONE))
+
+  def test_on_trick_completed_player_one_wins(self):
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ace_spades))
+    self.assertIs(game_widget.play_area, ace_spades_widget.parent)
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    game_widget.on_action(PlayCardAction(PlayerId.TWO, queen_diamonds))
+    self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
+
+    trick = PlayerPair(ace_spades, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.ONE)
+    self.assertIs(game_widget.tricks_widgets.one, ace_spades_widget.parent)
+    self.assertIs(game_widget.tricks_widgets.one, queen_diamonds_widget.parent)
+
+  def test_on_trick_completed_player_two_wins(self):
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    game_widget.on_action(PlayCardAction(PlayerId.TWO, queen_diamonds))
+    self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
+
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ace_spades))
+    self.assertIs(game_widget.play_area, ace_spades_widget.parent)
+
+    trick = PlayerPair(ace_spades, queen_diamonds)
+    game_widget.on_trick_completed(trick, PlayerId.TWO)
+    self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
+    self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
