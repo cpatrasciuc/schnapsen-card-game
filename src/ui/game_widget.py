@@ -197,6 +197,9 @@ class GameWidget(FloatLayout):
     are empty (i.e., no cards).
     """
     super().__init__(**kwargs)
+    self._init_widgets()
+
+  def _init_widgets(self):
     self._cards = CardWidget.create_widgets_for_all_cards()
     self._play_area = self.ids.play_area.__self__
 
