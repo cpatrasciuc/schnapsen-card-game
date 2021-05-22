@@ -248,13 +248,17 @@ class GameWidget(FloatLayout):
     """
     # TODO(ui): maybe reset all widgets and cards.
 
-    # TODO(ui): Maybe unify this with self._update_cards_in_hand().
-    for player in PlayerId:
-      # noinspection PyTypeChecker
-      for i, card in enumerate(sorted(game_state.cards_in_hand[player])):
-        self._cards[card].visible = player == PlayerId.ONE
-        self._player_card_widgets[player].add_card(self._cards[card], 0, i)
+    # TODO(ui): Remove this hack once Card.visible is available.
+    for card_widget in self._cards.values():
+      card_widget.visible = False
+    for suit in game_state.marriage_suits.one + game_state.marriage_suits.two:
+      self._cards[Card(suit, CardValue.QUEEN)].visible = True
+      self._cards[Card(suit, CardValue.KING)].visible = True
 
+    # Init the cards for each player.
+    self._update_cards_in_hand(game_state.cards_in_hand)
+
+    # Init the won tricks for each player.
     for player in PlayerId:
       for trick in game_state.won_tricks[player]:
         self._cards[trick.one].visible = True
@@ -262,23 +266,21 @@ class GameWidget(FloatLayout):
         self._cards[trick.two].visible = True
         self._tricks_widgets[player].add_card(self._cards[trick.two])
 
+    # Init the trump card and the talon.
     self._talon.set_trump_card(self._cards[game_state.trump_card])
     for card in reversed(game_state.talon):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
 
+    # Init the score.
     self.on_score_modified(game_state.trick_points)
-
-    # TODO(ui): Remove this hack once Card.visible is available.
-    for suit in game_state.marriage_suits.one + game_state.marriage_suits.two:
-      self._cards[Card(suit, CardValue.QUEEN)].visible = True
-      self._cards[Card(suit, CardValue.KING)].visible = True
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """
     This method should be called whenever the trick points need to be updated.
     :param score: The updated value for trick points.
     """
+    # TODO(tests): Add a test for this and the game score, when available.
     self.ids.human_trick_score_label.text = f"Trick points: {score.one}"
     self.ids.computer_trick_score_label.text = f"Trick points: {score.two}"
 
