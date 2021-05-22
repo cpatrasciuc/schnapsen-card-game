@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import unittest
+from collections import Counter
 from typing import List
 
 from kivy.base import EventLoop
@@ -22,9 +23,7 @@ from ui.game_widget import GameWidget
 
 
 class GameWidgetTest(unittest.TestCase):
-  def test_create_empty_widget(self):
-    game_widget = GameWidget()
-
+  def _assert_initial_game_widget_state(self, game_widget: GameWidget) -> None:
     # Creates all the cards without a parent widget.
     self.assertEqual(20, len(game_widget.cards.keys()))
     for card_widget in game_widget.cards.values():
@@ -51,6 +50,15 @@ class GameWidgetTest(unittest.TestCase):
     # No cards in the talon widget.
     self.assertIsNone(game_widget.talon_widget.pop_card())
     self.assertIsNone(game_widget.talon_widget.trump_card)
+
+    counts = Counter(
+      [widget.__class__.__name__ for widget in game_widget.walk()])
+    self.assertEqual(4, counts["CardSlotsLayout"])
+    self.assertEqual(1, counts["TalonWidget"])
+
+  def test_create_empty_widget(self):
+    game_widget = GameWidget()
+    self._assert_initial_game_widget_state(game_widget)
 
   def test_init_from_game_state(self):
     game_widget = GameWidget()
@@ -116,6 +124,15 @@ class GameWidgetTest(unittest.TestCase):
     with self.assertRaisesRegex(AssertionError, "Invalid game score"):
       game_widget = GameWidget()
       game_widget.init_from_game_state(GameState.new(), PlayerPair(0, -1))
+
+  def test_reset(self):
+    game_widget = GameWidget()
+    self._assert_initial_game_widget_state(game_widget)
+    game_widget.init_from_game_state(GameState.new())
+    with self.assertRaises(AssertionError):
+      self._assert_initial_game_widget_state(game_widget)
+    game_widget.reset()
+    self._assert_initial_game_widget_state(game_widget)
 
   def test_on_score_modified(self):
     game_widget = GameWidget()

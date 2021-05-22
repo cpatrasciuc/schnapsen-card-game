@@ -10,6 +10,7 @@ from kivy.base import runTouchApp
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
+from kivy.uix.widget import Widget
 
 from model.card import Card
 from model.card_value import CardValue
@@ -45,6 +46,12 @@ def _get_game_points_color(points: int) -> str:
   if points == 5:
     return "ffff33"  # yellow
   return "ff3333"  # red
+
+
+def _delete_widget(widget: Widget) -> None:
+  if widget.parent is not None:
+    widget.parent.remove_widget(widget)
+  del widget
 
 
 # TODO(ui): Make background a gradient.
@@ -191,16 +198,20 @@ Builder.load_string(dedent("""
 class GameWidget(FloatLayout):
   """The main widget used to view/play a game of Schnapsen."""
 
+  # pylint: disable=too-many-instance-attributes
+
   def __init__(self, **kwargs):
     """
     Instantiates a new GameWidget and all its children widgets. All the widgets
     are empty (i.e., no cards).
     """
     super().__init__(**kwargs)
-    self._init_widgets()
 
-  def _init_widgets(self):
-    self._cards = CardWidget.create_widgets_for_all_cards()
+    # Dictionary used to store all the cards widgets.
+    self._cards: Dict[Card, CardWidget] = {}
+
+    # A reference to the area where the cards are moved when one player plays a
+    # card.
     self._play_area = self.ids.play_area.__self__
 
     # When a marriage is announced, this stores the details of the card that is
@@ -208,10 +219,26 @@ class GameWidget(FloatLayout):
     # the trick is completed.
     self._marriage_card: Optional[Tuple[PlayerId, CardWidget]] = None
 
+    # Widgets that store the cards.
+    self._player_card_widgets: Optional[PlayerPair[CardSlotsLayout]] = None
+    self._tricks_widgets: Optional[PlayerPair[CardSlotsLayout]] = None
+    self._talon: Optional[TalonWidget] = None
+
+    # Labels used to display the trick points and game points.
+    self._trick_score_labels: PlayerPair[Label] = PlayerPair(
+      one=self.ids.human_trick_score_label.__self__,
+      two=self.ids.computer_trick_score_label.__self__)
+    self._game_score_labels: PlayerPair[Label] = PlayerPair(
+      one=self.ids.human_game_score_label.__self__,
+      two=self.ids.computer_game_score_label.__self__)
+
+    self._init_widgets()
+
+  def _init_widgets(self):
+    self._cards = CardWidget.create_widgets_for_all_cards()
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
-    self._init_score_labels()
     self.do_layout()
 
   def _init_talon_widget(self):
@@ -240,13 +267,23 @@ class GameWidget(FloatLayout):
     self.ids.human_tricks_placeholder.add_widget(human_tricks)
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
-  def _init_score_labels(self):
-    self._trick_score_labels = PlayerPair(
-      one=self.ids.human_trick_score_label.__self__,
-      two=self.ids.computer_trick_score_label.__self__)
-    self._game_score_labels = PlayerPair(
-      one=self.ids.human_game_score_label.__self__,
-      two=self.ids.computer_game_score_label.__self__)
+  def reset(self) -> None:
+    """
+    Resets the GameWidget and leaves it ready to be initialized from a new game
+    state.
+    """
+    _delete_widget(self._player_card_widgets.one)
+    _delete_widget(self._player_card_widgets.two)
+    self._player_card_widgets = None
+    _delete_widget(self._talon)
+    _delete_widget(self._tricks_widgets.one)
+    _delete_widget(self._tricks_widgets.two)
+    self._tricks_widgets = None
+    for card_widget in self._cards.values():
+      _delete_widget(card_widget)
+    self._cards = {}
+    self._marriage_card = None
+    self._init_widgets()
 
   @property
   def cards(self) -> Dict[Card, CardWidget]:
