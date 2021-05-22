@@ -76,6 +76,7 @@ class TalonWidget(Layout, DebuggableWidget):
     assert widget is not None, "Trump card cannot be set to None"
     assert self._trump_card is None, "Trump card is already set"
     self._trump_card = widget
+    self._trump_card.visible = True
     self._update_trump_card_position()
 
   def remove_trump_card(self) -> CardWidget:

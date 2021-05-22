@@ -44,8 +44,10 @@ class TalonWidgetTest(unittest.TestCase):
       # noinspection PyTypeChecker
       talon_widget.set_trump_card(None)
     trump_card = _get_test_card()
+    trump_card.visible = False
     talon_widget.set_trump_card(trump_card)
     self.assertEqual(trump_card, talon_widget.trump_card)
+    self.assertTrue(trump_card.visible)
     with self.assertRaisesRegex(AssertionError, "Trump card is already set"):
       talon_widget.set_trump_card(_get_test_card())
     self.assertIs(trump_card, talon_widget.remove_trump_card())
