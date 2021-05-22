@@ -30,8 +30,8 @@ Builder.load_string(dedent("""
       Color:
         rgba: 0.3, 0.4, 0.3, 1
       Rectangle:
-        pos:self.pos
-        size:self.size
+        pos: self.pos
+        size: self.size
   
     # The left-side of the widget: players cards, playing area, score info.
     AnchorLayout:
@@ -54,22 +54,22 @@ Builder.load_string(dedent("""
         # Scores for the computer player.
         BoxLayout:
           size_hint_y: 0.1
-          orientation: 'vertical'
+          orientation: "vertical"
           Label:
             id: computer_game_score_label
             text: "Game points: 5"
             font_size: self.height / 2
             text_size: self.size
-            halign: 'left'
-            valign: 'bottom'
+            halign: "left"
+            valign: "bottom"
             size_hint_y: 0.5
           Label:
             id: computer_trick_score_label
             text: "Trick points: 45"
             font_size: self.height / 2
             text_size: self.size
-            halign: 'left'
-            valign: 'top'
+            halign: "left"
+            valign: "top"
             size_hint_y: 0.5
           
         # The area where the player can drag and drop cards in order to play
@@ -78,37 +78,35 @@ Builder.load_string(dedent("""
           anchor_x: "center"
           anchor_y: "center"
           size_hint: 1.0, 1 - 0.1 - 0.35 - 0.1 - 0.1
-          BoxLayout:
+          FloatLayout:
             id: play_area
-            canvas:
-              Color:
-                rgba: 1, 0, 0, 1
-              Line:
-                rectangle: self.x + 1, self.y + 1, \
-                           self.width - 1, self.height - 1
-                dash_offset: 5
-                dash_length: 5
             size_hint: 0.8, 1
+            DebuggableWidget:
+              debug_text: "Play area"
+              color_rgba: 1, 0, 0, 1
+              background_rgba: 1, 1, 1, 0.1
+              size_hint: 1, 1
+              pos: play_area.pos
   
         # Scores for the human player.
         BoxLayout:
           size_hint_y: 0.1
-          orientation: 'vertical'
+          orientation: "vertical"
           Label:
             id: human_trick_score_label
             text: "Trick points: 27"
             font_size: self.height / 2
             text_size: self.size
-            halign: 'left'
-            valign: 'bottom'
+            halign: "left"
+            valign: "bottom"
             size_hint_y: 0.5
           Label:
             id: human_game_score_label
             text: "Game points: 3"
             font_size: self.height / 2
             text_size: self.size
-            halign: 'left'
-            valign: 'top'
+            halign: "left"
+            valign: "top"
             size_hint_y: 0.5
   
         # Placeholder for the widget that displays the human player's cards.
@@ -125,7 +123,7 @@ Builder.load_string(dedent("""
       # BoxLayout used to stack vertically the widget on this side of the
       # screen.
       BoxLayout:
-        orientation: 'vertical'
+        orientation: "vertical"
         size_hint: 0.35, 1
         
         # Placeholder for the widget that shows the tricks won by the computer
@@ -143,8 +141,8 @@ Builder.load_string(dedent("""
         BoxLayout:
           id: menu_placeholder
           size_hint: 1, None
-          Label:
-            text: "Buttons"
+          DebuggableWidget:
+            debug_text: "Menu buttons"
   
         # Placeholder for the widget that shows the tricks won by the human
         # player.
@@ -156,8 +154,8 @@ Builder.load_string(dedent("""
         BoxLayout:
           id: fill_area
           size_hint: 1, None
-          Label:
-            text: "Fill area"
+          DebuggableWidget:
+            debug_text: "Fill area"
   """))
 
 
