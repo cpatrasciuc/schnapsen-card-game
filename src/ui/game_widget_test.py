@@ -10,6 +10,7 @@ from kivy.tests.common import GraphicUnitTest
 
 from model.card import Card
 from model.card_value import CardValue
+from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
 from model.game_state_validation import GameStateValidator
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
@@ -91,6 +92,30 @@ class GameWidgetTest(unittest.TestCase):
                      game_widget.ids.human_trick_score_label.text)
     self.assertEqual("[color=ffffff]Trick points: 53[/color]",
                      game_widget.ids.computer_trick_score_label.text)
+
+  def test_init_form_game_state_with_game_score(self):
+    test_cases = [
+      (0, "[color=33aa33]Game points: 7[/color]"),
+      (1, "[color=33aa33]Game points: 6[/color]"),
+      (2, "[color=33aa33]Game points: 5[/color]"),
+      (3, "[color=33aa33]Game points: 4[/color]"),
+      (4, "[color=ffffff]Game points: 3[/color]"),
+      (5, "[color=ffff33]Game points: 2[/color]"),
+      (6, "[color=ff3333]Game points: 1[/color]"),
+    ]
+    for points, expected_text in test_cases:
+      game_widget = GameWidget()
+      game_widget.init_from_game_state(GameState.new(), PlayerPair(points, 0))
+      self.assertEqual(expected_text, game_widget.game_score_labels.one.text)
+      game_widget = GameWidget()
+      game_widget.init_from_game_state(GameState.new(), PlayerPair(0, points))
+      self.assertEqual(expected_text, game_widget.game_score_labels.two.text)
+    with self.assertRaisesRegex(AssertionError, "Invalid game score"):
+      game_widget = GameWidget()
+      game_widget.init_from_game_state(GameState.new(), PlayerPair(7, 4))
+    with self.assertRaisesRegex(AssertionError, "Invalid game score"):
+      game_widget = GameWidget()
+      game_widget.init_from_game_state(GameState.new(), PlayerPair(0, -1))
 
   def test_on_score_modified(self):
     game_widget = GameWidget()

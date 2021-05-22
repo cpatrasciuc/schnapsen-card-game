@@ -24,7 +24,7 @@ from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
 
 
-def _get_score_color(points: int) -> str:
+def _get_trick_points_color(points: int) -> str:
   """Returns the markup color that should be used to display the trick score."""
   if points == 0:
     return "ff3333"  # red
@@ -33,6 +33,18 @@ def _get_score_color(points: int) -> str:
   if points < 66:
     return "ffffff"  # white
   return "33ff33"  # green
+
+
+def _get_game_points_color(points: int) -> str:
+  """Returns the markup color that should be used to display the game score."""
+  assert 0 <= points < 7, "Invalid game points: %s" % points
+  if points < 4:
+    return "33aa33"  # green
+  if points == 4:
+    return "ffffff"  # white
+  if points == 5:
+    return "ffff33"  # yellow
+  return "ff3333"  # red
 
 
 # TODO(ui): Make background a gradient.
@@ -76,6 +88,7 @@ Builder.load_string(dedent("""
             halign: "left"
             valign: "bottom"
             size_hint_y: 0.5
+            markup: True
           Label:
             id: computer_trick_score_label
             text: "Trick points: 45"
@@ -123,6 +136,7 @@ Builder.load_string(dedent("""
             halign: "left"
             valign: "top"
             size_hint_y: 0.5
+            markup: True
   
         # Placeholder for the widget that displays the human player's cards.
         BoxLayout:
@@ -227,6 +241,9 @@ class GameWidget(FloatLayout):
     self._trick_score_labels = PlayerPair(
       one=self.ids.human_trick_score_label.__self__,
       two=self.ids.computer_trick_score_label.__self__)
+    self._game_score_labels = PlayerPair(
+      one=self.ids.human_game_score_label.__self__,
+      two=self.ids.computer_game_score_label.__self__)
 
   @property
   def cards(self) -> Dict[Card, CardWidget]:
@@ -265,12 +282,22 @@ class GameWidget(FloatLayout):
     """
     return self._trick_score_labels
 
-  def init_from_game_state(self, game_state: GameState) -> None:
+  @property
+  def game_score_labels(self) -> PlayerPair[Label]:
+    """
+    Returns the pair of labels used to display the game points for each player.
+    """
+    return self._game_score_labels
+
+  def init_from_game_state(self, game_state: GameState,
+                           game_score: PlayerPair[int] = PlayerPair(0,
+                                                                    0)) -> None:
     """
     Updates this GameWidget such that it represents the game state provided as
     an argument. It does not hold a reference to the game_state object. This
     GameWidget will not update itself automatically if subsequent changes are
     performed on the game_state object.
+    Optionally, one can pass the Bummerl game score through the game_score arg.
     """
     # TODO(ui): maybe reset all widgets and cards.
 
@@ -298,8 +325,11 @@ class GameWidget(FloatLayout):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
 
-    # Init the score.
+    # TODO(ui): If the current_trick is not empty, play a card to the play area.
+
+    # Init the scores.
     self.on_score_modified(game_state.trick_points)
+    self._update_game_score(game_score)
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """
@@ -307,10 +337,18 @@ class GameWidget(FloatLayout):
     :param score: The updated value for trick points.
     """
     score_template = "[color=%s]Trick points: %s[/color]"
-    color = _get_score_color(score.one)
+    color = _get_trick_points_color(score.one)
     self._trick_score_labels.one.text = score_template % (color, score.one)
-    color = _get_score_color(score.two)
+    color = _get_trick_points_color(score.two)
     self._trick_score_labels.two.text = score_template % (color, score.two)
+
+  def _update_game_score(self, score: PlayerPair[int]) -> None:
+    assert 0 <= score.one < 7 and 0 <= score.two < 7, "Invalid game score"
+    score_template = "[color=%s]Game points: %s[/color]"
+    color = _get_game_points_color(score.one)
+    self._game_score_labels.one.text = score_template % (color, 7 - score.one)
+    color = _get_game_points_color(score.two)
+    self._game_score_labels.two.text = score_template % (color, 7 - score.two)
 
   def do_layout(self, *args, **kwargs) -> None:
     """
