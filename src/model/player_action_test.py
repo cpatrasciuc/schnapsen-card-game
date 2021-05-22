@@ -8,7 +8,8 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import \
   get_game_state_with_empty_talon_for_tests, get_game_state_for_tests, \
-  get_game_state_with_all_tricks_played
+  get_game_state_with_all_tricks_played, \
+  get_game_state_with_multiple_cards_in_the_talon_for_tests
 from model.game_state_validation import GameStateValidator
 from model.player_action import CloseTheTalonAction, ExchangeTrumpCardAction, \
   AnnounceMarriageAction, PlayCardAction, get_available_actions
@@ -540,12 +541,7 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
   def test_play_trick_talon_has_more_than_one_card(self):
-    game_state = get_game_state_for_tests()
-    with GameStateValidator(game_state):
-      trick = game_state.won_tricks[PlayerId.TWO].pop()
-      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
-      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
-      game_state.talon.extend([trick.one, trick.two])
+    game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
 
     first_talon_card = game_state.talon[0]
     second_talon_card = game_state.talon[1]
@@ -567,7 +563,7 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertFalse(queen_diamonds in game_state.cards_in_hand[PlayerId.TWO])
     self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.ONE])
     self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertEqual([trick.two], game_state.talon)
+    self.assertEqual([Card(Suit.CLUBS, CardValue.TEN)], game_state.talon)
     self.assertEqual(PlayerId.ONE, game_state.next_player)
 
   def test_play_trick_talon_is_closed(self):

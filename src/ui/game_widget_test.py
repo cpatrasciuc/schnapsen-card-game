@@ -12,7 +12,8 @@ from kivy.tests.common import GraphicUnitTest
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
-from model.game_state_test_utils import get_game_state_for_tests
+from model.game_state_test_utils import get_game_state_for_tests, \
+  get_game_state_with_multiple_cards_in_the_talon_for_tests
 from model.game_state_validation import GameStateValidator
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
   PlayCardAction, AnnounceMarriageAction, PlayerAction
@@ -329,13 +330,7 @@ class GameWidgetTest(unittest.TestCase):
     self.assertTrue(trump_card.visible)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
-    game_state = get_game_state_for_tests()
-    with GameStateValidator(game_state):
-      trick = game_state.won_tricks[PlayerId.TWO].pop()
-      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
-      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
-      game_state.talon.extend([trick.one, trick.two])
-
+    game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
 
@@ -363,14 +358,9 @@ class GameWidgetTest(unittest.TestCase):
     self.assertFalse(second_talon_card.visible)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
-    game_state = get_game_state_for_tests()
+    game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
     with GameStateValidator(game_state):
-      trick = game_state.won_tricks[PlayerId.TWO].pop()
-      game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
-      game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
-      game_state.talon.extend([trick.one, trick.two])
       game_state.next_player = PlayerId.TWO
-
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
 

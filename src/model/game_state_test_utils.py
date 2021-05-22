@@ -5,6 +5,8 @@
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
+from model.game_state_validation import GameStateValidator
+from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
 
@@ -155,3 +157,13 @@ def get_game_state_with_all_tricks_played() -> GameState:
                    trump_card=None, talon=talon, won_tricks=won_tricks,
                    marriage_suits=marriage_suits, trick_points=trick_points,
                    current_trick=current_trick)
+
+
+def get_game_state_with_multiple_cards_in_the_talon_for_tests() -> GameState:
+  game_state = get_game_state_for_tests()
+  with GameStateValidator(game_state):
+    trick = game_state.won_tricks[PlayerId.TWO].pop()
+    game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
+    game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
+    game_state.talon.extend([trick.one, trick.two])
+  return game_state
