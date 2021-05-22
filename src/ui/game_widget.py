@@ -15,7 +15,7 @@ from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
-  CloseTheTalonAction, PlayCardAction
+  CloseTheTalonAction, PlayCardAction, AnnounceMarriageAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
@@ -308,20 +308,24 @@ class GameWidget(FloatLayout):
     card_slots_widget.add_card(trump_card_widget, row, col)
     self._talon.set_trump_card(trump_jack_widget)
 
-  def _get_default_play_location(self, player: PlayerId) -> Tuple[int, int]:
+  def _get_card_pos_delta(self, player) -> Tuple[int, int]:
     """
-    Returns the location to where the center of a played card should be moved
-    by default, if no other coordinates are given. This is used when the player
-    double clicks a card instead of dragging it to the play area.
-    :param player: The player that plays the card. The default locations differ
-    slightly between the two players, so the cards will not overlap.
+    Position delta that should be used to avoid card overlaps when multiple
+    cards should be moved roughly to the same position.
+
+    Examples:
+    * separate cards that are played to the center of the play area by double
+    clicking on them instead of dragging;
+    * separate the cards in a marriage when it is announced.
+
+    :param player: The player that plays the card. For PlayerId.ONE the deltas
+    move the second card towards the bottom-left corner. For PlayerId.TWO the
+    deltas move the second card towards the upper-right corner.
     """
-    # TODO(ui): Maybe reposition played cards if widget size changes.
-    center = self._play_area.center
     delta = self._player_card_widgets[player].card_size
     if player == PlayerId.ONE:
       delta = -delta[0], -delta[1]
-    return center[0] + 0.2 * delta[0], center[1] + 0.2 * delta[1]
+    return 0.2 * delta[0], 0.2 * delta[1]
 
   def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
                                      center: Optional[
@@ -342,7 +346,10 @@ class GameWidget(FloatLayout):
       card_widget.visible = True
       self._play_area.add_widget(card_widget)
       if center is None:
-        center = self._get_default_play_location(player)
+        # TODO(ui): Maybe reposition played cards if widget size changes.
+        play_area_center = self._play_area.center
+        delta = self._get_card_pos_delta(player)
+        center = play_area_center[0] + delta[0], play_area_center[1] + delta[1]
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
 
@@ -359,6 +366,15 @@ class GameWidget(FloatLayout):
       self._talon.closed = True
     elif isinstance(action, PlayCardAction):
       self._move_player_card_to_play_area(action.player_id, action.card)
+    elif isinstance(action, AnnounceMarriageAction):
+      self._move_player_card_to_play_area(action.player_id, action.card)
+      center = self._play_area.center
+      delta = self._get_card_pos_delta(action.player_id)
+      new_center = center[0] + 2 * delta[1], center[1] + 2 * delta[1]
+      self._move_player_card_to_play_area(action.player_id,
+                                          action.card.marriage_pair, new_center)
+    else:
+      assert False, "Should not reach this code"
 
 
 if __name__ == "__main__":

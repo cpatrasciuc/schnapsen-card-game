@@ -12,7 +12,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
-  PlayCardAction
+  PlayCardAction, AnnounceMarriageAction, PlayerAction
 from model.player_id import PlayerId
 from model.suit import Suit
 from ui.game_widget import GameWidget
@@ -111,6 +111,18 @@ class GameWidgetTest(unittest.TestCase):
     self.assertFalse(game_widget.talon_widget.closed)
     game_widget.on_action(CloseTheTalonAction(PlayerId.ONE))
     self.assertTrue(game_widget.talon_widget.closed)
+
+  def test_on_action_unsupported_action(self):
+    class UnsupportedAction(PlayerAction):
+      def can_execute_on(self, _):
+        return True
+
+      def execute(self, _):
+        pass
+
+    game_widget = GameWidget()
+    with self.assertRaisesRegex(AssertionError, "Should not reach this code"):
+      game_widget.on_action(UnsupportedAction(PlayerId.ONE))
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
@@ -228,5 +240,53 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
     self.assertEqual([38, 59], king_clubs_widget.size)
-    self.assertListAlmostEqual([111.6, 161.8],
-                               king_clubs_widget.center)
+    self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
+
+  def test_on_action_announce_marriage(self):
+    EventLoop.ensure_window()
+    EventLoop.window.size = 320, 240
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+    self.render(game_widget)
+
+    with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
+      game_widget.on_action(PlayCardAction(PlayerId.ONE,
+                                           Card(Suit.SPADES, CardValue.KING)))
+
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    queen_hearts_widget = game_widget.cards[queen_hearts]
+    king_hearts = queen_hearts.marriage_pair
+    king_hearts_widget = game_widget.cards[king_hearts]
+    self.assertIs(game_widget.player_card_widgets.one,
+                  queen_hearts_widget.parent)
+    self.assertIs(game_widget.player_card_widgets.one,
+                  king_hearts_widget.parent)
+    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+    self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
+    self.assertIs(game_widget.play_area, king_hearts_widget.parent)
+    self.assertTrue(queen_hearts_widget.visible)
+    self.assertTrue(king_hearts_widget.visible)
+    self.assertEqual([38, 59], queen_hearts_widget.size)
+    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assertEqual((96.4, 138.2), queen_hearts_widget.center)
+    self.assertEqual((80.4, 126.4), king_hearts_widget.center)
+
+    king_clubs = Card(Suit.CLUBS, CardValue.KING)
+    king_clubs_widget = game_widget.cards[king_clubs]
+    queen_clubs = king_clubs.marriage_pair
+    queen_clubs_widget = game_widget.cards[queen_clubs]
+    self.assertIs(game_widget.player_card_widgets.two, king_clubs_widget.parent)
+    self.assertIs(game_widget.player_card_widgets.two,
+                  queen_clubs_widget.parent)
+    self.assertFalse(king_clubs_widget.visible)
+    self.assertFalse(queen_clubs_widget.visible)
+    game_widget.on_action(AnnounceMarriageAction(PlayerId.TWO, king_clubs))
+    self.assertIs(game_widget.play_area, king_clubs_widget.parent)
+    self.assertIs(game_widget.play_area, queen_clubs_widget.parent)
+    self.assertTrue(king_clubs_widget.visible)
+    self.assertTrue(queen_clubs_widget.visible)
+    self.assertEqual([38, 59], king_clubs_widget.size)
+    self.assertEqual([38, 59], queen_clubs_widget.size)
+    self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
+    self.assertListAlmostEqual([127.6, 173.6], queen_clubs_widget.center)
