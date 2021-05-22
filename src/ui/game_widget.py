@@ -4,7 +4,7 @@
 
 import logging
 from textwrap import dedent
-from typing import Dict
+from typing import Dict, Tuple, Optional
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
@@ -15,7 +15,7 @@ from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
-  CloseTheTalonAction
+  CloseTheTalonAction, PlayCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
@@ -230,7 +230,8 @@ class GameWidget(FloatLayout):
     Returns a reference to the widget representing the area where the cards are
     played during a trick.
     """
-    return self.ids.play_area
+    # TODO(ui): Fix this by saving a non-weak reference in the constructor.
+    return self.ids.play_area.__self__
 
   def init_from_game_state(self, game_state: GameState) -> None:
     """
@@ -307,6 +308,44 @@ class GameWidget(FloatLayout):
     card_slots_widget.add_card(trump_card_widget, row, col)
     self._talon.set_trump_card(trump_jack_widget)
 
+  def _get_default_play_location(self, player: PlayerId) -> Tuple[int, int]:
+    """
+    Returns the location to where the center of a played card should be moved
+    by default, if no other coordinates are given. This is used when the player
+    double clicks a card instead of dragging it to the play area.
+    :param player: The player that plays the card. The default locations differ
+    slightly between the two players, so the cards will not overlap.
+    """
+    # TODO(ui): Maybe reposition played cards if widget size changes.
+    center = self.ids.play_area.center
+    delta = self._player_card_widgets[player].card_size
+    if player == PlayerId.ONE:
+      delta = -delta[0], -delta[1]
+    return center[0] + 0.2 * delta[0], center[1] + 0.2 * delta[1]
+
+  def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
+                                     center: Optional[
+                                       Tuple[int, int]] = None) -> None:
+    """
+    Move the card given as argument from the player's hand to the play area.
+    :param player: The player holding the card to be moved.
+    :param card: The card to be moved.
+    :param center: The position of the center of the card after the move.
+    """
+    card_widget = self._cards[card]
+    # TODO(tests): Add a test where the users drag the cards onto the play area.
+    if card_widget.parent != self.ids.play_area:
+      logging.info("GameWidget: Moving %s to play area.", card)
+      card_slots_widget = self._player_card_widgets[player]
+      row, col = card_slots_widget.remove_card(card_widget)
+      assert row is not None, "Player %s does not hold %s" % (player, card)
+      card_widget.visible = True
+      self.ids.play_area.add_widget(card_widget)
+      if center is None:
+        center = self._get_default_play_location(player)
+      card_widget.size = self.player_card_widgets.one.card_size
+      card_widget.center = center[0], center[1]
+
   def on_action(self, action: PlayerAction) -> None:
     """
     This method should be called whenever a new player action was performed in a
@@ -318,6 +357,8 @@ class GameWidget(FloatLayout):
       self._exchange_trump_card(action.player_id)
     elif isinstance(action, CloseTheTalonAction):
       self._talon.closed = True
+    elif isinstance(action, PlayCardAction):
+      self._move_player_card_to_play_area(action.player_id, action.card)
 
 
 if __name__ == "__main__":

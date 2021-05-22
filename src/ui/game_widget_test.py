@@ -11,7 +11,8 @@ from kivy.tests.common import GraphicUnitTest
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
-from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction
+from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
+  PlayCardAction
 from model.player_id import PlayerId
 from model.suit import Suit
 from ui.game_widget import GameWidget
@@ -197,3 +198,35 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                                list(game_widget.player_card_widgets.two.pos))
     self.assertListAlmostEqual([333, 168], game_widget.play_area.size, places=0)
     self.assertListAlmostEqual([42, 216], game_widget.play_area.pos, places=0)
+
+  def test_on_action_play_card(self):
+    EventLoop.ensure_window()
+    EventLoop.window.size = 320, 240
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+    self.render(game_widget)
+
+    with self.assertRaisesRegex(AssertionError, "Player ONE does not hold J♥"):
+      game_widget.on_action(PlayCardAction(PlayerId.ONE,
+                                           Card(Suit.HEARTS, CardValue.JACK)))
+
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.assertIs(game_widget.play_area, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.visible)
+    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual((96.4, 138.2), ten_spades_widget.center)
+
+    king_clubs = Card(Suit.CLUBS, CardValue.KING)
+    king_clubs_widget = game_widget.cards[king_clubs]
+    self.assertIs(game_widget.player_card_widgets.two, king_clubs_widget.parent)
+    self.assertFalse(king_clubs_widget.visible)
+    game_widget.on_action(PlayCardAction(PlayerId.TWO, king_clubs))
+    self.assertIs(game_widget.play_area, king_clubs_widget.parent)
+    self.assertTrue(king_clubs_widget.visible)
+    self.assertEqual([38, 59], king_clubs_widget.size)
+    self.assertListAlmostEqual([111.6, 161.8],
+                               king_clubs_widget.center)
