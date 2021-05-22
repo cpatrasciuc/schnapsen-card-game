@@ -87,10 +87,29 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIsNone(game_widget.talon_widget.pop_card())
 
     # The trick points are correctly displayed.
-    self.assertEqual("Trick points: 22",
+    self.assertEqual("[color=ffff33]Trick points: 22[/color]",
                      game_widget.ids.human_trick_score_label.text)
-    self.assertEqual("Trick points: 53",
+    self.assertEqual("[color=ffffff]Trick points: 53[/color]",
                      game_widget.ids.computer_trick_score_label.text)
+
+  def test_on_score_modified(self):
+    game_widget = GameWidget()
+    test_cases = [
+      (0, "[color=ff3333]Trick points: 0[/color]"),
+      (1, "[color=ffff33]Trick points: 1[/color]"),
+      (10, "[color=ffff33]Trick points: 10[/color]"),
+      (32, "[color=ffff33]Trick points: 32[/color]"),
+      (33, "[color=ffffff]Trick points: 33[/color]"),
+      (40, "[color=ffffff]Trick points: 40[/color]"),
+      (65, "[color=ffffff]Trick points: 65[/color]"),
+      (66, "[color=33ff33]Trick points: 66[/color]"),
+      (80, "[color=33ff33]Trick points: 80[/color]"),
+    ]
+    for points, expected_text in test_cases:
+      game_widget.on_score_modified(PlayerPair(points, 0))
+      self.assertEqual(expected_text, game_widget.trick_score_labels.one.text)
+      game_widget.on_score_modified(PlayerPair(0, points))
+      self.assertEqual(expected_text, game_widget.trick_score_labels.two.text)
 
   def test_on_action_exchange_trump_card(self):
     game_widget = GameWidget()

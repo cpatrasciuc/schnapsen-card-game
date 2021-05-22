@@ -9,6 +9,7 @@ from typing import Dict, Tuple, Optional, List
 from kivy.base import runTouchApp
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.label import Label
 
 from model.card import Card
 from model.card_value import CardValue
@@ -21,6 +22,18 @@ from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
+
+
+def _get_score_color(points: int) -> str:
+  """Returns the markup color that should be used to display the trick score."""
+  if points == 0:
+    return "ff3333"  # red
+  if points < 33:
+    return "ffff33"  # yellow
+  if points < 66:
+    return "ffffff"  # white
+  return "33ff33"  # green
+
 
 # TODO(ui): Make background a gradient.
 # TODO(ui): Maybe add paddings to some widgets.
@@ -71,6 +84,7 @@ Builder.load_string(dedent("""
             halign: "left"
             valign: "top"
             size_hint_y: 0.5
+            markup: True
           
         # The area where the player can drag and drop cards in order to play
         # them.
@@ -100,6 +114,7 @@ Builder.load_string(dedent("""
             halign: "left"
             valign: "bottom"
             size_hint_y: 0.5
+            markup: True
           Label:
             id: human_game_score_label
             text: "Game points: 3"
@@ -179,6 +194,7 @@ class GameWidget(FloatLayout):
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
+    self._init_score_labels()
     self.do_layout()
 
   def _init_talon_widget(self):
@@ -206,6 +222,11 @@ class GameWidget(FloatLayout):
     human_tricks.size_hint = 1, 1
     self.ids.human_tricks_placeholder.add_widget(human_tricks)
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
+
+  def _init_score_labels(self):
+    self._trick_score_labels = PlayerPair(
+      one=self.ids.human_trick_score_label.__self__,
+      two=self.ids.computer_trick_score_label.__self__)
 
   @property
   def cards(self) -> Dict[Card, CardWidget]:
@@ -236,6 +257,13 @@ class GameWidget(FloatLayout):
     played during a trick.
     """
     return self._play_area
+
+  @property
+  def trick_score_labels(self) -> PlayerPair[Label]:
+    """
+    Returns the pair of labels used to display the trick points for each player.
+    """
+    return self._trick_score_labels
 
   def init_from_game_state(self, game_state: GameState) -> None:
     """
@@ -278,9 +306,11 @@ class GameWidget(FloatLayout):
     This method should be called whenever the trick points need to be updated.
     :param score: The updated value for trick points.
     """
-    # TODO(tests): Add a test for this and the game score, when available.
-    self.ids.human_trick_score_label.text = f"Trick points: {score.one}"
-    self.ids.computer_trick_score_label.text = f"Trick points: {score.two}"
+    score_template = "[color=%s]Trick points: %s[/color]"
+    color = _get_score_color(score.one)
+    self._trick_score_labels.one.text = score_template % (color, score.one)
+    color = _get_score_color(score.two)
+    self._trick_score_labels.two.text = score_template % (color, score.two)
 
   def do_layout(self, *args, **kwargs) -> None:
     """
