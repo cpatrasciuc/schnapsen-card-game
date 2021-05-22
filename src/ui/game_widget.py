@@ -4,7 +4,7 @@
 
 import logging
 from textwrap import dedent
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
@@ -341,8 +341,8 @@ class GameWidget(FloatLayout):
     if card_widget.parent != self._play_area:
       logging.info("GameWidget: Moving %s to play area.", card)
       card_slots_widget = self._player_card_widgets[player]
-      row, col = card_slots_widget.remove_card(card_widget)
-      assert row is not None, "Player %s does not hold %s" % (player, card)
+      pos = card_slots_widget.remove_card(card_widget)
+      assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
       card_widget.visible = True
       self._play_area.add_widget(card_widget)
       if center is None:
