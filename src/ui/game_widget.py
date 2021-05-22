@@ -4,7 +4,7 @@
 
 import logging
 from textwrap import dedent
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
