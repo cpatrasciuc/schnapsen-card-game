@@ -401,10 +401,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   # pylint: disable=too-many-statements
   def test_do_layout(self):
     EventLoop.ensure_window()
+    EventLoop.window.size = 320, 240
     game_widget = GameWidget()
     self.render(game_widget)
 
-    # The default window size for tests is 320 x 240.
+    # The initial window size is 320 x 240.
     self.assertEqual([320, 240], game_widget.size)
     self.assertEqual([112, 60], game_widget.tricks_widgets.one.size)
     self.assertEqual([208, 24], game_widget.tricks_widgets.one.pos)
