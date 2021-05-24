@@ -213,6 +213,11 @@ class GameWidget(FloatLayout):
     # A reference to the area where the cards are moved when one player plays a
     # card.
     self._play_area = self.ids.play_area.__self__
+    # Store the current play area size in order to update the position of the
+    # already played cards accordingly, when the window is resized.
+    self._prev_play_area_size = self._play_area.size[0], self._play_area.size[1]
+    self._prev_play_area_pos = self._play_area.pos[0], self._play_area.pos[1]
+    self._play_area.bind(size=lambda *_: self._update_play_area_cards())
 
     # When a marriage is announced, this stores the details of the card that is
     # only shown and not played, in order to return it to the player's hand when
@@ -460,12 +465,31 @@ class GameWidget(FloatLayout):
       card_widget.visible = True
       self._play_area.add_widget(card_widget)
       if center is None:
-        # TODO(ui): Maybe reposition played cards if widget size changes.
         play_area_center = self._play_area.center
         delta = self._get_card_pos_delta(player)
         center = play_area_center[0] + delta[0], play_area_center[1] + delta[1]
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
+
+  def _update_play_area_cards(self) -> None:
+    """
+    Whenever the size of the play area changes (because the size of the
+    GameWidget changes), we resize the cards to match the size of the cards in
+    the player's hand and we reposition them proportionally to the new size of
+    the play area.
+    """
+    for widget in self._play_area.children:
+      if not isinstance(widget, CardWidget):
+        continue
+      new_center_x = (widget.center[0] - self._prev_play_area_pos[0]) / \
+                     self._prev_play_area_size[0] * self._play_area.size[0]
+      new_center_y = (widget.center[1] - self._prev_play_area_pos[1]) / \
+                     self._prev_play_area_size[1] * self._play_area.size[1]
+      widget.size = self.player_card_widgets.one.card_size
+      widget.center = self._play_area.pos[0] + new_center_x, \
+                      self._play_area.pos[1] + new_center_y
+    self._prev_play_area_size = self._play_area.size[0], self._play_area.size[1]
+    self._prev_play_area_pos = self._play_area.pos[0], self._play_area.pos[1]
 
   def on_action(self, action: PlayerAction) -> None:
     """

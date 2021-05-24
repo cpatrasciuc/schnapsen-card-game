@@ -554,3 +554,24 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], queen_clubs_widget.size)
     self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
     self.assertListAlmostEqual([127.6, 173.6], queen_clubs_widget.center)
+
+  def test_cards_in_play_area_are_updated_on_window_resize(self):
+    EventLoop.ensure_window()
+    EventLoop.window.size = 320, 240
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(get_game_state_for_tests())
+    self.render(game_widget)
+
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.assertIs(game_widget.play_area, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.visible)
+    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual((96.4, 138.2), ten_spades_widget.center)
+    EventLoop.window.size = 640, 480
+    self.advance_frames(1)
+    self.assertEqual([77, 118], ten_spades_widget.size)
+    self.assertEqual((192.8, 276.4), ten_spades_widget.center)
