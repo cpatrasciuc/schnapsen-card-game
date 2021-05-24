@@ -15,7 +15,6 @@ from ui.card_slots_layout import CardSlotsLayout
 class CardSlotsLayoutTest(unittest.TestCase):
   def compute_layout(self, cards_layout: CardSlotsLayout, expected_size=None,
                      expected_pos=None):
-    cards_layout.do_layout()
     self.assertEqual(expected_size, cards_layout.card_size)
     pos = [[cards_layout.get_card_pos(row, col) for col in
             range(cards_layout.cols)] for row in range(cards_layout.rows)]
@@ -95,6 +94,14 @@ class CardSlotsLayoutTest(unittest.TestCase):
     cards_layout.size = 100, 100
     self.compute_layout(cards_layout, (33, 66),
                         [[(0, 33), (16, 33)], [(0, 0), (16, 0)]])
+
+  def test_card_size_and_positions_are_available_after_init(self):
+    cards_layout = CardSlotsLayout(aspect_ratio=1 / 3, rows=1, cols=3)
+    # Do not make any changes to cards_layout.size.
+    # Make sure CardSlotsLayout.card_size and CardSlotsLayout.get_card_pos() are
+    # returning the right values.
+    self.assertEqual([100, 100], cards_layout.size)
+    self.compute_layout(cards_layout, (33, 100), [[(0, 0), (33, 0), (66, 0)]])
 
   def test_remove_missing_card(self):
     cards_layout = CardSlotsLayout(rows=1, cols=3)
@@ -227,4 +234,50 @@ class CardSlotsLayoutGraphicTest(GraphicUnitTest):
     cards_layout.pos = 30, 40
     self.advance_frames(1)
     self.assertEqual([310, 20], widget.pos)
+    self.assertEqual([300, 900], widget.size)
+
+  def test_card_size_is_updated_right_away_not_before_next_frame(self):
+    cards_layout = CardSlotsLayout(aspect_ratio=1 / 3, rows=1, cols=3)
+    cards_layout.size = 100, 100
+    cards_layout.size_hint = None, None
+
+    EventLoop.ensure_window()
+    self.render(cards_layout)
+
+    # Create a widget at random coordinates with a random size.
+    widget = Widget()
+    widget.size = 123, 456
+    widget.pos = 78, 90
+
+    # Add the widget to the CardSlotsLayout.
+    # Verify that CardSlotsLayout.card_size and CardSlotsLayout.get_card_pos()
+    # already return the correct values without having to wait for the next
+    # frame, while the size and position of the widget itself are only updated
+    # after one frame.
+    self.assertEqual((33, 100), cards_layout.card_size)
+    self.assertEqual((33, 0), cards_layout.get_card_pos(0, 1))
+    cards_layout.add_card(widget, 0, 1)
+    self.assertEqual((33, 100), cards_layout.card_size)
+    self.assertEqual((33, 0), cards_layout.get_card_pos(0, 1))
+    self.assertEqual([123, 456], widget.size)
+    self.assertEqual([78, 90], widget.pos)
+    self.advance_frames(1)
+    self.assertEqual((33, 100), cards_layout.card_size)
+    self.assertEqual((33, 0), cards_layout.get_card_pos(0, 1))
+    self.assertEqual([33, 0], widget.pos)
+    self.assertEqual([33, 100], widget.size)
+
+    # Resize the CardSlotsLayout and check the CardSlotsLayout.card_size and
+    # CardSlotsLayout.get_card_pos() already return the correct values without
+    # having to wait for the next frame, while the size and position of the
+    # widget itself are only updated after one frame.
+    cards_layout.size = 900, 900
+    self.assertEqual((300, 900), cards_layout.card_size)
+    self.assertEqual((300, 0), cards_layout.get_card_pos(0, 1))
+    self.assertEqual([33, 0], widget.pos)
+    self.assertEqual([33, 100], widget.size)
+    self.advance_frames(1)
+    self.assertEqual((300, 900), cards_layout.card_size)
+    self.assertEqual((300, 0), cards_layout.get_card_pos(0, 1))
+    self.assertEqual([300, 0], widget.pos)
     self.assertEqual([300, 900], widget.size)

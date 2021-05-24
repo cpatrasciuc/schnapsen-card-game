@@ -49,12 +49,21 @@ class CardSlotsLayout(Layout, DebuggableWidget):
                                                  range(rows)]
     self._card_size = 0, 0
 
+    # Perform the initial computations based on the default size of the widget.
+    self._update_card_size()
+
     # Trigger a call to do_layout() whenever position, size or children change.
     self.fbind('children', self._trigger_layout)
     self.fbind('pos', self._trigger_layout)
     self.fbind('pos_hint', self._trigger_layout)
     self.fbind('size_hint', self._trigger_layout)
     self.fbind('size', self._trigger_layout)
+
+    # Instead of updating the card size and card positions in do_layout() which
+    # is only called before the next frame is drawn, update them right away.
+    # This way other components that rely on these values can use them correctly
+    # before the next frame.
+    self.fbind('size', lambda *_: self._update_card_size())
 
   @property
   def rows(self) -> int:
@@ -161,7 +170,6 @@ class CardSlotsLayout(Layout, DebuggableWidget):
     This function is called when a layout is called by a trigger. That means
     whenever the position, the size or the children of this layout change.
     """
-    self._update_card_size()
     for row in range(self._rows):
       for col in range(self._cols):
         if self._slots[row][col] is None:
