@@ -339,8 +339,6 @@ class GameWidget(FloatLayout):
     performed on the game_state object.
     Optionally, one can pass the Bummerl game score through the game_score arg.
     """
-    # TODO(ui): maybe reset all widgets and cards.
-
     # TODO(ui): Remove this hack once Card.visible is available.
     for card_widget in self._cards.values():
       card_widget.visible = False
