@@ -129,6 +129,8 @@ class GameWidgetTest(unittest.TestCase):
   def test_reset(self):
     game_widget = GameWidget()
     self._assert_initial_game_widget_state(game_widget)
+    game_widget.reset()
+    self._assert_initial_game_widget_state(game_widget)
     game_widget.init_from_game_state(GameState.new())
     with self.assertRaises(AssertionError):
       self._assert_initial_game_widget_state(game_widget)
