@@ -189,6 +189,21 @@ class CardSlotsLayoutTest(unittest.TestCase):
       # noinspection PyTypeChecker
       self.assertEqual((None, None), cards_layout.remove_card(None))
 
+  def test_at(self):
+    cards_layout = CardSlotsLayout(rows=2, cols=3)
+    for row in range(2):
+      for col in range(3):
+        self.assertIsNone(cards_layout.at(row, col), msg=(row, col))
+    card = Widget()
+    cards_layout.add_card(card, 1, 1)
+    self.assertIs(card, cards_layout.at(1, 1))
+    cards_layout.remove_card_at(1, 1)
+    self.assertIsNone(cards_layout.at(1, 1))
+    with self.assertRaisesRegex(AssertionError, r"(-1, 0)"):
+      cards_layout.at(-1, 0)
+    with self.assertRaisesRegex(AssertionError, r"(0, 10)"):
+      cards_layout.at(0, 10)
+
 
 class CardSlotsLayoutGraphicTest(GraphicUnitTest):
   def test_children_are_resized_and_repositioned(self):

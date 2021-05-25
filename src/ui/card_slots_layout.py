@@ -86,6 +86,14 @@ class CardSlotsLayout(Layout, DebuggableWidget):
           return row, col
     return None, None
 
+  def at(self, row: int, col: int) -> Optional[Widget]:
+    """
+    Returns the widget at coordinates (row, col). Returns None if no such widget
+    exists.
+    """
+    assert 0 <= row < self._rows and 0 <= col < self._cols, (row, col)
+    return self._slots[row][col]
+
   def add_card(self, widget: Widget, row: Optional[int] = None,
                col: Optional[int] = None) -> None:
     """
