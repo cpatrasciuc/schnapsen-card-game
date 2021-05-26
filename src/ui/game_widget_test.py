@@ -75,6 +75,7 @@ class GameWidgetTest(unittest.TestCase):
     for player in PlayerId:
       for card in game_state.cards_in_hand[player]:
         self.assertIs(player_card_widgets[player], card_widgets[card].parent)
+        self.assertEqual(player == PlayerId.ONE, card_widgets[card].grayed_out)
 
     # Cards for already played tricks are in the right widgets.
     tricks_widgets = game_widget.tricks_widgets
@@ -82,19 +83,23 @@ class GameWidgetTest(unittest.TestCase):
       for trick in game_state.won_tricks[player]:
         self.assertIs(tricks_widgets[player], card_widgets[trick.one].parent)
         self.assertTrue(card_widgets[trick.one].visible)
+        self.assertFalse(card_widgets[trick.one].grayed_out)
         self.assertIs(tricks_widgets[player], card_widgets[trick.two].parent)
         self.assertTrue(card_widgets[trick.two].visible)
+        self.assertFalse(card_widgets[trick.two].grayed_out)
 
     # Trump card is correctly set.
     self.assertIs(game_widget.talon_widget.trump_card,
                   card_widgets[game_state.trump_card])
     self.assertTrue(card_widgets[game_state.trump_card].visible)
+    self.assertFalse(card_widgets[game_state.trump_card].grayed_out)
 
     # Remaining cards are in the talon.
     for card in game_state.talon:
       card_widget = game_widget.talon_widget.pop_card()
       self.assertEqual(card, card_widget.card)
       self.assertFalse(card_widget.visible)
+      self.assertFalse(card_widget.grayed_out)
     self.assertIsNone(game_widget.talon_widget.pop_card())
 
     # The trick points are correctly displayed.
@@ -291,8 +296,10 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIsNone(game_widget.talon_widget.trump_card)
     self.assertIs(game_widget.player_card_widgets.one, last_talon_card.parent)
     self.assertTrue(last_talon_card.visible)
+    self.assertTrue(last_talon_card.grayed_out)
     self.assertIs(game_widget.player_card_widgets.two, trump_card.parent)
     self.assertTrue(trump_card.visible)
+    self.assertFalse(trump_card.grayed_out)
 
   def test_on_new_cards_drawn_last_talon_card_player_two_wins(self):
     game_widget = GameWidget()
@@ -329,8 +336,10 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIsNone(game_widget.talon_widget.trump_card)
     self.assertIs(game_widget.player_card_widgets.two, last_talon_card.parent)
     self.assertFalse(last_talon_card.visible)
+    self.assertFalse(last_talon_card.grayed_out)
     self.assertIs(game_widget.player_card_widgets.one, trump_card.parent)
     self.assertTrue(trump_card.visible)
+    self.assertTrue(trump_card.grayed_out)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -357,8 +366,10 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.player_card_widgets.one, first_talon_card.parent)
     self.assertTrue(first_talon_card.visible)
+    self.assertTrue(first_talon_card.grayed_out)
     self.assertIs(game_widget.player_card_widgets.two, second_talon_card.parent)
     self.assertFalse(second_talon_card.visible)
+    self.assertFalse(second_talon_card.grayed_out)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -387,8 +398,10 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.player_card_widgets.two, first_talon_card.parent)
     self.assertFalse(first_talon_card.visible)
+    self.assertFalse(first_talon_card.grayed_out)
     self.assertIs(game_widget.player_card_widgets.one, second_talon_card.parent)
     self.assertTrue(second_talon_card.visible)
+    self.assertTrue(second_talon_card.grayed_out)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
@@ -496,6 +509,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
+    self.assertFalse(ten_spades_widget.grayed_out)
     self.assertEqual([38, 59], ten_spades_widget.size)
     self.assertEqual((96.4, 138.2), ten_spades_widget.center)
 
@@ -503,9 +517,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     king_clubs_widget = game_widget.cards[king_clubs]
     self.assertIs(game_widget.player_card_widgets.two, king_clubs_widget.parent)
     self.assertFalse(king_clubs_widget.visible)
+    self.assertFalse(king_clubs_widget.grayed_out)
     game_widget.on_action(PlayCardAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
+    self.assertFalse(king_clubs_widget.grayed_out)
     self.assertEqual([38, 59], king_clubs_widget.size)
     self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
 
@@ -533,7 +549,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertTrue(queen_hearts_widget.visible)
+    self.assertFalse(queen_hearts_widget.grayed_out)
     self.assertTrue(king_hearts_widget.visible)
+    self.assertFalse(king_hearts_widget.grayed_out)
     self.assertEqual([38, 59], queen_hearts_widget.size)
     self.assertEqual([38, 59], king_hearts_widget.size)
     self.assertEqual((96.4, 138.2), queen_hearts_widget.center)
@@ -547,12 +565,16 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.player_card_widgets.two,
                   queen_clubs_widget.parent)
     self.assertFalse(king_clubs_widget.visible)
+    self.assertFalse(king_clubs_widget.grayed_out)
     self.assertFalse(queen_clubs_widget.visible)
+    self.assertFalse(queen_clubs_widget.grayed_out)
     game_widget.on_action(AnnounceMarriageAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertIs(game_widget.play_area, queen_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
+    self.assertFalse(king_clubs_widget.grayed_out)
     self.assertTrue(queen_clubs_widget.visible)
+    self.assertFalse(queen_clubs_widget.grayed_out)
     self.assertEqual([38, 59], king_clubs_widget.size)
     self.assertEqual([38, 59], queen_clubs_widget.size)
     self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
@@ -572,6 +594,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
+    self.assertFalse(ten_spades_widget.grayed_out)
     self.assertEqual([38, 59], ten_spades_widget.size)
     self.assertEqual((96.4, 138.2), ten_spades_widget.center)
     EventLoop.window.size = 640, 480
@@ -730,6 +753,177 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
     # A double-click on the talon should have no effect.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+  def test_play_a_card_using_double_click(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    # A double-click on any player card should have no effect.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      touch = UnitTestTouch(*card_widget.center)
+      touch.is_double_tap = True
+      touch.touch_down()
+      touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # All cards can be played.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertFalse(card_widget.grayed_out)
+
+    # A double-click on a player's card should play it.
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    touch = UnitTestTouch(*ten_spades_widget.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, PlayCardAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+    self.assertEqual(ten_spades, action.card)
+
+    # All the player's cards are grayed out.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out, msg=card_widget.card)
+
+    # A double-click on the same card should have no effect.
+    callback.reset_mock()
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+    # A double-click on other player card should have no effect.
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    touch = UnitTestTouch(*ace_spades_widget.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+  def test_play_a_card_with_double_click_must_follow_suit(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+      game_state.close_talon()
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
+    action.execute(game_state)
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    # A double-click on any player card should have no effect.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      touch = UnitTestTouch(*card_widget.center)
+      touch.is_double_tap = True
+      touch.touch_down()
+      touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # Since the player must follow suit, they can only play their SPADES cards.
+    # A double-click on any of the other cards should have no effect.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertEqual(card.suit != Suit.SPADES, card_widget.grayed_out)
+      if card_widget.grayed_out:
+        touch = UnitTestTouch(*card_widget.center)
+        touch.is_double_tap = True
+        touch.touch_down()
+        touch.touch_up()
+        callback.assert_not_called()
+
+  def test_announce_marriage_using_double_click(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    # A double-click on any player card should have no effect.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      touch = UnitTestTouch(*card_widget.center)
+      touch.is_double_tap = True
+      touch.touch_down()
+      touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # All cards can be played.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertFalse(card_widget.grayed_out)
+
+    # A double-click on a marriage card should announce it.
+    king_hearts = Card(Suit.HEARTS, CardValue.KING)
+    king_hearts_widget = game_widget.cards[king_hearts]
+    touch = UnitTestTouch(*king_hearts_widget.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, AnnounceMarriageAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+    self.assertEqual(king_hearts, action.card)
+
+    # All the player's cards are grayed out.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out, msg=card_widget.card)
+
+    # A double-click on the same card should have no effect.
+    callback.reset_mock()
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+    # A double-click on the marriage pair card should have no effect.
+    queen_hearts_widget = game_widget.cards[king_hearts.marriage_pair]
+    touch = UnitTestTouch(*queen_hearts_widget.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+    # A double-click on other player card should have no effect.
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    touch = UnitTestTouch(*ace_spades_widget.center)
+    touch.is_double_tap = True
     touch.touch_down()
     touch.touch_up()
     callback.assert_not_called()

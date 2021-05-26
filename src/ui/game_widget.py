@@ -483,6 +483,7 @@ class GameWidget(FloatLayout):
       pos = card_slots_widget.remove_card(card_widget)
       assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
       card_widget.visible = True
+      card_widget.grayed_out = False
       self._play_area.add_widget(card_widget)
       if center is None:
         play_area_center = self._play_area.center
@@ -589,6 +590,7 @@ class GameWidget(FloatLayout):
         card_widget.do_translation = False
         if player == PlayerId.ONE:
           card_widget.visible = True
+          card_widget.grayed_out = True
 
   def request_next_action(self, game_state: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:
@@ -602,6 +604,13 @@ class GameWidget(FloatLayout):
         self._bind_card_action(self._talon.trump_card, action)
       elif isinstance(action, CloseTheTalonAction):
         self._bind_card_action(self._talon.top_card(), action)
+      elif isinstance(action, AnnounceMarriageAction) or \
+          isinstance(action, PlayCardAction):
+        card = self._cards[action.card]
+        card.grayed_out = False
+        self._bind_card_action(card, action)
+      else:  # pragma: no cover
+        assert False, "Should not be reachable"
 
   def _bind_card_action(self, card: CardWidget, action: PlayerAction) -> None:
     self._actions[card] = action
@@ -615,6 +624,9 @@ class GameWidget(FloatLayout):
     :param action: The action that the player decided to execute.
     """
     logging.info("GameWidget: Executing action %s", action)
+    for card_widget in self._actions.keys():
+      if card_widget.parent is self._player_card_widgets.one:
+        card_widget.grayed_out = True
     self._clear_actions()
     callback = self._action_callback
     self._action_callback = None
