@@ -382,6 +382,7 @@ class GameWidget(FloatLayout):
         self._tricks_widgets[player].add_card(self._cards[trick.two])
 
     # Init the trump card and the talon.
+    # TODO(ui): Only do this if trump_card is not None.
     self._talon.set_trump_card(self._cards[game_state.trump_card])
     for card in reversed(game_state.talon):
       self._cards[card].visible = False
@@ -598,8 +599,13 @@ class GameWidget(FloatLayout):
 
     for action in available_actions:
       if isinstance(action, ExchangeTrumpCardAction):
-        self._actions[self._talon.trump_card] = action
-        self._talon.trump_card.bind(on_double_tap=self._card_action_callback)
+        self._bind_card_action(self._talon.trump_card, action)
+      elif isinstance(action, CloseTheTalonAction):
+        self._bind_card_action(self._talon.top_card(), action)
+
+  def _bind_card_action(self, card: CardWidget, action: PlayerAction) -> None:
+    self._actions[card] = action
+    card.bind(on_double_tap=self._card_action_callback)
 
   def _reply_with_action(self, action: PlayerAction) -> None:
     """

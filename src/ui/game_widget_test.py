@@ -654,3 +654,82 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch.touch_down()
     touch.touch_up()
     callback.assert_not_called()
+
+  def test_close_the_talon_with_double_click(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    top_talon_card = game_widget.talon_widget.top_card()
+
+    # A double-click on the talon should have no effect.
+    touch = UnitTestTouch(*top_talon_card.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # A double-click on the talon should call the callback with a
+    # CloseTheTalonAction.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, CloseTheTalonAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+
+    # A double-click on the talon card should have no effect.
+    callback.reset_mock()
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+    # Close the talon and request the next action.
+    action.execute(game_state)
+    game_widget.request_next_action(game_state, callback)
+
+    # A double-click on the talon card should have no effect.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+  def test_double_click_the_talon_when_cannot_close_the_talon(self):
+    EventLoop.ensure_window()
+
+    # Player TWO plays a card. Player ONE will not be able close the talon.
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK))
+    action.execute(game_state)
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    top_talon_card = game_widget.talon_widget.top_card()
+
+    # A double-click on the talon should have no effect.
+    touch = UnitTestTouch(*top_talon_card.center)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # A double-click on the talon should have no effect.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
