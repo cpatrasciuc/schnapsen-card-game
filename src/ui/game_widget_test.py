@@ -5,9 +5,10 @@
 import unittest
 from collections import Counter
 from typing import List
+from unittest.mock import Mock
 
 from kivy.base import EventLoop
-from kivy.tests.common import GraphicUnitTest
+from kivy.tests.common import GraphicUnitTest, UnitTestTouch
 
 from model.card import Card
 from model.card_value import CardValue
@@ -577,3 +578,79 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.advance_frames(1)
     self.assertEqual([77, 118], ten_spades_widget.size)
     self.assertEqual((192.8, 276.4), ten_spades_widget.center)
+
+
+class GameWidgetPlayerGraphicTest(GraphicUnitTest):
+  def test_exchange_trump_card_with_double_click(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trump_jack = game_state.cards_in_hand.two.pop(2)
+      ten_hearts = game_state.cards_in_hand.one.pop(2)
+      game_state.cards_in_hand.two.append(ten_hearts)
+      game_state.cards_in_hand.one.append(trump_jack)
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    trump_card_widget = game_widget.talon_widget.trump_card
+
+    # A double-click on the trump card should have no effect.
+    touch = UnitTestTouch(
+      trump_card_widget.center_x - trump_card_widget.width / 4,
+      trump_card_widget.center_y)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # A double-click on the trump card should call the callback with an
+    # ExchangeTrumpCardAction.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, ExchangeTrumpCardAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+
+    # A double-click on the trump card should have no effect.
+    callback.reset_mock()
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()
+
+  def test_double_click_trump_card_when_cannot_exchange_trump_card(self):
+    EventLoop.ensure_window()
+
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    trump_card_widget = game_widget.talon_widget.trump_card
+
+    touch = UnitTestTouch(
+      trump_card_widget.center_x - trump_card_widget.width / 4,
+      trump_card_widget.center_y)
+    touch.is_double_tap = True
+    touch.touch_down()
+    touch.touch_up()
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # A double-click on the trump card should have no effect.
+    touch.touch_down()
+    touch.touch_up()
+    callback.assert_not_called()

@@ -4,7 +4,7 @@
 
 import logging
 from textwrap import dedent
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List, Callable
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
@@ -17,7 +17,8 @@ from model.card_value import CardValue
 from model.game_state import GameState, Trick
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
-  CloseTheTalonAction, PlayCardAction, AnnounceMarriageAction
+  CloseTheTalonAction, PlayCardAction, AnnounceMarriageAction, \
+  get_available_actions
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
@@ -236,6 +237,24 @@ class GameWidget(FloatLayout):
     self._game_score_labels: PlayerPair[Label] = PlayerPair(
       one=self.ids.human_game_score_label.__self__,
       two=self.ids.computer_game_score_label.__self__)
+
+    # Stores the callback that is passed by the GameController when it requests
+    # a new player action.
+    self._action_callback: Optional[Callable[[PlayerAction], None]] = None
+
+    # When a player action is requested, this dict stores the default action
+    # associated to each card that can be double clicked.
+    self._actions: Dict[CardWidget, PlayerAction] = {}
+
+    # Function executed when a card is double clicked.
+    def card_action_callback(card_widget: CardWidget):
+      self._reply_with_action(self._actions[card_widget])
+
+    # When request_next_action() is called, we bind this callback to all the
+    # cards that have an associated available action. We need to store a
+    # reference to this callback, since we want to unbind it from all cards once
+    # the player picks an action.
+    self._card_action_callback = card_action_callback
 
     self._init_widgets()
 
@@ -569,6 +588,39 @@ class GameWidget(FloatLayout):
         card_widget.do_translation = False
         if player == PlayerId.ONE:
           card_widget.visible = True
+
+  def request_next_action(self, game_state: GameState,
+                          callback: Callable[[PlayerAction], None]) -> None:
+    available_actions = get_available_actions(game_state)
+    logging.info("GameWidget: Action requested. Available actions are: %s",
+                 available_actions)
+    self._action_callback = callback
+
+    for action in available_actions:
+      if isinstance(action, ExchangeTrumpCardAction):
+        self._actions[self._talon.trump_card] = action
+        self._talon.trump_card.bind(on_double_tap=self._card_action_callback)
+
+  def _reply_with_action(self, action: PlayerAction) -> None:
+    """
+    This method is executed once the player decided which is the next action
+    they want to play. We call the callback provided by the GameController when
+    it called request_next_action() and we clear all the other card actions.
+    :param action: The action that the player decided to execute.
+    """
+    logging.info("GameWidget: Executing action %s", action)
+    self._clear_actions()
+    callback = self._action_callback
+    self._action_callback = None
+    callback(action)
+
+  def _clear_actions(self):
+    """
+    Remove all actions associated to a card. Unbinds all double-click callbacks.
+    """
+    for card_widget in self._actions.keys():
+      card_widget.unbind(on_double_tap=self._card_action_callback)
+    self._actions = {}
 
 
 if __name__ == "__main__":
