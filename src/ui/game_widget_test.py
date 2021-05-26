@@ -4,11 +4,12 @@
 
 import unittest
 from collections import Counter
-from typing import List
+from typing import List, Optional
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
 from kivy.tests.common import GraphicUnitTest, UnitTestTouch
+from kivy.uix.widget import Widget
 
 from model.card import Card
 from model.card_value import CardValue
@@ -22,6 +23,15 @@ from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.game_widget import GameWidget
+
+
+# TODO(refactor): Add this and the copy from talon_widget_test.py to a common
+# class.
+def _get_children_index(parent: Widget, child: Widget) -> Optional[int]:
+  for index, widget in enumerate(parent.walk(restrict=True, loopback=False)):
+    if widget is child:
+      return index
+  return None
 
 
 class GameWidgetTest(unittest.TestCase):
@@ -556,6 +566,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], king_hearts_widget.size)
     self.assertEqual((96.4, 138.2), queen_hearts_widget.center)
     self.assertEqual((80.4, 126.4), king_hearts_widget.center)
+    self.assertLess(
+      _get_children_index(game_widget.play_area, king_hearts_widget),
+      _get_children_index(game_widget.play_area, queen_hearts_widget))
 
     king_clubs = Card(Suit.CLUBS, CardValue.KING)
     king_clubs_widget = game_widget.cards[king_clubs]
@@ -579,6 +592,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], queen_clubs_widget.size)
     self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
     self.assertListAlmostEqual([127.6, 173.6], queen_clubs_widget.center)
+    self.assertLess(
+      _get_children_index(game_widget.play_area, queen_clubs_widget),
+      _get_children_index(game_widget.play_area, king_clubs_widget))
 
   def test_cards_in_play_area_are_updated_on_window_resize(self):
     EventLoop.ensure_window()

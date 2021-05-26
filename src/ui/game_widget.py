@@ -526,7 +526,6 @@ class GameWidget(FloatLayout):
     elif isinstance(action, PlayCardAction):
       self._move_player_card_to_play_area(action.player_id, action.card)
     elif isinstance(action, AnnounceMarriageAction):
-      self._move_player_card_to_play_area(action.player_id, action.card)
       center = self._play_area.center
       delta = self._get_card_pos_delta(action.player_id)
       new_center = center[0] + 2 * delta[1], center[1] + 2 * delta[1]
@@ -534,6 +533,7 @@ class GameWidget(FloatLayout):
                              self._cards[action.card.marriage_pair])
       self._move_player_card_to_play_area(action.player_id,
                                           action.card.marriage_pair, new_center)
+      self._move_player_card_to_play_area(action.player_id, action.card)
     else:
       assert False, "Should not reach this code"
 
