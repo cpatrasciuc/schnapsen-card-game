@@ -2,11 +2,8 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import unittest
-from typing import Optional
 from unittest.mock import Mock
 
-from kivy.tests.common import GraphicUnitTest
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
 
@@ -15,6 +12,7 @@ from model.card_value import CardValue
 from model.suit import Suit
 from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
+from ui.test_utils import UiTestCase, GraphicUnitTest
 
 
 def _get_test_card(ratio=0.5):
@@ -25,15 +23,7 @@ def _get_test_card(ratio=0.5):
   return card_widget
 
 
-def _get_children_index(parent: TalonWidget,
-                        child: CardWidget) -> Optional[int]:
-  for index, widget in enumerate(parent.walk(restrict=True, loopback=False)):
-    if widget is child:
-      return index
-  return None
-
-
-class TalonWidgetTest(unittest.TestCase):
+class TalonWidgetTest(UiTestCase):
   def test_set_and_remove_trump_card(self):
     talon_widget = TalonWidget()
     self.assertIsNone(talon_widget.trump_card)
@@ -87,64 +77,41 @@ class TalonWidgetTest(unittest.TestCase):
     talon_widget.push_card(card_1)
     trump_card = _get_test_card()
     talon_widget.set_trump_card(trump_card)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_1))
+    self.assert_is_drawn_on_top(card_1, trump_card)
     card_2 = _get_test_card()
     talon_widget.push_card(card_2)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_1))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_2))
+    self.assert_is_drawn_on_top(card_1, trump_card)
+    self.assert_is_drawn_on_top(card_2, trump_card)
     card_3 = _get_test_card()
     talon_widget.push_card(card_3)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_1))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_2))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(card_1, trump_card)
+    self.assert_is_drawn_on_top(card_2, trump_card)
+    self.assert_is_drawn_on_top(card_3, trump_card)
     talon_widget.remove_trump_card()
     talon_widget.set_trump_card(trump_card)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_1))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_2))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(card_1, trump_card)
+    self.assert_is_drawn_on_top(card_2, trump_card)
+    self.assert_is_drawn_on_top(card_3, trump_card)
     talon_widget.closed = True
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_1))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_2))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(trump_card, card_1)
+    self.assert_is_drawn_on_top(trump_card, card_2)
+    self.assert_is_drawn_on_top(trump_card, card_3)
     talon_widget.remove_trump_card()
     talon_widget.set_trump_card(trump_card)
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_1))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_2))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(trump_card, card_1)
+    self.assert_is_drawn_on_top(trump_card, card_2)
+    self.assert_is_drawn_on_top(trump_card, card_3)
     talon_widget.pop_card()
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_1))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_2))
+    self.assert_is_drawn_on_top(trump_card, card_1)
+    self.assert_is_drawn_on_top(trump_card, card_2)
     talon_widget.push_card(card_3)
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_1))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_2))
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(trump_card, card_1)
+    self.assert_is_drawn_on_top(trump_card, card_2)
+    self.assert_is_drawn_on_top(trump_card, card_3)
     talon_widget.closed = False
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_1))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_2))
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, card_3))
+    self.assert_is_drawn_on_top(card_1, trump_card)
+    self.assert_is_drawn_on_top(card_2, trump_card)
+    self.assert_is_drawn_on_top(card_3, trump_card)
 
   def test_close_talon(self):
     talon_widget = TalonWidget(aspect_ratio=0.5)
@@ -159,22 +126,19 @@ class TalonWidgetTest(unittest.TestCase):
     talon_widget.do_layout()
 
     self.assertFalse(talon_widget.closed)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, talon_card))
+    self.assert_is_drawn_on_top(talon_card, trump_card)
     self.assertNotEqual(talon_card.center, trump_card.center)
     self.assertEqual(90, trump_card.rotation)
 
     talon_widget.closed = True
     self.assertTrue(talon_widget.closed)
-    self.assertGreater(_get_children_index(talon_widget, trump_card),
-                       _get_children_index(talon_widget, talon_card))
+    self.assert_is_drawn_on_top(trump_card, talon_card)
     self.assertEqual(talon_card.center, trump_card.center)
     self.assertEqual(10, trump_card.rotation)
 
     talon_widget.closed = False
     self.assertFalse(talon_widget.closed)
-    self.assertLess(_get_children_index(talon_widget, trump_card),
-                    _get_children_index(talon_widget, talon_card))
+    self.assert_is_drawn_on_top(talon_card, trump_card)
     self.assertNotEqual(talon_card.center, trump_card.center)
     self.assertEqual(90, trump_card.rotation)
 

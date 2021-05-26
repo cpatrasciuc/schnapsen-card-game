@@ -4,12 +4,11 @@
 
 import unittest
 
-from kivy.base import EventLoop
-from kivy.tests.common import GraphicUnitTest
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 
 from ui.card_slots_layout import CardSlotsLayout
+from ui.test_utils import GraphicUnitTest
 
 
 class CardSlotsLayoutTest(unittest.TestCase):
@@ -211,7 +210,6 @@ class CardSlotsLayoutGraphicTest(GraphicUnitTest):
     cards_layout.size = 100, 100
     cards_layout.size_hint = None, None
 
-    EventLoop.ensure_window()
     self.render(cards_layout)
 
     # Create a widget at random coordinates with a random size.
@@ -256,7 +254,6 @@ class CardSlotsLayoutGraphicTest(GraphicUnitTest):
     cards_layout.size = 100, 100
     cards_layout.size_hint = None, None
 
-    EventLoop.ensure_window()
     self.render(cards_layout)
 
     # Create a widget at random coordinates with a random size.

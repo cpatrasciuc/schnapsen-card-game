@@ -4,12 +4,10 @@
 
 import unittest
 from collections import Counter
-from typing import List, Optional
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
-from kivy.tests.common import GraphicUnitTest, UnitTestTouch
-from kivy.uix.widget import Widget
+from kivy.tests.common import UnitTestTouch
 
 from model.card import Card
 from model.card_value import CardValue
@@ -23,15 +21,7 @@ from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.game_widget import GameWidget
-
-
-# TODO(refactor): Add this and the copy from talon_widget_test.py to a common
-# class.
-def _get_children_index(parent: Widget, child: Widget) -> Optional[int]:
-  for index, widget in enumerate(parent.walk(restrict=True, loopback=False)):
-    if widget is child:
-      return index
-  return None
+from ui.test_utils import GraphicUnitTest
 
 
 class GameWidgetTest(unittest.TestCase):
@@ -415,19 +405,8 @@ class GameWidgetTest(unittest.TestCase):
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
-  # pylint: disable=invalid-name
-  def assertListAlmostEqual(self, first: List, second: List,
-                            places: int = 7, msg: str = ""):
-    self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
-    for i, item in enumerate(first):
-      self.assertAlmostEqual(item, second[i],
-                             msg=msg + f"\nFirst diff at index {i}.",
-                             places=places)
-
   # pylint: disable=too-many-statements
   def test_do_layout(self):
-    EventLoop.ensure_window()
-    EventLoop.window.size = 320, 240
     game_widget = GameWidget()
     self.render(game_widget)
 
@@ -442,10 +421,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([208, 84], game_widget.player_card_widgets.one.size)
     self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
     self.assertEqual([208, 84], game_widget.player_card_widgets.two.size)
-    self.assertListAlmostEqual([0, 216],
-                               list(game_widget.player_card_widgets.two.pos))
-    self.assertListAlmostEqual([166, 84], game_widget.play_area.size, places=0)
-    self.assertListAlmostEqual([21, 108], game_widget.play_area.pos, places=0)
+    self.assert_list_almost_equal([0, 216],
+                                  list(game_widget.player_card_widgets.two.pos))
+    self.assert_list_almost_equal([166, 84], game_widget.play_area.size,
+                                  places=0)
+    self.assert_list_almost_equal([21, 108], game_widget.play_area.pos,
+                                  places=0)
 
     # Stretch window horizontally to 640 x 240.
     EventLoop.window.size = 640, 240
@@ -460,10 +441,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([416, 84], game_widget.player_card_widgets.one.size)
     self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
     self.assertEqual([416, 84], game_widget.player_card_widgets.two.size)
-    self.assertListAlmostEqual([0, 216],
-                               list(game_widget.player_card_widgets.two.pos))
-    self.assertListAlmostEqual([333, 84], game_widget.play_area.size, places=0)
-    self.assertListAlmostEqual([42, 108], game_widget.play_area.pos, places=0)
+    self.assert_list_almost_equal([0, 216],
+                                  list(game_widget.player_card_widgets.two.pos))
+    self.assert_list_almost_equal([333, 84], game_widget.play_area.size,
+                                  places=0)
+    self.assert_list_almost_equal([42, 108], game_widget.play_area.pos,
+                                  places=0)
 
     # Stretch window vertically to 320 x 480.
     EventLoop.window.size = 320, 480
@@ -478,10 +461,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([208, 168], game_widget.player_card_widgets.one.size)
     self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
     self.assertEqual([208, 168], game_widget.player_card_widgets.two.size)
-    self.assertListAlmostEqual([0, 432],
-                               list(game_widget.player_card_widgets.two.pos))
-    self.assertListAlmostEqual([166, 168], game_widget.play_area.size, places=0)
-    self.assertListAlmostEqual([21, 216], game_widget.play_area.pos, places=0)
+    self.assert_list_almost_equal([0, 432],
+                                  list(game_widget.player_card_widgets.two.pos))
+    self.assert_list_almost_equal([166, 168], game_widget.play_area.size,
+                                  places=0)
+    self.assert_list_almost_equal([21, 216], game_widget.play_area.pos,
+                                  places=0)
 
     # Stretch window vertically and horizontally to 640 x 480.
     EventLoop.window.size = 640, 480
@@ -496,15 +481,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([416, 168], game_widget.player_card_widgets.one.size)
     self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
     self.assertEqual([416, 168], game_widget.player_card_widgets.two.size)
-    self.assertListAlmostEqual([0, 432],
-                               list(game_widget.player_card_widgets.two.pos))
-    self.assertListAlmostEqual([333, 168], game_widget.play_area.size, places=0)
-    self.assertListAlmostEqual([42, 216], game_widget.play_area.pos, places=0)
+    self.assert_list_almost_equal([0, 432],
+                                  list(game_widget.player_card_widgets.two.pos))
+    self.assert_list_almost_equal([333, 168], game_widget.play_area.size,
+                                  places=0)
+    self.assert_list_almost_equal([42, 216], game_widget.play_area.pos,
+                                  places=0)
 
   def test_on_action_play_card(self):
-    EventLoop.ensure_window()
-    EventLoop.window.size = 320, 240
-
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
     self.render(game_widget)
@@ -533,12 +517,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
     self.assertEqual([38, 59], king_clubs_widget.size)
-    self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
+    self.assert_list_almost_equal([111.6, 161.8], king_clubs_widget.center)
 
   def test_on_action_announce_marriage(self):
-    EventLoop.ensure_window()
-    EventLoop.window.size = 320, 240
-
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
     self.render(game_widget)
@@ -566,9 +547,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], king_hearts_widget.size)
     self.assertEqual((96.4, 138.2), queen_hearts_widget.center)
     self.assertEqual((80.4, 126.4), king_hearts_widget.center)
-    self.assertLess(
-      _get_children_index(game_widget.play_area, king_hearts_widget),
-      _get_children_index(game_widget.play_area, queen_hearts_widget))
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     king_clubs = Card(Suit.CLUBS, CardValue.KING)
     king_clubs_widget = game_widget.cards[king_clubs]
@@ -590,16 +569,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertFalse(queen_clubs_widget.grayed_out)
     self.assertEqual([38, 59], king_clubs_widget.size)
     self.assertEqual([38, 59], queen_clubs_widget.size)
-    self.assertListAlmostEqual([111.6, 161.8], king_clubs_widget.center)
-    self.assertListAlmostEqual([127.6, 173.6], queen_clubs_widget.center)
-    self.assertLess(
-      _get_children_index(game_widget.play_area, queen_clubs_widget),
-      _get_children_index(game_widget.play_area, king_clubs_widget))
+    self.assert_list_almost_equal([111.6, 161.8], king_clubs_widget.center)
+    self.assert_list_almost_equal([127.6, 173.6], queen_clubs_widget.center)
+    self.assert_is_drawn_on_top(king_clubs_widget, queen_clubs_widget)
 
   def test_cards_in_play_area_are_updated_on_window_resize(self):
-    EventLoop.ensure_window()
-    EventLoop.window.size = 320, 240
-
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
     self.render(game_widget)
@@ -621,8 +595,6 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
 class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_exchange_trump_card_with_double_click(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
       trump_jack = game_state.cards_in_hand.two.pop(2)
@@ -668,8 +640,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
   def test_double_click_trump_card_when_cannot_exchange_trump_card(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
@@ -695,8 +665,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
   def test_close_the_talon_with_double_click(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
@@ -742,8 +710,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
   def test_double_click_the_talon_when_cannot_close_the_talon(self):
-    EventLoop.ensure_window()
-
     # Player TWO plays a card. Player ONE will not be able close the talon.
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
@@ -774,8 +740,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
   def test_play_a_card_using_double_click(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
@@ -836,8 +800,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     callback.assert_not_called()
 
   def test_play_a_card_with_double_click_must_follow_suit(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
@@ -875,8 +837,6 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
         callback.assert_not_called()
 
   def test_announce_marriage_using_double_click(self):
-    EventLoop.ensure_window()
-
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)

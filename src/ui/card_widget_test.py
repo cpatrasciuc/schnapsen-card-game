@@ -5,14 +5,14 @@
 import unittest
 from unittest.mock import Mock
 
-from kivy.base import EventLoop
-from kivy.tests.common import UnitTestTouch, GraphicUnitTest
+from kivy.tests.common import UnitTestTouch
 from kivy.uix.floatlayout import FloatLayout
 
 from model.card import Card
 from model.card_value import CardValue
 from model.suit import Suit
 from ui.card_widget import CardWidget
+from ui.test_utils import GraphicUnitTest
 
 
 class CardWidgetTest(unittest.TestCase):
@@ -66,8 +66,7 @@ class CardWidgetTest(unittest.TestCase):
 class CardWidgetGraphicTest(GraphicUnitTest):
   def test_dragging_a_card_with_the_mouse(self):
     # pylint: disable=too-many-statements
-    EventLoop.ensure_window()
-    window = EventLoop.window
+    window = self.window
 
     on_card_moved_handler = Mock()
 
@@ -159,8 +158,7 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     on_card_moved_handler.assert_not_called()
 
   def test_dragging_a_card_with_the_mouse_translations_disabled(self):
-    EventLoop.ensure_window()
-    window = EventLoop.window
+    window = self.window
 
     on_card_moved_handler = Mock()
 
@@ -232,8 +230,7 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     The args passed to this function are forwarded to the constructor of the
     CardWidget used in the test.
     """
-    EventLoop.ensure_window()
-    window = EventLoop.window
+    window = self.window
 
     # Place the card in the center of the window.
     card_widget = CardWidget(*args, **kwargs)
