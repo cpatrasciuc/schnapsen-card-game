@@ -86,6 +86,7 @@ class CardSlotsLayout(Layout, DebuggableWidget):
           return row, col
     return None, None
 
+  # pylint: disable=invalid-name
   def at(self, row: int, col: int) -> Optional[Widget]:
     """
     Returns the widget at coordinates (row, col). Returns None if no such widget

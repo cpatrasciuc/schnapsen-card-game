@@ -604,8 +604,7 @@ class GameWidget(FloatLayout):
         self._bind_card_action(self._talon.trump_card, action)
       elif isinstance(action, CloseTheTalonAction):
         self._bind_card_action(self._talon.top_card(), action)
-      elif isinstance(action, AnnounceMarriageAction) or \
-          isinstance(action, PlayCardAction):
+      elif isinstance(action, (AnnounceMarriageAction, PlayCardAction)):
         card = self._cards[action.card]
         card.grayed_out = False
         self._bind_card_action(card, action)
@@ -624,7 +623,7 @@ class GameWidget(FloatLayout):
     :param action: The action that the player decided to execute.
     """
     logging.info("GameWidget: Executing action %s", action)
-    for card_widget in self._actions.keys():
+    for card_widget in self._actions:
       if card_widget.parent is self._player_card_widgets.one:
         card_widget.grayed_out = True
     self._clear_actions()
@@ -636,7 +635,7 @@ class GameWidget(FloatLayout):
     """
     Remove all actions associated to a card. Unbinds all double-click callbacks.
     """
-    for card_widget in self._actions.keys():
+    for card_widget in self._actions:
       card_widget.unbind(on_double_tap=self._card_action_callback)
     self._actions = {}
 
