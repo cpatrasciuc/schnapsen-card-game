@@ -12,10 +12,10 @@ from model.card import Card
 from model.card_value import CardValue
 from model.suit import Suit
 from ui.card_widget import CardWidget
-from ui.test_utils import GraphicUnitTest
+from ui.test_utils import GraphicUnitTest, UiTestCase
 
 
-class CardWidgetTest(unittest.TestCase):
+class CardWidgetTest(UiTestCase):
   def test_create_widgets_for_all_cards(self):
     card_dict = CardWidget.create_widgets_for_all_cards()
     self.assertEqual(20, len(card_dict.keys()))
@@ -61,6 +61,13 @@ class CardWidgetTest(unittest.TestCase):
     card_widget.grayed_out = False
     self.assertFalse(card_widget.grayed_out)
     self.assertEqual(1.0, card_widget.opacity)
+
+  def test_shadow(self):
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+    self.assertTrue(card_widget.shadow)
+    card_widget.shadow = 0
+    self.assertFalse(card_widget.shadow)
+    # TODO(tests): Use Widget.export_as_image() and compare the two images.
 
 
 class CardWidgetGraphicTest(GraphicUnitTest):

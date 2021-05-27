@@ -4,15 +4,19 @@
 
 import os.path
 import random
+from textwrap import dedent
 from typing import Dict, Tuple, Optional
 
 from kivy.base import runTouchApp
 from kivy.input import MotionEvent
+from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.scatter import Scatter
 
 from model.card import Card
+
+_SHADOW_STRENGTH = 0.5
 
 
 def _get_image_full_path(filename: str) -> str:
@@ -30,8 +34,25 @@ def _get_card_back_filename() -> str:
   return _get_image_full_path("card_back")
 
 
+def _get_drop_shadow_filename() -> str:
+  return _get_image_full_path("drop_shadow")
+
+
+Builder.load_string(dedent("""
+  <CardWidget>:
+    _shadow_enabled: 1
+    _shadow_image: 'missing.png'
+    canvas.before:
+      Color:
+        rgba: 1, 1, 1, self._shadow_enabled
+      Rectangle:
+        source: self._shadow_image
+        size: (self.width * 1.1, self.height * 1.1)
+        pos: (-self.width * 0.05, -self.height * 0.05)
+  """))
+
+
 # TODO(ui): Add an atlas with all card images.
-# TODO(ui): Add a drop shadow.
 class CardWidget(Scatter):
   """
   A widget that represents a playing card. It can be moved, scaled and rotated
@@ -53,6 +74,8 @@ class CardWidget(Scatter):
     self._visible = True
     self._grayed_out = False
     self._touch_down_pos: Optional[Tuple[int, int]] = None
+    self._shadow_image = _get_drop_shadow_filename()
+    self._shadow_enabled = _SHADOW_STRENGTH
     self.auto_bring_to_front = True
     image = Image(source=_get_card_filename(card))
     image.keep_ratio = False
@@ -99,6 +122,14 @@ class CardWidget(Scatter):
   def grayed_out(self, grayed_out: bool) -> None:
     self._grayed_out = grayed_out
     self.opacity = 0.5 if self._grayed_out else 1.0
+
+  @property
+  def shadow(self) -> bool:
+    return self._shadow_enabled == _SHADOW_STRENGTH
+
+  @shadow.setter
+  def shadow(self, enabled: bool) -> None:
+    self._shadow_enabled = _SHADOW_STRENGTH if enabled else 0
 
   @staticmethod
   def create_widgets_for_all_cards() -> Dict[Card, "CardWidget"]:
