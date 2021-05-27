@@ -55,14 +55,12 @@ def _delete_widget(widget: Widget) -> None:
   del widget
 
 
-# TODO(ui): Make background a gradient.
 # TODO(ui): Maybe add paddings to some widgets.
 Builder.load_string(dedent("""
   <GameWidget>:
     canvas.before:
-      Color:
-        rgba: 0.3, 0.4, 0.3, 1
       Rectangle:
+        source: 'resources/background.png'
         pos: self.pos
         size: self.size
   
