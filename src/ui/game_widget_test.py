@@ -2,8 +2,10 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import unittest
+# pylint: disable=too-many-lines,too-many-statements,too-many-locals
+
 from collections import Counter
+from typing import Tuple
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
@@ -20,11 +22,19 @@ from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
+from ui.card_widget import CardWidget
 from ui.game_widget import GameWidget
-from ui.test_utils import GraphicUnitTest
+from ui.test_utils import GraphicUnitTest, UiTestCase
 
 
-class GameWidgetTest(unittest.TestCase):
+def _drag_card_to_pos(card_widget: CardWidget, position: Tuple[int, int]):
+  touch = UnitTestTouch(*card_widget.center)
+  touch.touch_down()
+  touch.touch_move(*position)
+  touch.touch_up()
+
+
+class GameWidgetTest(UiTestCase):
   def _assert_initial_game_widget_state(self, game_widget: GameWidget) -> None:
     # Creates all the cards without a parent widget.
     self.assertEqual(20, len(game_widget.cards.keys()))
@@ -76,6 +86,7 @@ class GameWidgetTest(unittest.TestCase):
       for card in game_state.cards_in_hand[player]:
         self.assertIs(player_card_widgets[player], card_widgets[card].parent)
         self.assertEqual(player == PlayerId.ONE, card_widgets[card].grayed_out)
+        self.assert_do_translation(False, card_widgets[card])
 
     # Cards for already played tricks are in the right widgets.
     tricks_widgets = game_widget.tricks_widgets
@@ -84,15 +95,18 @@ class GameWidgetTest(unittest.TestCase):
         self.assertIs(tricks_widgets[player], card_widgets[trick.one].parent)
         self.assertTrue(card_widgets[trick.one].visible)
         self.assertFalse(card_widgets[trick.one].grayed_out)
+        self.assert_do_translation(False, card_widgets[trick.one])
         self.assertIs(tricks_widgets[player], card_widgets[trick.two].parent)
         self.assertTrue(card_widgets[trick.two].visible)
         self.assertFalse(card_widgets[trick.two].grayed_out)
+        self.assert_do_translation(False, card_widgets[trick.two])
 
     # Trump card is correctly set.
     self.assertIs(game_widget.talon_widget.trump_card,
                   card_widgets[game_state.trump_card])
     self.assertTrue(card_widgets[game_state.trump_card].visible)
     self.assertFalse(card_widgets[game_state.trump_card].grayed_out)
+    self.assert_do_translation(False, card_widgets[game_state.trump_card])
 
     # Remaining cards are in the talon.
     for card in game_state.talon:
@@ -100,6 +114,7 @@ class GameWidgetTest(unittest.TestCase):
       self.assertEqual(card, card_widget.card)
       self.assertFalse(card_widget.visible)
       self.assertFalse(card_widget.grayed_out)
+      self.assert_do_translation(False, card_widget)
     self.assertIsNone(game_widget.talon_widget.pop_card())
 
     # The trick points are correctly displayed.
@@ -297,9 +312,11 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.player_card_widgets.one, last_talon_card.parent)
     self.assertTrue(last_talon_card.visible)
     self.assertTrue(last_talon_card.grayed_out)
+    self.assert_do_translation(False, last_talon_card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card.parent)
     self.assertTrue(trump_card.visible)
     self.assertFalse(trump_card.grayed_out)
+    self.assert_do_translation(False, trump_card)
 
   def test_on_new_cards_drawn_last_talon_card_player_two_wins(self):
     game_widget = GameWidget()
@@ -337,9 +354,11 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.player_card_widgets.two, last_talon_card.parent)
     self.assertFalse(last_talon_card.visible)
     self.assertFalse(last_talon_card.grayed_out)
+    self.assert_do_translation(False, last_talon_card)
     self.assertIs(game_widget.player_card_widgets.one, trump_card.parent)
     self.assertTrue(trump_card.visible)
     self.assertTrue(trump_card.grayed_out)
+    self.assert_do_translation(False, trump_card)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -367,9 +386,11 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.player_card_widgets.one, first_talon_card.parent)
     self.assertTrue(first_talon_card.visible)
     self.assertTrue(first_talon_card.grayed_out)
+    self.assert_do_translation(False, first_talon_card)
     self.assertIs(game_widget.player_card_widgets.two, second_talon_card.parent)
     self.assertFalse(second_talon_card.visible)
     self.assertFalse(second_talon_card.grayed_out)
+    self.assert_do_translation(False, second_talon_card)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -399,9 +420,11 @@ class GameWidgetTest(unittest.TestCase):
     self.assertIs(game_widget.player_card_widgets.two, first_talon_card.parent)
     self.assertFalse(first_talon_card.visible)
     self.assertFalse(first_talon_card.grayed_out)
+    self.assert_do_translation(False, first_talon_card)
     self.assertIs(game_widget.player_card_widgets.one, second_talon_card.parent)
     self.assertTrue(second_talon_card.visible)
     self.assertTrue(second_talon_card.grayed_out)
+    self.assert_do_translation(False, second_talon_card)
 
 
 class GameWidgetGraphicTest(GraphicUnitTest):
@@ -504,6 +527,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
     self.assertEqual([38, 59], ten_spades_widget.size)
     self.assertEqual((96.4, 138.2), ten_spades_widget.center)
 
@@ -512,12 +536,39 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.player_card_widgets.two, king_clubs_widget.parent)
     self.assertFalse(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
+    self.assert_do_translation(False, king_clubs_widget)
     game_widget.on_action(PlayCardAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
+    self.assert_do_translation(False, king_clubs_widget)
     self.assertEqual([38, 59], king_clubs_widget.size)
     self.assert_list_almost_equal([111.6, 161.8], king_clubs_widget.center)
+
+  def test_on_action_play_card_by_dragging(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    self.assertNotEqual((96.4, 138.2), drag_pos)
+
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    _drag_card_to_pos(ten_spades_widget, drag_pos)
+    self.advance_frames(1)
+    callback.assert_called_once()
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.assertIs(game_widget.play_area, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.visible)
+    self.assertFalse(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
+    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual(drag_pos, ten_spades_widget.center)
 
   def test_on_action_announce_marriage(self):
     game_widget = GameWidget()
@@ -541,8 +592,10 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertTrue(queen_hearts_widget.visible)
     self.assertFalse(queen_hearts_widget.grayed_out)
+    self.assert_do_translation(False, queen_hearts_widget)
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
+    self.assert_do_translation(False, king_hearts_widget)
     self.assertEqual([38, 59], queen_hearts_widget.size)
     self.assertEqual([38, 59], king_hearts_widget.size)
     self.assertEqual((96.4, 138.2), queen_hearts_widget.center)
@@ -558,15 +611,19 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                   queen_clubs_widget.parent)
     self.assertFalse(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
+    self.assert_do_translation(False, king_clubs_widget)
     self.assertFalse(queen_clubs_widget.visible)
     self.assertFalse(queen_clubs_widget.grayed_out)
+    self.assert_do_translation(False, queen_clubs_widget)
     game_widget.on_action(AnnounceMarriageAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertIs(game_widget.play_area, queen_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
+    self.assert_do_translation(False, king_clubs_widget)
     self.assertTrue(queen_clubs_widget.visible)
     self.assertFalse(queen_clubs_widget.grayed_out)
+    self.assert_do_translation(False, queen_clubs_widget)
     self.assertEqual([38, 59], king_clubs_widget.size)
     self.assertEqual([38, 59], queen_clubs_widget.size)
     self.assert_list_almost_equal([111.6, 161.8], king_clubs_widget.center)
@@ -585,12 +642,42 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
     self.assertEqual([38, 59], ten_spades_widget.size)
     self.assertEqual((96.4, 138.2), ten_spades_widget.center)
     EventLoop.window.size = 640, 480
     self.advance_frames(1)
     self.assertEqual([77, 118], ten_spades_widget.size)
     self.assertEqual((192.8, 276.4), ten_spades_widget.center)
+
+  def test_cards_dragged_in_play_area_are_updated_on_window_resize(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    self.assertNotEqual((96.4, 138.2), drag_pos)
+
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    _drag_card_to_pos(ten_spades_widget, drag_pos)
+    callback.assert_called_once()
+    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.assertIs(game_widget.play_area, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.visible)
+    self.assertFalse(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
+    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual(drag_pos, ten_spades_widget.center)
+    self.window.size = 640, 480
+    self.advance_frames(1)
+    self.assertEqual([77, 118], ten_spades_widget.size)
+    self.assert_list_almost_equal([61.6, 236.0],
+                                  list(ten_spades_widget.center), places=0)
 
 
 class GameWidgetPlayerGraphicTest(GraphicUnitTest):
@@ -799,6 +886,97 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch.touch_up()
     callback.assert_not_called()
 
+  def test_play_a_card_by_dragging(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    play_area_pos = game_widget.play_area.center[0], \
+                    game_widget.play_area.center[1]
+
+    # Dragging any player card should have no effect.
+    for i, card in enumerate(game_state.cards_in_hand.one):
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      self.assert_do_translation(False, card_widget)
+      _drag_card_to_pos(card_widget, play_area_pos)
+      self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                       card_widget.size, msg=card_widget.card)
+      self.assertEqual(game_widget.player_card_widgets.one.get_card_pos(0, i),
+                       card_widget.pos, msg=card_widget.card)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # All cards can be played.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertFalse(card_widget.grayed_out)
+      self.assert_do_translation(True, card_widget)
+
+    # Dragging any player card somewhere other than the playing area, should
+    # have no effect.
+    position_outside_play_area = game_widget.tricks_widgets.two.center
+    for i, card in enumerate(game_state.cards_in_hand.one):
+      card_widget = game_widget.cards[card]
+      _drag_card_to_pos(card_widget, position_outside_play_area)
+      self.assertNotEqual(
+        game_widget.player_card_widgets.one.get_card_pos(0, i), card_widget.pos,
+        msg=card_widget.card)
+      self.advance_frames(1)
+      self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                       card_widget.size, msg=card_widget.card)
+      self.assertEqual(game_widget.player_card_widgets.one.get_card_pos(0, i),
+                       card_widget.pos, msg=card_widget.card)
+
+    # Dragging a player's card onto the play area, should play it.
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    _drag_card_to_pos(ten_spades_widget, play_area_pos)
+    self.advance_frames(1)
+    self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                     ten_spades_widget.size)
+    self.assertNotEqual(game_widget.player_card_widgets.one.get_card_pos(0, 3),
+                        ten_spades_widget.pos)
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, PlayCardAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+    self.assertEqual(ten_spades, action.card)
+
+    # All the player's cards are grayed out and cannot be dragged anymore.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertEqual(card_widget is not ten_spades_widget,
+                       card_widget.grayed_out, msg=card_widget.card)
+      self.assert_do_translation(False, card_widget)
+
+    # Dragging the same card should have no effect.
+    callback.reset_mock()
+    old_pos = ten_spades_widget.x, ten_spades_widget.y
+    new_play_area_pos = game_widget.play_area.x + 10, \
+                        game_widget.play_area.y + 10
+    self.assertTrue(game_widget.play_area.collide_point(*new_play_area_pos))
+    _drag_card_to_pos(ten_spades_widget, new_play_area_pos)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(old_pos, ten_spades_widget.pos)
+
+    # Dragging other player cards should have no effect.
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    old_pos = ace_spades_widget.x, ace_spades_widget.y
+    _drag_card_to_pos(ace_spades_widget, new_play_area_pos)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(old_pos, ace_spades_widget.pos)
+    callback.assert_not_called()
+
   def test_play_a_card_with_double_click_must_follow_suit(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
@@ -834,6 +1012,50 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
         touch.is_double_tap = True
         touch.touch_down()
         touch.touch_up()
+        callback.assert_not_called()
+
+  def test_play_a_card_by_dragging_must_follow_suit(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+      game_state.close_talon()
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
+    action.execute(game_state)
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    play_area_pos = game_widget.play_area.center[0], \
+                    game_widget.play_area.center[1]
+
+    # Dragging any player card should have no effect.
+    for i, card in enumerate(game_state.cards_in_hand.one):
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      self.assert_do_translation(False, card_widget)
+      _drag_card_to_pos(card_widget, play_area_pos)
+      self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                       card_widget.size, msg=card_widget.card)
+      self.assertEqual(game_widget.player_card_widgets.one.get_card_pos(0, i),
+                       card_widget.pos, msg=card_widget.card)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # Since the player must follow suit, they can only play their SPADES cards.
+    # Dragging any of the other cards should have no effect.
+    for i, card in enumerate(game_state.cards_in_hand.one):
+      card_widget = game_widget.cards[card]
+      self.assertEqual(card.suit != Suit.SPADES, card_widget.grayed_out)
+      self.assert_do_translation(card.suit == Suit.SPADES, card_widget)
+      if card_widget.grayed_out:
+        _drag_card_to_pos(card_widget, play_area_pos)
+        self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                         card_widget.size, msg=card_widget.card)
+        self.assertEqual(game_widget.player_card_widgets.one.get_card_pos(0, i),
+                         card_widget.pos, msg=card_widget.card)
         callback.assert_not_called()
 
   def test_announce_marriage_using_double_click(self):

@@ -10,6 +10,8 @@ from kivy.core.window import Window
 from kivy.tests.common import GraphicUnitTest as BaseGraphicUnitTest
 from kivy.uix.widget import Widget
 
+from ui.card_widget import CardWidget
+
 
 def get_children_index(parent: Widget, child: Widget) -> Optional[int]:
   """
@@ -40,6 +42,10 @@ class UiTestCase(unittest.TestCase):
     self.assertIs(top.parent, bottom.parent)
     self.assertGreater(get_children_index(top.parent, top),
                        get_children_index(bottom.parent, bottom))
+
+  def assert_do_translation(self, expected: bool, card: CardWidget) -> None:
+    self.assertEqual(expected, card.do_translation_x)
+    self.assertEqual(expected, card.do_translation_y)
 
 
 class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):

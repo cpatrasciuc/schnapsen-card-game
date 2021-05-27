@@ -186,6 +186,10 @@ class CardSlotsLayout(Layout, DebuggableWidget):
         self._slots[row][col].pos = self.get_card_pos(row, col)
         self._slots[row][col].size = self._card_size
 
+  def trigger_layout(self) -> None:
+    """Schedules a call to do_layout() before the next frame is drawn."""
+    self._trigger_layout()
+
 
 if __name__ == "__main__":
   ROWS = 2

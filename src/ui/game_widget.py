@@ -259,11 +259,16 @@ class GameWidget(FloatLayout):
     self._init_widgets()
 
   def _init_widgets(self):
-    self._cards = CardWidget.create_widgets_for_all_cards()
+    self._init_cards()
     self._init_tricks_widgets()
     self._init_cards_in_hand_widgets()
     self._init_talon_widget()
     self.do_layout()
+
+  def _init_cards(self):
+    self._cards = CardWidget.create_widgets_for_all_cards()
+    for card_widget in self._cards.values():
+      card_widget.bind(on_card_moved=self._on_card_moved)
 
   def _init_talon_widget(self):
     self._talon = TalonWidget()
@@ -476,14 +481,13 @@ class GameWidget(FloatLayout):
     :param center: The position of the center of the card after the move.
     """
     card_widget = self._cards[card]
-    # TODO(tests): Add a test where the users drag the cards onto the play area.
+    card_widget.visible = True
+    card_widget.grayed_out = False
     if card_widget.parent != self._play_area:
       logging.info("GameWidget: Moving %s to play area.", card)
       card_slots_widget = self._player_card_widgets[player]
       pos = card_slots_widget.remove_card(card_widget)
       assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
-      card_widget.visible = True
-      card_widget.grayed_out = False
       self._play_area.add_widget(card_widget)
       if center is None:
         play_area_center = self._play_area.center
@@ -608,6 +612,7 @@ class GameWidget(FloatLayout):
         card = self._cards[action.card]
         card.grayed_out = False
         self._bind_card_action(card, action)
+        card.do_translation = True
       else:  # pragma: no cover
         assert False, "Should not be reachable"
 
@@ -637,7 +642,19 @@ class GameWidget(FloatLayout):
     """
     for card_widget in self._actions:
       card_widget.unbind(on_double_tap=self._card_action_callback)
+      card_widget.do_translation = False
     self._actions = {}
+
+  def _on_card_moved(self, card_widget: CardWidget,
+                     center: Tuple[int, int]) -> None:
+    if self._play_area.collide_point(*center):
+      logging.info("GameWidget: Card %s was dragged to the playing area",
+                   card_widget)
+      self._player_card_widgets.one.remove_card(card_widget)
+      self._play_area.add_widget(card_widget)
+      self._reply_with_action(self._actions[card_widget])
+    else:
+      self._player_card_widgets.one.trigger_layout()
 
 
 if __name__ == "__main__":
