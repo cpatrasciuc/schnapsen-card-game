@@ -192,6 +192,31 @@ class GameWidgetTest(UiTestCase):
                      game_widget.talon_widget.trump_card.card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card_widget.parent)
 
+  def test_on_action_exchange_trump_card_visibility_checks(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trump_jack = game_state.cards_in_hand.two.pop(2)
+      ten_hearts = game_state.cards_in_hand.one.pop(2)
+      game_state.cards_in_hand.two.append(ten_hearts)
+      game_state.cards_in_hand.one.append(trump_jack)
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    trump_card_widget = game_widget.talon_widget.trump_card
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
+    trump_jack_widget = game_widget.cards[Card(Suit.CLUBS, CardValue.JACK)]
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    with self.assertRaisesRegex(AssertionError,
+                                "Trump Jack not in player's hand"):
+      game_widget.on_action(ExchangeTrumpCardAction(PlayerId.TWO))
+    game_widget.on_action(ExchangeTrumpCardAction(PlayerId.ONE))
+    self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
+                     game_widget.talon_widget.trump_card.card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_card_widget.parent)
+    self.assertTrue(trump_card_widget.grayed_out)
+    self.assertFalse(trump_jack_widget.grayed_out)
+
   def test_on_action_close_the_talon(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())

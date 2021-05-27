@@ -442,6 +442,7 @@ class GameWidget(FloatLayout):
   def _exchange_trump_card(self, player: PlayerId) -> None:
     trump_jack_widget = self._get_trump_jack_widget()
     trump_jack_widget.visible = True
+    trump_jack_widget.grayed_out = False
     card_slots_widget = self._player_card_widgets[player]
     row, col = card_slots_widget.remove_card(trump_jack_widget)
     assert row is not None and col is not None, \
@@ -450,6 +451,8 @@ class GameWidget(FloatLayout):
     trump_card_widget.rotation = 0
     # TODO(ui): Sort the cards in hand.
     card_slots_widget.add_card(trump_card_widget, row, col)
+    if player == PlayerId.ONE:
+      trump_card_widget.grayed_out = True
     self._talon.set_trump_card(trump_jack_widget)
 
   def _get_card_pos_delta(self, player) -> Tuple[int, int]:
