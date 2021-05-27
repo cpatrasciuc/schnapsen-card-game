@@ -630,6 +630,53 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assert_list_almost_equal([127.6, 173.6], queen_clubs_widget.center)
     self.assert_is_drawn_on_top(king_clubs_widget, queen_clubs_widget)
 
+  def test_on_action_announce_marriage_by_dragging(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
+      game_widget.on_action(PlayCardAction(PlayerId.ONE,
+                                           Card(Suit.SPADES, CardValue.KING)))
+
+    drag_pos = game_widget.play_area.center
+    self.assertEqual([104.0, 150.0], drag_pos)
+
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    queen_hearts_widget = game_widget.cards[queen_hearts]
+    king_hearts = queen_hearts.marriage_pair
+    king_hearts_widget = game_widget.cards[king_hearts]
+    self.assertIs(game_widget.player_card_widgets.one,
+                  queen_hearts_widget.parent)
+    self.assertIs(game_widget.player_card_widgets.one,
+                  king_hearts_widget.parent)
+
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    _drag_card_to_pos(queen_hearts_widget, drag_pos)
+    callback.assert_called_once()
+
+    self.assertEqual((104.0, 150.0), queen_hearts_widget.center)
+    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+
+    self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
+    self.assertIs(game_widget.play_area, king_hearts_widget.parent)
+    self.assertTrue(queen_hearts_widget.visible)
+    self.assertFalse(queen_hearts_widget.grayed_out)
+    self.assert_do_translation(False, queen_hearts_widget)
+    self.assertTrue(king_hearts_widget.visible)
+    self.assertFalse(king_hearts_widget.grayed_out)
+    self.assert_do_translation(False, king_hearts_widget)
+    self.assertEqual([38, 59], queen_hearts_widget.size)
+    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assertEqual((104.0, 150.0), queen_hearts_widget.center)
+    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
   def test_cards_in_play_area_are_updated_on_window_resize(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
@@ -678,6 +725,64 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([77, 118], ten_spades_widget.size)
     self.assert_list_almost_equal([61.6, 236.0],
                                   list(ten_spades_widget.center), places=0)
+
+  def test_marriage_dragged_in_play_area_is_updated_on_window_resize(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    self.assertTrue(game_widget.play_area.collide_point(*drag_pos))
+    self.assert_list_almost_equal([30.8, 118.0], list(drag_pos))
+
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    queen_hearts_widget = game_widget.cards[queen_hearts]
+    king_hearts = queen_hearts.marriage_pair
+    king_hearts_widget = game_widget.cards[king_hearts]
+    self.assertIs(game_widget.player_card_widgets.one,
+                  queen_hearts_widget.parent)
+    self.assertIs(game_widget.player_card_widgets.one,
+                  king_hearts_widget.parent)
+
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    _drag_card_to_pos(queen_hearts_widget, drag_pos)
+    callback.assert_called_once()
+
+    self.assert_list_almost_equal([30.799999999999997, 118.0],
+                                  list(queen_hearts_widget.center), places=0)
+    self.assert_list_almost_equal([23.2, 106.2],
+                                  list(king_hearts_widget.center), places=0)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+
+    self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
+    self.assertIs(game_widget.play_area, king_hearts_widget.parent)
+    self.assertTrue(queen_hearts_widget.visible)
+    self.assertFalse(queen_hearts_widget.grayed_out)
+    self.assert_do_translation(False, queen_hearts_widget)
+    self.assertTrue(king_hearts_widget.visible)
+    self.assertFalse(king_hearts_widget.grayed_out)
+    self.assert_do_translation(False, king_hearts_widget)
+    self.assertEqual([38, 59], queen_hearts_widget.size)
+    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assert_list_almost_equal([30.799999999999997, 118.0],
+                                  list(queen_hearts_widget.center), places=0)
+    self.assert_list_almost_equal([23.2, 106.2],
+                                  list(king_hearts_widget.center), places=0)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    # Resize the window.
+    self.window.size = 640, 480
+    self.advance_frames(1)
+    self.assertEqual([77, 118], queen_hearts_widget.size)
+    self.assertEqual([77, 118], king_hearts_widget.size)
+    self.assert_list_almost_equal([61.6, 236.0],
+                                  list(queen_hearts_widget.center), places=0)
+    self.assert_list_almost_equal([46.4, 212.4],
+                                  list(king_hearts_widget.center), places=0)
 
 
 class GameWidgetPlayerGraphicTest(GraphicUnitTest):
@@ -1125,3 +1230,111 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch.touch_down()
     touch.touch_up()
     callback.assert_not_called()
+
+  def test_announce_marriage_by_dragging(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    play_area_pos = game_widget.play_area.center[0], \
+                    game_widget.play_area.center[1]
+
+    # Dragging any player card should have no effect.
+    for i, card in enumerate(game_state.cards_in_hand.one):
+      card_widget = game_widget.cards[card]
+      self.assertTrue(card_widget.grayed_out)
+      self.assert_do_translation(False, card_widget)
+      _drag_card_to_pos(card_widget, play_area_pos)
+      self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                       card_widget.size, msg=card_widget.card)
+      self.assertEqual(game_widget.player_card_widgets.one.get_card_pos(0, i),
+                       card_widget.pos, msg=card_widget.card)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+
+    # All cards can be played.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertFalse(card_widget.grayed_out)
+      self.assert_do_translation(True, card_widget)
+
+    queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
+    queen_hearts_widget = game_widget.cards[queen_hearts]
+    king_hearts_widget = game_widget.cards[queen_hearts.marriage_pair]
+    self.assertEqual((41, 25), king_hearts_widget.pos)
+    self.assertEqual((0, 25), queen_hearts_widget.pos)
+
+    # Announce the marriage using the card that is drawn at the bottom, to make
+    # sure we test the scenario where it is moved to the top.
+    self.assert_is_drawn_on_top(king_hearts_widget, queen_hearts_widget)
+
+    # Dragging a marriage card should move the marriage pair as well.
+    touch = UnitTestTouch(*queen_hearts_widget.center)
+    touch.touch_down()
+    touch.touch_move(*game_widget.tricks_widgets.two.pos)
+    self.assertEqual((189.0, 150.5), queen_hearts_widget.pos)
+    self.assertEqual((181.4, 138.7), king_hearts_widget.pos)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+    callback.assert_not_called()
+
+    # Stopping the drag outside the playing area should move the cards back to
+    # their initial position.
+    touch.touch_up()
+    callback.assert_not_called()
+    self.advance_frames(1)
+    self.assertEqual((41, 25), king_hearts_widget.pos)
+    self.assertEqual((0, 25), queen_hearts_widget.pos)
+
+    # Dragging the card to the playing area should announce the marriage.
+    _drag_card_to_pos(queen_hearts_widget, play_area_pos)
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, AnnounceMarriageAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+    self.assertEqual(queen_hearts, action.card)
+    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
+    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    # All the player's cards are grayed out and cannot be dragged.
+    for card in game_state.cards_in_hand.one:
+      card_widget = game_widget.cards[card]
+      self.assertEqual(
+        card_widget not in [queen_hearts_widget, king_hearts_widget],
+        card_widget.grayed_out, msg=card_widget.card)
+      self.assert_do_translation(False, card_widget)
+
+    new_drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    self.assertTrue(game_widget.collide_point(*new_drag_pos))
+
+    # Dragging the same card should have no effect.
+    callback.reset_mock()
+    _drag_card_to_pos(queen_hearts_widget, new_drag_pos)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
+    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    # Dragging the marriage pair should have no effect.
+    _drag_card_to_pos(king_hearts_widget, new_drag_pos)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
+    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
+
+    # Dragging other player card should have no effect.
+    ace_spades = Card(Suit.SPADES, CardValue.ACE)
+    ace_spades_widget = game_widget.cards[ace_spades]
+    _drag_card_to_pos(ace_spades_widget, new_drag_pos)
+    callback.assert_not_called()
+    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
+    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)

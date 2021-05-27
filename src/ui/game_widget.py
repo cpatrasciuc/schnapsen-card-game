@@ -613,6 +613,8 @@ class GameWidget(FloatLayout):
         card.grayed_out = False
         self._bind_card_action(card, action)
         card.do_translation = True
+        if isinstance(action, AnnounceMarriageAction):
+          card.bind(on_transform_with_touch=self._on_transform_with_touch)
       else:  # pragma: no cover
         assert False, "Should not be reachable"
 
@@ -642,6 +644,7 @@ class GameWidget(FloatLayout):
     """
     for card_widget in self._actions:
       card_widget.unbind(on_double_tap=self._card_action_callback)
+      card_widget.unbind(on_transform_with_touch=self._on_transform_with_touch)
       card_widget.do_translation = False
     self._actions = {}
 
@@ -650,11 +653,35 @@ class GameWidget(FloatLayout):
     if self._play_area.collide_point(*center):
       logging.info("GameWidget: Card %s was dragged to the playing area",
                    card_widget)
+
+      action = self._actions[card_widget]
+
+      # If the player announces a marriage, first move the un-played card to the
+      # play area, so it will be displayed under the card that is played.
+      if isinstance(action, AnnounceMarriageAction):
+        marriage_pair_widget = self._cards[card_widget.card.marriage_pair]
+        self._player_card_widgets.one.remove_card(marriage_pair_widget)
+        self._play_area.add_widget(marriage_pair_widget)
+
       self._player_card_widgets.one.remove_card(card_widget)
       self._play_area.add_widget(card_widget)
-      self._reply_with_action(self._actions[card_widget])
+      self._reply_with_action(action)
+
     else:
       self._player_card_widgets.one.trigger_layout()
+
+  def _on_transform_with_touch(self, card_widget: CardWidget, _) -> None:
+    """
+    This method is called whenever a marriage card is dragged by the user to a
+    new position, so we can update the position of the marriage pair card
+    accordingly.
+    :param card_widget: The CardWidget that got dragged.
+    """
+    pos = card_widget.pos
+    delta = self._get_card_pos_delta(PlayerId.ONE)
+    pos = pos[0] + delta[0], pos[1] + delta[1]
+    marriage_pair_widget = self._cards[card_widget.card.marriage_pair]
+    marriage_pair_widget.pos = pos
 
 
 if __name__ == "__main__":

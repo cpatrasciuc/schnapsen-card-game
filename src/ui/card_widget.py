@@ -53,7 +53,7 @@ class CardWidget(Scatter):
     self._visible = True
     self._grayed_out = False
     self._touch_down_pos: Optional[Tuple[int, int]] = None
-    self.auto_bring_to_front = False
+    self.auto_bring_to_front = True
     image = Image(source=_get_card_filename(card))
     image.keep_ratio = False
     image.allow_stretch = True
