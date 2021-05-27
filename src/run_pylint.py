@@ -29,7 +29,7 @@ def run_pylint():
   ]
   generated_members = [
     r"kivy.*setter",
-    r"ui\..*(Widget|Layout)\.bind",
+    r"ui\..*(Widget|Layout|ScoreView)\.bind",
     r"ui\..*(Widget|Layout)\.dispatch",
     r"ui\..*(Widget|Layout)\.fbind",
     r"ui\..*(Widget|Layout)\.register_event_type",
