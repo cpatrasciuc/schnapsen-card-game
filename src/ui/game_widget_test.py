@@ -1111,7 +1111,8 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     # A double-click on any of the other cards should have no effect.
     for card in game_state.cards_in_hand.one:
       card_widget = game_widget.cards[card]
-      self.assertEqual(card.suit != Suit.SPADES, card_widget.grayed_out)
+      self.assertEqual(card_widget.card.suit != Suit.SPADES,
+                       card_widget.grayed_out)
       if card_widget.grayed_out:
         touch = UnitTestTouch(*card_widget.center)
         touch.is_double_tap = True
@@ -1153,8 +1154,10 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     # Dragging any of the other cards should have no effect.
     for i, card in enumerate(game_state.cards_in_hand.one):
       card_widget = game_widget.cards[card]
-      self.assertEqual(card.suit != Suit.SPADES, card_widget.grayed_out)
-      self.assert_do_translation(card.suit == Suit.SPADES, card_widget)
+      self.assertEqual(card_widget.card.suit != Suit.SPADES,
+                       card_widget.grayed_out)
+      self.assert_do_translation(card_widget.card.suit == Suit.SPADES,
+                                 card_widget)
       if card_widget.grayed_out:
         _drag_card_to_pos(card_widget, play_area_pos)
         self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
