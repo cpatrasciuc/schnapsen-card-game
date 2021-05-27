@@ -499,11 +499,20 @@ class GameWidget(FloatLayout):
       assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
       self._play_area.add_widget(card_widget)
       if center is None:
-        play_area_center = self._play_area.center
-        delta = self._get_card_pos_delta(player)
-        center = play_area_center[0] + delta[0], play_area_center[1] + delta[1]
+        center = self._get_default_play_location(player)
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
+
+  def _get_default_play_location(self, player: PlayerId) -> Tuple[int, int]:
+    """
+    Returns the coordinates where a card should be moved when it is played
+    without using dragging (i.e., it's a card played by the computer or the user
+    double-clicked it instead of dragging it).
+    """
+    play_area_center = self._play_area.center
+    delta = self._get_card_pos_delta(player)
+    center = play_area_center[0] + delta[0], play_area_center[1] + delta[1]
+    return center
 
   def _update_play_area_cards(self) -> None:
     """
