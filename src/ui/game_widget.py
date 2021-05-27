@@ -393,7 +393,8 @@ class GameWidget(FloatLayout):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
 
-    # TODO(ui): Check if talon is closed.
+    if game_state.is_talon_closed:
+      self._talon.closed = True
 
     # TODO(ui): If the current_trick is not empty, play a card to the play area.
 

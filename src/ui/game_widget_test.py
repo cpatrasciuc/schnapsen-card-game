@@ -16,7 +16,8 @@ from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_multiple_cards_in_the_talon_for_tests, \
-  get_game_state_with_empty_talon_for_tests
+  get_game_state_with_empty_talon_for_tests, \
+  get_game_state_with_all_tricks_played
 from model.game_state_validation import GameStateValidator
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
   PlayCardAction, AnnounceMarriageAction, PlayerAction
@@ -118,12 +119,26 @@ class GameWidgetTest(UiTestCase):
       self.assertFalse(card_widget.grayed_out)
       self.assert_do_translation(False, card_widget)
     self.assertIsNone(game_widget.talon_widget.pop_card())
+    self.assertEqual(game_state.is_talon_closed,
+                     game_widget.talon_widget.closed)
 
   def test_init_from_game_state(self):
     self._run_init_from_game_state(get_game_state_for_tests())
 
   def test_init_from_game_state_with_empty_talon(self):
     self._run_init_from_game_state(get_game_state_with_empty_talon_for_tests())
+
+  def test_init_from_game_state_with_closed_talon(self):
+    game_state = get_game_state_for_tests()
+    game_state.close_talon()
+    self._run_init_from_game_state(game_state)
+
+  def test_init_from_game_state_with_all_tricks_played(self):
+    self._run_init_from_game_state(get_game_state_with_all_tricks_played())
+
+  def test_init_from_game_state_with_multiple_cards_in_the_talon(self):
+    self._run_init_from_game_state(
+      get_game_state_with_multiple_cards_in_the_talon_for_tests())
 
   def test_init_form_game_state_with_game_score(self):
     test_cases = [
