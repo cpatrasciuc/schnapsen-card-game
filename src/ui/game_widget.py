@@ -67,6 +67,50 @@ Builder.load_string(dedent("""
         pos: self.pos
         size: self.size
   
+    # The right side of the widget. It shows the tricks won by both players, the
+    # talon, the trump card and the menu buttons.
+    AnchorLayout:
+      anchor_x: "right"
+      anchor_y: "center"
+      
+      # BoxLayout used to stack vertically the widget on this side of the
+      # screen.
+      BoxLayout:
+        orientation: "vertical"
+        size_hint: 0.35, 1
+        padding: root.padding_pct * self.width, root.padding_pct * self.height
+        
+        # Placeholder for the widget that shows the tricks won by the computer
+        # player.
+        BoxLayout:
+          id: computer_tricks_placeholder
+          size_hint: 1, 0.25
+          
+        # Placeholder for the widget that shows the talon and trump card.
+        BoxLayout:
+          id: talon_placeholder
+          size_hint: 1, None
+        
+        # Placeholder for the menu buttons.
+        BoxLayout:
+          id: menu_placeholder
+          size_hint: 1, None
+          DebuggableWidget:
+            debug_text: "Menu buttons"
+  
+        # Placeholder for the widget that shows the tricks won by the human
+        # player.
+        BoxLayout:
+          id: human_tricks_placeholder
+          size_hint: 1, None
+  
+        # Empty area in the bottom-right corner of the widget.
+        BoxLayout:
+          id: fill_area
+          size_hint: 1, None
+          DebuggableWidget:
+            debug_text: "Fill area"
+
     # The left-side of the widget: players cards, playing area, score info.
     AnchorLayout:
       anchor_x: "left"
@@ -152,50 +196,6 @@ Builder.load_string(dedent("""
         BoxLayout:
           id: human_cards_placeholder
           size_hint_y: 0.35
-  
-    # The right side of the widget. It shows the tricks won by both players, the
-    # talon, the trump card and the menu buttons.
-    AnchorLayout:
-      anchor_x: "right"
-      anchor_y: "center"
-      
-      # BoxLayout used to stack vertically the widget on this side of the
-      # screen.
-      BoxLayout:
-        orientation: "vertical"
-        size_hint: 0.35, 1
-        padding: root.padding_pct * self.width, root.padding_pct * self.height
-        
-        # Placeholder for the widget that shows the tricks won by the computer
-        # player.
-        BoxLayout:
-          id: computer_tricks_placeholder
-          size_hint: 1, 0.25
-          
-        # Placeholder for the widget that shows the talon and trump card.
-        BoxLayout:
-          id: talon_placeholder
-          size_hint: 1, None
-        
-        # Placeholder for the menu buttons.
-        BoxLayout:
-          id: menu_placeholder
-          size_hint: 1, None
-          DebuggableWidget:
-            debug_text: "Menu buttons"
-  
-        # Placeholder for the widget that shows the tricks won by the human
-        # player.
-        BoxLayout:
-          id: human_tricks_placeholder
-          size_hint: 1, None
-  
-        # Empty area in the bottom-right corner of the widget.
-        BoxLayout:
-          id: fill_area
-          size_hint: 1, None
-          DebuggableWidget:
-            debug_text: "Fill area"
   """))
 
 
