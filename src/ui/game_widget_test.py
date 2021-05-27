@@ -661,6 +661,44 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], jack_spades_widget.size)
     self.assert_list_almost_equal([38.4, 129.8], jack_spades_widget.center)
 
+  def test_on_action_announce_marriage_reply_is_relative_to_first_card(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    self.assertNotEqual(game_widget.play_area.center, drag_pos)
+
+    king_hearts = Card(Suit.HEARTS, CardValue.KING)
+    king_hearts_widget = game_widget.cards[king_hearts]
+    self.assertIs(game_widget.player_card_widgets.one,
+                  king_hearts_widget.parent)
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    _drag_card_to_pos(king_hearts_widget, drag_pos)
+    self.advance_frames(1)
+    callback.assert_called_once()
+    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, king_hearts))
+    self.assertIs(game_widget.play_area, king_hearts_widget.parent)
+    self.assertTrue(king_hearts_widget.visible)
+    self.assertFalse(king_hearts_widget.grayed_out)
+    self.assert_do_translation(False, king_hearts_widget)
+    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assertEqual(drag_pos, king_hearts_widget.center)
+
+    jack_spades = Card(Suit.SPADES, CardValue.JACK)
+    jack_spades_widget = game_widget.cards[jack_spades]
+    self.assertIs(game_widget.player_card_widgets.two,
+                  jack_spades_widget.parent)
+    game_widget.on_action(PlayCardAction(PlayerId.TWO, jack_spades))
+    self.assertIs(game_widget.play_area, jack_spades_widget.parent)
+    self.assertTrue(jack_spades_widget.visible)
+    self.assertFalse(jack_spades_widget.grayed_out)
+    self.assert_do_translation(False, jack_spades_widget)
+    self.assertEqual([38, 59], jack_spades_widget.size)
+    self.assert_list_almost_equal([38.4, 129.8], jack_spades_widget.center)
+
   def test_on_action_announce_marriage(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
@@ -691,7 +729,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], king_hearts_widget.size)
     self.assertEqual(game_widget.play_area.center,
                      list(queen_hearts_widget.center))
-    self.assertEqual((80.4, 126.4), king_hearts_widget.center)
+    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     game_widget.reset()
@@ -724,7 +762,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertEqual([38, 59], queen_clubs_widget.size)
     self.assert_list_almost_equal(game_widget.play_area.center,
                                   list(king_clubs_widget.center))
-    self.assert_list_almost_equal([127.6, 173.6], queen_clubs_widget.center)
+    self.assert_list_almost_equal([111.6, 161.8], queen_clubs_widget.center)
     self.assert_is_drawn_on_top(king_clubs_widget, queen_clubs_widget)
 
   def test_on_action_announce_marriage_by_dragging(self):
