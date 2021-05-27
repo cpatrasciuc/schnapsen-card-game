@@ -495,11 +495,11 @@ class GameWidget(FloatLayout):
     if card_widget.parent != self._play_area:
       logging.info("GameWidget: Moving %s to play area.", card)
       card_slots_widget = self._player_card_widgets[player]
+      if center is None:
+        center = self._get_default_play_location(player)
       pos = card_slots_widget.remove_card(card_widget)
       assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
       self._play_area.add_widget(card_widget)
-      if center is None:
-        center = self._get_default_play_location(player)
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
 
@@ -509,10 +509,13 @@ class GameWidget(FloatLayout):
     without using dragging (i.e., it's a card played by the computer or the user
     double-clicked it instead of dragging it).
     """
-    play_area_center = self._play_area.center
-    delta = self._get_card_pos_delta(player)
-    center = play_area_center[0] + delta[0], play_area_center[1] + delta[1]
-    return center
+    pos = self._play_area.center
+    for widget in self._play_area.children:
+      if isinstance(widget, CardWidget):
+        pos = widget.center
+        delta = self._get_card_pos_delta(player)
+        pos = pos[0] + delta[0], pos[1] + delta[1]
+    return pos[0], pos[1]
 
   def _update_play_area_cards(self) -> None:
     """
@@ -548,14 +551,14 @@ class GameWidget(FloatLayout):
     elif isinstance(action, PlayCardAction):
       self._move_player_card_to_play_area(action.player_id, action.card)
     elif isinstance(action, AnnounceMarriageAction):
-      center = self._play_area.center
+      center = self._get_default_play_location(action.player_id)
       delta = self._get_card_pos_delta(action.player_id)
       new_center = center[0] + 2 * delta[1], center[1] + 2 * delta[1]
       self._marriage_card = (action.player_id,
                              self._cards[action.card.marriage_pair])
       self._move_player_card_to_play_area(action.player_id,
                                           action.card.marriage_pair, new_center)
-      self._move_player_card_to_play_area(action.player_id, action.card)
+      self._move_player_card_to_play_area(action.player_id, action.card, center)
     else:
       assert False, "Should not reach this code"
 
