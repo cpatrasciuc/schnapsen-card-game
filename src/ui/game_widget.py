@@ -387,11 +387,13 @@ class GameWidget(FloatLayout):
         self._tricks_widgets[player].add_card(self._cards[trick.two])
 
     # Init the trump card and the talon.
-    # TODO(ui): Only do this if trump_card is not None.
-    self._talon.set_trump_card(self._cards[game_state.trump_card])
+    if game_state.trump_card is not None:
+      self._talon.set_trump_card(self._cards[game_state.trump_card])
     for card in reversed(game_state.talon):
       self._cards[card].visible = False
       self._talon.push_card(self._cards[card])
+
+    # TODO(ui): Check if talon is closed.
 
     # TODO(ui): If the current_trick is not empty, play a card to the play area.
 
@@ -653,6 +655,7 @@ class GameWidget(FloatLayout):
 
   def _on_card_moved(self, card_widget: CardWidget,
                      center: Tuple[int, int]) -> None:
+    # If the card is dragged onto the play area, play it.
     if self._play_area.collide_point(*center):
       logging.info("GameWidget: Card %s was dragged to the playing area",
                    card_widget)
@@ -669,9 +672,22 @@ class GameWidget(FloatLayout):
       self._player_card_widgets.one.remove_card(card_widget)
       self._play_area.add_widget(card_widget)
       self._reply_with_action(action)
+      return
 
-    else:
-      self._player_card_widgets.one.trigger_layout()
+    # If the trump jack is dragged onto the trump card, exchange the trump card,
+    # if this action is available.
+    if self._talon.trump_card is not None:
+      if card_widget == self._get_trump_jack_widget():
+        action = self._actions.get(self._talon.trump_card, None)
+        if action is not None:
+          if self._talon.trump_card.collide_point(*center):
+            self._reply_with_action(action)
+            return
+
+    # If the card is dragged anywhere else, trigger a call to do_layout() which
+    # will bring the dragged card back to the player's hand before the next
+    # frame is drawn.
+    self._player_card_widgets.one.trigger_layout()
 
   def _on_transform_with_touch(self, card_widget: CardWidget, _) -> None:
     """

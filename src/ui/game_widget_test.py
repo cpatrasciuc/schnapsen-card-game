@@ -15,7 +15,8 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests, \
-  get_game_state_with_multiple_cards_in_the_talon_for_tests
+  get_game_state_with_multiple_cards_in_the_talon_for_tests, \
+  get_game_state_with_empty_talon_for_tests
 from model.game_state_validation import GameStateValidator
 from model.player_action import ExchangeTrumpCardAction, CloseTheTalonAction, \
   PlayCardAction, AnnounceMarriageAction, PlayerAction
@@ -72,10 +73,8 @@ class GameWidgetTest(UiTestCase):
     game_widget = GameWidget()
     self._assert_initial_game_widget_state(game_widget)
 
-  def test_init_from_game_state(self):
+  def _run_init_from_game_state(self, game_state: GameState):
     game_widget = GameWidget()
-
-    game_state = get_game_state_for_tests()
     game_widget.init_from_game_state(game_state)
     card_widgets = game_widget.cards
 
@@ -102,11 +101,14 @@ class GameWidgetTest(UiTestCase):
         self.assert_do_translation(False, card_widgets[trick.two])
 
     # Trump card is correctly set.
-    self.assertIs(game_widget.talon_widget.trump_card,
-                  card_widgets[game_state.trump_card])
-    self.assertTrue(card_widgets[game_state.trump_card].visible)
-    self.assertFalse(card_widgets[game_state.trump_card].grayed_out)
-    self.assert_do_translation(False, card_widgets[game_state.trump_card])
+    if game_state.trump_card is not None:
+      self.assertIs(game_widget.talon_widget.trump_card,
+                    card_widgets[game_state.trump_card])
+      self.assertTrue(card_widgets[game_state.trump_card].visible)
+      self.assertFalse(card_widgets[game_state.trump_card].grayed_out)
+      self.assert_do_translation(False, card_widgets[game_state.trump_card])
+    else:
+      self.assertIsNone(game_widget.talon_widget.trump_card)
 
     # Remaining cards are in the talon.
     for card in game_state.talon:
@@ -117,11 +119,11 @@ class GameWidgetTest(UiTestCase):
       self.assert_do_translation(False, card_widget)
     self.assertIsNone(game_widget.talon_widget.pop_card())
 
-    # The trick points are correctly displayed.
-    self.assertEqual("[color=ffff33]Trick points: 22[/color]",
-                     game_widget.ids.human_trick_score_label.text)
-    self.assertEqual("[color=ffffff]Trick points: 53[/color]",
-                     game_widget.ids.computer_trick_score_label.text)
+  def test_init_from_game_state(self):
+    self._run_init_from_game_state(get_game_state_for_tests())
+
+  def test_init_from_game_state_with_empty_talon(self):
+    self._run_init_from_game_state(get_game_state_with_empty_talon_for_tests())
 
   def test_init_form_game_state_with_game_score(self):
     test_cases = [
@@ -855,6 +857,231 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch.touch_down()
     touch.touch_up()
     callback.assert_not_called()
+
+  def test_exchange_trump_card_by_dragging(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trump_jack = game_state.cards_in_hand.two.pop(2)
+      ten_hearts = game_state.cards_in_hand.one.pop(2)
+      game_state.cards_in_hand.two.append(ten_hearts)
+      game_state.cards_in_hand.one.append(trump_jack)
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    trump_card_widget = game_widget.talon_widget.trump_card
+    trump_jack_widget = game_widget.cards[trump_jack]
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the trump jack onto the trump card should have no effect.
+    _drag_card_to_pos(trump_jack_widget, trump_card_widget.center)
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+    self.assertFalse(trump_jack_widget.grayed_out)
+    self.assert_do_translation(True, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the trump jack outside the play area and outside the trump card,
+    # should have no effect.
+    pos = trump_jack_widget.pos
+    _drag_card_to_pos(trump_jack_widget, game_widget.tricks_widgets.two.center)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(pos, trump_jack_widget.pos)
+
+    # Dragging the trump jack onto the trump card should call the callback with
+    # an ExchangeTrumpCardAction.
+    _drag_card_to_pos(trump_jack_widget, trump_card_widget.center)
+    callback.assert_called_once()
+    self.assertEqual(1, len(callback.call_args.args))
+    self.assertEqual({}, callback.call_args.kwargs)
+    action = callback.call_args.args[0]
+    self.assertIsInstance(action, ExchangeTrumpCardAction)
+    self.assertEqual(PlayerId.ONE, action.player_id)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging again the trump jack onto the trump card should have no effect.
+    callback.reset_mock()
+    _drag_card_to_pos(trump_jack_widget, trump_card_widget.center)
+    callback.assert_not_called()
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+  def test_exchange_trump_card_by_dragging_not_on_lead(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trump_jack = game_state.cards_in_hand.two.pop(2)
+      ten_hearts = game_state.cards_in_hand.one.pop(2)
+      game_state.cards_in_hand.two.append(ten_hearts)
+      game_state.cards_in_hand.one.append(trump_jack)
+      game_state.next_player = PlayerId.TWO
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN))
+    action.execute(game_state)
+    self.render(game_widget)
+
+    trump_card_widget = game_widget.talon_widget.trump_card
+    trump_jack_widget = game_widget.cards[trump_jack]
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the trump jack onto the trump card should have no effect.
+    _drag_card_to_pos(trump_jack_widget, trump_card_widget.center)
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+    self.assertFalse(trump_jack_widget.grayed_out)
+    # This is true since the trump jack can be dragged on the play area to play
+    # it, but it cannot be dragged onto the trump card to exchange it.
+    self.assert_do_translation(True, trump_jack_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the trump jack outside the play area and outside the trump card,
+    # should have no effect.
+    pos = trump_jack_widget.pos
+    _drag_card_to_pos(trump_jack_widget, game_widget.tricks_widgets.two.center)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(pos, trump_jack_widget.pos)
+
+    # Dragging the trump jack onto the trump card should have no effect.
+    _drag_card_to_pos(trump_jack_widget, trump_card_widget.center)
+    self.advance_frames(1)
+    callback.not_called()
+    self.assertEqual(pos, trump_jack_widget.pos)
+
+  def test_exchange_trump_card_by_dragging_talon_is_empty(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+    with GameStateValidator(game_state):
+      trump_jack = game_state.cards_in_hand.two.pop(2)
+      ten_hearts = game_state.cards_in_hand.one.pop(2)
+      game_state.cards_in_hand.two.append(ten_hearts)
+      game_state.cards_in_hand.one.append(trump_jack)
+
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    trump_jack_widget = game_widget.cards[trump_jack]
+    self.assertIsNone(game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+
+    # Dragging the trump jack onto the talon widget should have no effect.
+    _drag_card_to_pos(trump_jack_widget, game_widget.talon_widget.center)
+    self.assertIsNone(game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
+    self.assertTrue(trump_jack_widget.grayed_out)
+    self.assert_do_translation(False, trump_jack_widget)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+    self.assertFalse(trump_jack_widget.grayed_out)
+    # This is true since the trump jack can be dragged on the play area to play
+    # it, but it cannot be dragged onto the talon to exchange it.
+    self.assert_do_translation(True, trump_jack_widget)
+
+    # Dragging the trump jack outside the play area should have no effect.
+    pos = trump_jack_widget.pos
+    _drag_card_to_pos(trump_jack_widget, game_widget.tricks_widgets.two.center)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(pos, trump_jack_widget.pos)
+
+    # Dragging the trump jack onto the talon widget should have no effect.
+    _drag_card_to_pos(trump_jack_widget, game_widget.talon_widget.center)
+    self.advance_frames(1)
+    callback.not_called()
+    self.assertEqual(pos, trump_jack_widget.pos)
+
+  def test_dragging_non_trump_jack_card_over_the_trump_card(self):
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget()
+    game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
+
+    ten_spades = Card(Suit.SPADES, CardValue.TEN)
+    ten_spades_widget = game_widget.cards[ten_spades]
+    trump_card_widget = game_widget.talon_widget.trump_card
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the ten of spades onto the trump card should have no effect.
+    _drag_card_to_pos(ten_spades_widget, trump_card_widget.center)
+    self.assertIs(trump_card_widget, game_widget.talon_widget.trump_card)
+    self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
+    self.assertTrue(ten_spades_widget.grayed_out)
+    self.assert_do_translation(False, ten_spades_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Request the next player's action.
+    callback = Mock()
+    game_widget.request_next_action(game_state, callback)
+    callback.assert_not_called()
+    self.assertFalse(ten_spades_widget.grayed_out)
+    # This is true since the ten of spades can be dragged on the play area to
+    # play it, but it cannot be dragged onto the trump card to exchange it.
+    self.assert_do_translation(True, ten_spades_widget)
+    self.assertFalse(trump_card_widget.grayed_out)
+    self.assert_do_translation(False, trump_card_widget)
+
+    # Dragging the ten of spades outside the play area and outside the trump
+    # card, should have no effect.
+    pos = ten_spades_widget.pos
+    _drag_card_to_pos(ten_spades_widget, game_widget.tricks_widgets.two.center)
+    self.advance_frames(1)
+    callback.assert_not_called()
+    self.assertEqual(pos, ten_spades_widget.pos)
+
+    # Dragging the ten of spades onto the trump card should have no effect.
+    _drag_card_to_pos(ten_spades_widget, trump_card_widget.center)
+    self.advance_frames(1)
+    callback.not_called()
+    self.assertEqual(pos, ten_spades_widget.pos)
 
   def test_double_click_trump_card_when_cannot_exchange_trump_card(self):
     game_state = get_game_state_for_tests()
