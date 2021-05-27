@@ -55,9 +55,12 @@ def _delete_widget(widget: Widget) -> None:
   del widget
 
 
-# TODO(ui): Maybe add paddings to some widgets.
+# TODO(tests): Add tests for padding_pct.
 Builder.load_string(dedent("""
   <GameWidget>:
+    # Adds some padding to the left/right side of the GameWidget layout, as a
+    # percentage of those components width/height.
+    padding_pct: 0.00
     canvas.before:
       Rectangle:
         source: 'resources/background.png'
@@ -74,6 +77,7 @@ Builder.load_string(dedent("""
       BoxLayout:
         orientation: 'vertical'
         size_hint: 0.65, 1
+        padding: root.padding_pct * self.width, root.padding_pct * self.height
   
         # Placeholder to show the cards of the computer player. It uses only 10%
         # of the height since it mostly contains non-visible cards, so not very
@@ -160,6 +164,7 @@ Builder.load_string(dedent("""
       BoxLayout:
         orientation: "vertical"
         size_hint: 0.35, 1
+        padding: root.padding_pct * self.width, root.padding_pct * self.height
         
         # Placeholder for the widget that shows the tricks won by the computer
         # player.
