@@ -3,11 +3,13 @@
 #  found in the LICENSE file.
 
 import logging
+import os.path
 from textwrap import dedent
 from typing import Dict, Tuple, Optional, List, Callable
 
 from kivy.base import runTouchApp
 from kivy.lang import Builder
+from kivy.resources import resource_add_path
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
@@ -55,6 +57,8 @@ def _delete_widget(widget: Widget) -> None:
   del widget
 
 
+resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
+
 # TODO(tests): Add tests for padding_pct.
 Builder.load_string(dedent("""
   <GameWidget>:
@@ -63,7 +67,7 @@ Builder.load_string(dedent("""
     padding_pct: 0.00
     canvas.before:
       Rectangle:
-        source: 'resources/background.png'
+        source: 'background.png'
         pos: self.pos
         size: self.size
   
