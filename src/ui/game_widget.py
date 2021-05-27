@@ -389,9 +389,12 @@ class GameWidget(FloatLayout):
     # Init the trump card and the talon.
     if game_state.trump_card is not None:
       self._talon.set_trump_card(self._cards[game_state.trump_card])
-    for card in reversed(game_state.talon):
-      self._cards[card].visible = False
-      self._talon.push_card(self._cards[card])
+    for i, card in enumerate(reversed(game_state.talon)):
+      card_widget = self._cards[card]
+      card_widget.visible = False
+      if i != 0:
+        card_widget.shadow = False
+      self._talon.push_card(card_widget)
 
     if game_state.is_talon_closed:
       self._talon.closed = True
@@ -598,6 +601,7 @@ class GameWidget(FloatLayout):
         card_widget = self._cards[card]
         self._player_card_widgets[player].add_card(card_widget, 0, i)
         card_widget.do_translation = False
+        card_widget.shadow = True
         if player == PlayerId.ONE:
           card_widget.visible = True
           card_widget.grayed_out = True

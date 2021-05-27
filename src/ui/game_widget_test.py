@@ -118,6 +118,9 @@ class GameWidgetTest(UiTestCase):
       self.assertFalse(card_widget.visible)
       self.assertFalse(card_widget.grayed_out)
       self.assert_do_translation(False, card_widget)
+      # Only the last talon card has shadow enabled.
+      self.assertEqual(game_widget.talon_widget.top_card() is None,
+                       card_widget.shadow)
     self.assertIsNone(game_widget.talon_widget.pop_card())
     self.assertEqual(game_state.is_talon_closed,
                      game_widget.talon_widget.closed)
@@ -354,10 +357,12 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.one, last_talon_card.parent)
     self.assertTrue(last_talon_card.visible)
     self.assertTrue(last_talon_card.grayed_out)
+    self.assertTrue(last_talon_card.shadow)
     self.assert_do_translation(False, last_talon_card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card.parent)
     self.assertTrue(trump_card.visible)
     self.assertFalse(trump_card.grayed_out)
+    self.assertTrue(trump_card.shadow)
     self.assert_do_translation(False, trump_card)
 
   def test_on_new_cards_drawn_last_talon_card_player_two_wins(self):
@@ -396,10 +401,12 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.two, last_talon_card.parent)
     self.assertFalse(last_talon_card.visible)
     self.assertFalse(last_talon_card.grayed_out)
+    self.assertTrue(last_talon_card.shadow)
     self.assert_do_translation(False, last_talon_card)
     self.assertIs(game_widget.player_card_widgets.one, trump_card.parent)
     self.assertTrue(trump_card.visible)
     self.assertTrue(trump_card.grayed_out)
+    self.assertTrue(trump_card.shadow)
     self.assert_do_translation(False, trump_card)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
@@ -428,10 +435,12 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.one, first_talon_card.parent)
     self.assertTrue(first_talon_card.visible)
     self.assertTrue(first_talon_card.grayed_out)
+    self.assertTrue(first_talon_card.shadow)
     self.assert_do_translation(False, first_talon_card)
     self.assertIs(game_widget.player_card_widgets.two, second_talon_card.parent)
     self.assertFalse(second_talon_card.visible)
     self.assertFalse(second_talon_card.grayed_out)
+    self.assertTrue(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
@@ -462,10 +471,12 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.two, first_talon_card.parent)
     self.assertFalse(first_talon_card.visible)
     self.assertFalse(first_talon_card.grayed_out)
+    self.assertTrue(first_talon_card.shadow)
     self.assert_do_translation(False, first_talon_card)
     self.assertIs(game_widget.player_card_widgets.one, second_talon_card.parent)
     self.assertTrue(second_talon_card.visible)
     self.assertTrue(second_talon_card.grayed_out)
+    self.assertTrue(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
 
 
