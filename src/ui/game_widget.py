@@ -253,16 +253,6 @@ class GameWidget(FloatLayout):
     # associated to each card that can be double clicked.
     self._actions: Dict[CardWidget, PlayerAction] = {}
 
-    # Function executed when a card is double clicked.
-    def card_action_callback(card_widget: CardWidget):
-      self._reply_with_action(self._actions[card_widget])
-
-    # When request_next_action() is called, we bind this callback to all the
-    # cards that have an associated available action. We need to store a
-    # reference to this callback, since we want to unbind it from all cards once
-    # the player picks an action.
-    self._card_action_callback = card_action_callback
-
     self._init_widgets()
 
   def _init_widgets(self):
@@ -652,6 +642,13 @@ class GameWidget(FloatLayout):
   def _bind_card_action(self, card: CardWidget, action: PlayerAction) -> None:
     self._actions[card] = action
     card.bind(on_double_tap=self._card_action_callback)
+
+  def _card_action_callback(self, card_widget: CardWidget) -> None:
+    """
+    Function executed when a card is double clicked.
+    :param card_widget: The card that was double-clicked.
+    """
+    self._reply_with_action(self._actions[card_widget])
 
   def _reply_with_action(self, action: PlayerAction) -> None:
     """
