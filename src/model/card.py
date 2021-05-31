@@ -8,19 +8,24 @@ from model.card_value import CardValue
 from model.suit import Suit
 
 
-@dataclasses.dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, unsafe_hash=True)
 class Card:
   """
-  Class representing a playing card. Card instances are immutable.
+  Class representing a playing card.
 
   The sorting order is for display purposes only. It groups first by suit and
   then by card value. Comparison operators should not be used to check whether
   one card wins a trick or not.
   To check if a card wins a trick against a different card, given a trump suit,
   use Card.wins().
+
+  The public field tells whether the card was seen by both players in a game of
+  Schnapsen (e.g., the card was played, or it's the trump card).
   """
   suit: Suit
   card_value: CardValue
+  public: bool = dataclasses.field(default=False, repr=False, compare=False,
+                                   hash=False)
 
   def __post_init__(self):
     if self.card_value is None or self.suit is None:

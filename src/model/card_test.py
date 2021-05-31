@@ -40,17 +40,10 @@ class CardTest(unittest.TestCase):
                                 "card_value must be an instance of CardValue"):
       Card(Suit.DIAMONDS, Suit.DIAMONDS)
 
-  def test_immutable(self):
-    card = Card(Suit.DIAMONDS, CardValue.ACE)
-    with self.assertRaisesRegex(dataclasses.FrozenInstanceError,
-                                "cannot assign to field"):
-      # noinspection PyDataclass
-      card.suit = Suit.HEARTS
-
   def test_serialization(self):
     for card_value in CardValue:
       for suit in Suit:
-        card = Card(suit, card_value)
+        card = Card(suit, card_value, True)
         self.assertEqual(card, loads(dumps(card)))
 
   def test_hash_and_eq(self):
@@ -58,17 +51,46 @@ class CardTest(unittest.TestCase):
                 Card(Suit.DIAMONDS, CardValue.KING)}
     self.assertEqual(2, len(card_set), card_set)
     card_set = {Card(Suit.DIAMONDS, CardValue.ACE),
-                Card(Suit.DIAMONDS, CardValue.ACE)}
+                Card(Suit.DIAMONDS, CardValue.ACE, True),
+                Card(Suit.DIAMONDS, CardValue.KING)}
+    self.assertEqual(2, len(card_set), card_set)
+    self.assertEqual({Card(Suit.DIAMONDS, CardValue.ACE),
+                      Card(Suit.DIAMONDS, CardValue.KING)}, card_set)
+    self.assertEqual({Card(Suit.DIAMONDS, CardValue.ACE, True),
+                      Card(Suit.DIAMONDS, CardValue.KING)},
+                     card_set)
+    card_set = {Card(Suit.DIAMONDS, CardValue.ACE),
+                Card(Suit.DIAMONDS, CardValue.ACE, True),
+                Card(Suit.DIAMONDS, CardValue.KING, True)}
+    self.assertEqual(2, len(card_set), card_set)
+    self.assertEqual({Card(Suit.DIAMONDS, CardValue.ACE),
+                      Card(Suit.DIAMONDS, CardValue.KING)}, card_set)
+    self.assertEqual({Card(Suit.DIAMONDS, CardValue.ACE, True),
+                      Card(Suit.DIAMONDS, CardValue.KING)},
+                     card_set)
+    card_set = {Card(Suit.DIAMONDS, CardValue.ACE),
+                Card(Suit.DIAMONDS, CardValue.ACE, True),
+                Card(Suit.DIAMONDS, CardValue.ACE, False),
+                Card(Suit.DIAMONDS, CardValue.ACE, True)}
     self.assertEqual(1, len(card_set), card_set)
+    self.assertNotEqual(object(), Card(Suit.DIAMONDS, CardValue.ACE))
 
-  def test_display_order(self):
+  def test_order(self):
     # Sort by suit first.
     self.assertLess(Card(Suit.HEARTS, CardValue.ACE),
                     Card(Suit.DIAMONDS, CardValue.KING))
+    self.assertLess(Card(Suit.HEARTS, CardValue.ACE, True),
+                    Card(Suit.DIAMONDS, CardValue.KING, False))
+    self.assertLess(Card(Suit.HEARTS, CardValue.ACE, False),
+                    Card(Suit.DIAMONDS, CardValue.KING, True))
 
     # For same suit, sort by card value.
     self.assertLess(Card(Suit.HEARTS, CardValue.KING),
                     Card(Suit.HEARTS, CardValue.ACE))
+    self.assertLess(Card(Suit.HEARTS, CardValue.KING, True),
+                    Card(Suit.HEARTS, CardValue.ACE), False)
+    self.assertLess(Card(Suit.HEARTS, CardValue.KING, False),
+                    Card(Suit.HEARTS, CardValue.ACE), True)
 
     # Sort the whole deck, check the first and last card.
     deck = Card.get_all_cards()
