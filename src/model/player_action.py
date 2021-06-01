@@ -276,6 +276,7 @@ class ExchangeTrumpCardAction(PlayerAction):
     game_state.cards_in_hand[self.player_id].remove(trump_jack)
     game_state.cards_in_hand[self.player_id].append(game_state.trump_card)
     game_state.trump_card = trump_jack
+    game_state.trump_card.public = True
 
   def __eq__(self, other):
     if not isinstance(other, ExchangeTrumpCardAction):

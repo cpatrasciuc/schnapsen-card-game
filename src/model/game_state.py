@@ -136,6 +136,10 @@ class GameState:
   current_trick: Trick = dataclasses.field(
     default_factory=lambda: Trick(None, None))
 
+  def __post_init__(self):
+    if self.trump_card is not None:
+      self.trump_card.public = True
+
   def is_to_lead(self, player_id):
     """
     Checks if we are at the beginning of a trick and the given player is

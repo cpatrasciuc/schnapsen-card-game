@@ -211,6 +211,7 @@ class AnnounceMarriageActionTest(unittest.TestCase):
       queen_spades = game_state.cards_in_hand[PlayerId.TWO].pop()
       game_state.cards_in_hand[PlayerId.TWO].append(game_state.trump_card)
       game_state.trump_card = queen_spades
+      game_state.trump_card.public = True
     action = AnnounceMarriageAction(PlayerId.TWO, queen_spades)
     self.assertFalse(action.can_execute_on(game_state))
 

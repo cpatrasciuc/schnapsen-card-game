@@ -38,6 +38,12 @@ class ValidateTest(unittest.TestCase):
                                 "trump and trump_card.suit do not match"):
       validate(self.game_state)
 
+  def test_trump_card_is_public(self):
+    self.game_state.trump_card.public = False
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "The trump card should be public"):
+      validate(self.game_state)
+
   def test_trump_card_is_present(self):
     self.game_state.talon.append(self.game_state.trump_card)
     self.game_state.trump_card = None

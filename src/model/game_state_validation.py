@@ -25,6 +25,8 @@ def _validate_trump_and_trump_card(game_state: GameState) -> None:
   if game_state.trump_card is not None:
     if game_state.trump_card.suit != game_state.trump:
       raise InvalidGameStateError("trump and trump_card.suit do not match")
+    if not game_state.trump_card.public:
+      raise InvalidGameStateError("The trump card should be public")
   if game_state.trump_card is None and len(game_state.talon) > 0:
     raise InvalidGameStateError("trump_card is missing")
 
