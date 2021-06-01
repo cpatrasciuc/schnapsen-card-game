@@ -143,6 +143,8 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
     action.execute(game_state)
     self.assertEqual(game_state.trump_card, trump_jack)
     self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.TWO])
+    index = game_state.cards_in_hand[PlayerId.TWO].index(trump_card)
+    self.assertTrue(game_state.cards_in_hand[PlayerId.TWO][index].public)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
   def test_cannot_execute_illegal_action(self):
