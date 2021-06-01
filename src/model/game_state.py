@@ -7,6 +7,7 @@ import random
 from typing import List, Optional
 
 from model.card import Card
+from model.card_value import CardValue
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -139,6 +140,12 @@ class GameState:
   def __post_init__(self):
     if self.trump_card is not None:
       self.trump_card.public = True
+    for player in PlayerId:
+      for marriage_suit in self.marriage_suits[player]:
+        for card in self.cards_in_hand[player]:
+          if card.suit == marriage_suit:
+            if card.card_value in [CardValue.QUEEN, CardValue.KING]:
+              card.public = True
 
   def is_to_lead(self, player_id):
     """

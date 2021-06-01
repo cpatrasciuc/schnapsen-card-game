@@ -131,6 +131,11 @@ def _validate_marriage_suits(game_state: GameState) -> None:
           raise InvalidGameStateError(
             f"{player_id} announced marriage {marriage_suit} and played one" +
             " card. The other card is not in their hand.")
+        index = game_state.cards_in_hand[player_id].index(marriage[0])
+        unplayed_card = game_state.cards_in_hand[player_id][index]
+        if not unplayed_card.public:
+          raise InvalidGameStateError(
+            f"Marriage card should be public: {unplayed_card}")
 
 
 def _validate_trick_points(game_state: GameState) -> None:

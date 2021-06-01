@@ -275,6 +275,10 @@ class ValidateTest(unittest.TestCase):
     self.game_state.marriage_suits.one.append(Suit.HEARTS)
     self.game_state.trick_points.one += 20
     self.game_state.next_player = PlayerId.TWO
+    with self.assertRaisesRegex(InvalidGameStateError,
+                                "Marriage card should be public: Q♥"):
+      validate(self.game_state)
+    self.game_state.cards_in_hand.one[0].public = True
     validate(self.game_state)
 
     # Both cards were played, but by different players.

@@ -82,6 +82,8 @@ class GameStateNewGameTest(unittest.TestCase):
       game_state.won_tricks.one.append(PlayerPair(king_hearts, king_spades))
       game_state.trick_points.one += 28
       game_state.marriage_suits.one.append(Suit.HEARTS)
+      queen_hearts = game_state.cards_in_hand.one[1]
+      queen_hearts.public = True
       game_state.cards_in_hand.one.append(game_state.talon.pop(0))
       game_state.cards_in_hand.two.append(game_state.talon.pop(0))
       game_state.current_trick.one = game_state.cards_in_hand.one[0]

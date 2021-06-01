@@ -227,6 +227,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual([Suit.HEARTS], game_state.marriage_suits[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
+    king_hearts = game_state.cards_in_hand[PlayerId.ONE][1]
+    self.assertTrue(king_hearts.public)
 
   def test_announce_trump_marriage(self):
     game_state = get_game_state_for_tests()
@@ -241,6 +243,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual([Suit.DIAMONDS, Suit.CLUBS],
                      game_state.marriage_suits[PlayerId.TWO])
     self.assertEqual(PlayerId.ONE, game_state.next_player)
+    king_clubs = game_state.cards_in_hand[PlayerId.TWO][1]
+    self.assertTrue(king_clubs.public)
 
   def test_announce_marriage_without_scoring_any_trick(self):
     game_state = get_game_state_for_tests()
@@ -261,6 +265,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual([Suit.HEARTS], game_state.marriage_suits[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
+    king_hearts = game_state.cards_in_hand[PlayerId.ONE][1]
+    self.assertTrue(king_hearts.public)
 
   def test_announcing_marriage_is_enough_to_win_the_game(self):
     game_state = get_game_state_for_tests()
@@ -270,6 +276,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     action = AnnounceMarriageAction(PlayerId.TWO, king_clubs)
     self.assertTrue(action.can_execute_on(game_state))
     action.execute(game_state)
+    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    self.assertTrue(queen_clubs.public)
     self.assertEqual(93, game_state.trick_points[PlayerId.TWO])
     self.assertTrue(game_state.is_game_over)
 

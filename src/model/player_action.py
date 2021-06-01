@@ -236,6 +236,10 @@ class AnnounceMarriageAction(PlayerAction):
     they win a trick.
     """
     assert self.can_execute_on(game_state)
+    for card in game_state.cards_in_hand[self.player_id]:
+      if card == self._card.marriage_pair:
+        card.public = True
+        break
     game_state.current_trick[self.player_id] = self._card
     game_state.marriage_suits[self.player_id].append(self._card.suit)
     if game_state.trick_points[self.player_id] > 0:
