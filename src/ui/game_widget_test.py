@@ -9,6 +9,7 @@ from typing import Tuple
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
+from kivy.metrics import dp
 from kivy.tests.common import UnitTestTouch
 
 from model.card import Card
@@ -510,82 +511,93 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.render(game_widget)
 
     # The initial window size is 320 x 240.
-    self.assertEqual([320, 240], game_widget.size)
-    self.assertEqual([112, 60], game_widget.tricks_widgets.one.size)
-    self.assertEqual([208, 24], game_widget.tricks_widgets.one.pos)
-    self.assertEqual([112, 60], game_widget.tricks_widgets.two.size)
-    self.assertEqual([208, 180], game_widget.tricks_widgets.two.pos)
-    self.assertEqual([112, 72], game_widget.talon_widget.size)
-    self.assertEqual([208, 108], game_widget.talon_widget.pos)
-    self.assertEqual([208, 84], game_widget.player_card_widgets.one.size)
-    self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
-    self.assertEqual([208, 84], game_widget.player_card_widgets.two.size)
-    self.assert_list_almost_equal([0, 216],
-                                  list(game_widget.player_card_widgets.two.pos))
-    self.assert_list_almost_equal([166, 84], game_widget.play_area.size,
-                                  places=0)
-    self.assert_list_almost_equal([21, 108], game_widget.play_area.pos,
+    self.assertEqual([dp(320), dp(240)], game_widget.size)
+    self.assertEqual([dp(112), dp(60)], game_widget.tricks_widgets.one.size)
+    self.assertEqual([dp(208), dp(24)], game_widget.tricks_widgets.one.pos)
+    self.assertEqual([dp(112), dp(60)], game_widget.tricks_widgets.two.size)
+    self.assertEqual([dp(208), dp(180)], game_widget.tricks_widgets.two.pos)
+    self.assertEqual([dp(112), dp(72)], game_widget.talon_widget.size)
+    self.assertEqual([dp(208), dp(108)], game_widget.talon_widget.pos)
+    self.assertEqual([dp(208), dp(84)],
+                     game_widget.player_card_widgets.one.size)
+    self.assertEqual([dp(0), dp(0)], game_widget.player_card_widgets.one.pos)
+    self.assertEqual([dp(208), dp(84)],
+                     game_widget.player_card_widgets.two.size)
+    self.assert_list_almost_equal([dp(0), dp(216)],
+                                  game_widget.player_card_widgets.two.pos)
+    self.assert_list_almost_equal([dp(166.4), dp(84)],
+                                  game_widget.play_area.size, places=0)
+    self.assert_list_almost_equal([dp(21), dp(108)], game_widget.play_area.pos,
                                   places=0)
 
     # Stretch window horizontally to 640 x 240.
     EventLoop.window.size = 640, 240
     self.advance_frames(1)
-    self.assertEqual([640, 240], game_widget.size)
-    self.assertEqual([224, 60], game_widget.tricks_widgets.one.size)
-    self.assertEqual([416, 24], game_widget.tricks_widgets.one.pos)
-    self.assertEqual([224, 60], game_widget.tricks_widgets.two.size)
-    self.assertEqual([416, 180], game_widget.tricks_widgets.two.pos)
-    self.assertEqual([224, 72], game_widget.talon_widget.size)
-    self.assertEqual([416, 108], game_widget.talon_widget.pos)
-    self.assertEqual([416, 84], game_widget.player_card_widgets.one.size)
-    self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
-    self.assertEqual([416, 84], game_widget.player_card_widgets.two.size)
-    self.assert_list_almost_equal([0, 216],
-                                  list(game_widget.player_card_widgets.two.pos))
-    self.assert_list_almost_equal([333, 84], game_widget.play_area.size,
+    self.assertEqual([dp(640), dp(240)], game_widget.size)
+    self.assertEqual([dp(224), dp(60)], game_widget.tricks_widgets.one.size)
+    self.assertEqual([dp(416), dp(24)], game_widget.tricks_widgets.one.pos)
+    self.assertEqual([dp(224), dp(60)], game_widget.tricks_widgets.two.size)
+    self.assertEqual([dp(416), dp(180)], game_widget.tricks_widgets.two.pos)
+    self.assertEqual([dp(224), dp(72)], game_widget.talon_widget.size)
+    self.assertEqual([dp(416), dp(108)], game_widget.talon_widget.pos)
+    self.assertEqual([dp(416), dp(84)],
+                     game_widget.player_card_widgets.one.size)
+    self.assertEqual([dp(0), dp(0)], game_widget.player_card_widgets.one.pos)
+    self.assertEqual([dp(416), dp(84)],
+                     game_widget.player_card_widgets.two.size)
+    self.assert_list_almost_equal([dp(0), dp(216)],
+                                  game_widget.player_card_widgets.two.pos,
                                   places=0)
-    self.assert_list_almost_equal([42, 108], game_widget.play_area.pos,
+    self.assert_list_almost_equal([dp(333), dp(84)], game_widget.play_area.size,
                                   places=0)
+    self.assert_list_almost_equal([dp(41.5), dp(108)],
+                                  game_widget.play_area.pos, places=0)
 
     # Stretch window vertically to 320 x 480.
     EventLoop.window.size = 320, 480
     self.advance_frames(1)
-    self.assertEqual([320, 480], game_widget.size)
-    self.assertEqual([112, 120], game_widget.tricks_widgets.one.size)
-    self.assertEqual([208, 48], game_widget.tricks_widgets.one.pos)
-    self.assertEqual([112, 120], game_widget.tricks_widgets.two.size)
-    self.assertEqual([208, 360], game_widget.tricks_widgets.two.pos)
-    self.assertEqual([112, 144], game_widget.talon_widget.size)
-    self.assertEqual([208, 216], game_widget.talon_widget.pos)
-    self.assertEqual([208, 168], game_widget.player_card_widgets.one.size)
-    self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
-    self.assertEqual([208, 168], game_widget.player_card_widgets.two.size)
-    self.assert_list_almost_equal([0, 432],
-                                  list(game_widget.player_card_widgets.two.pos))
-    self.assert_list_almost_equal([166, 168], game_widget.play_area.size,
+    self.assertEqual([dp(320), dp(480)], game_widget.size)
+    self.assertEqual([dp(112), dp(120)], game_widget.tricks_widgets.one.size)
+    self.assertEqual([dp(208), dp(48)], game_widget.tricks_widgets.one.pos)
+    self.assertEqual([dp(112), dp(120)], game_widget.tricks_widgets.two.size)
+    self.assertEqual([dp(208), dp(360)], game_widget.tricks_widgets.two.pos)
+    self.assertEqual([dp(112), dp(144)], game_widget.talon_widget.size)
+    self.assertEqual([dp(208), dp(216)], game_widget.talon_widget.pos)
+    self.assertEqual([dp(208), dp(168)],
+                     game_widget.player_card_widgets.one.size)
+    self.assertEqual([dp(0), dp(0)], game_widget.player_card_widgets.one.pos)
+    self.assertEqual([dp(208), dp(168)],
+                     game_widget.player_card_widgets.two.size)
+    self.assert_list_almost_equal([dp(0), dp(432)],
+                                  game_widget.player_card_widgets.two.pos,
                                   places=0)
-    self.assert_list_almost_equal([21, 216], game_widget.play_area.pos,
+    self.assert_list_almost_equal([dp(166.4), dp(168)],
+                                  game_widget.play_area.size, places=0)
+    self.assert_list_almost_equal([dp(21), dp(216)], game_widget.play_area.pos,
                                   places=0)
 
     # Stretch window vertically and horizontally to 640 x 480.
     EventLoop.window.size = 640, 480
     self.advance_frames(1)
-    self.assertEqual([640, 480], game_widget.size)
-    self.assertEqual([224, 120], game_widget.tricks_widgets.one.size)
-    self.assertEqual([416, 48], game_widget.tricks_widgets.one.pos)
-    self.assertEqual([224, 120], game_widget.tricks_widgets.two.size)
-    self.assertEqual([416, 360], game_widget.tricks_widgets.two.pos)
-    self.assertEqual([224, 144], game_widget.talon_widget.size)
-    self.assertEqual([416, 216], game_widget.talon_widget.pos)
-    self.assertEqual([416, 168], game_widget.player_card_widgets.one.size)
-    self.assertEqual([0, 0], game_widget.player_card_widgets.one.pos)
-    self.assertEqual([416, 168], game_widget.player_card_widgets.two.size)
-    self.assert_list_almost_equal([0, 432],
-                                  list(game_widget.player_card_widgets.two.pos))
-    self.assert_list_almost_equal([333, 168], game_widget.play_area.size,
+    self.assertEqual([dp(640), dp(480)], game_widget.size)
+    self.assertEqual([dp(224), dp(120)], game_widget.tricks_widgets.one.size)
+    self.assertEqual([dp(416), dp(48)], game_widget.tricks_widgets.one.pos)
+    self.assertEqual([dp(224), dp(120)], game_widget.tricks_widgets.two.size)
+    self.assertEqual([dp(416), dp(360)], game_widget.tricks_widgets.two.pos)
+    self.assertEqual([dp(224), dp(144)], game_widget.talon_widget.size)
+    self.assertEqual([dp(416), dp(216)], game_widget.talon_widget.pos)
+    self.assertEqual([dp(416), dp(168)],
+                     game_widget.player_card_widgets.one.size)
+    self.assertEqual([dp(0), dp(0)], game_widget.player_card_widgets.one.pos)
+    self.assertEqual([dp(416), dp(168)],
+                     game_widget.player_card_widgets.two.size)
+    self.assert_list_almost_equal([dp(0), dp(432)],
+                                  game_widget.player_card_widgets.two.pos,
                                   places=0)
-    self.assert_list_almost_equal([42, 216], game_widget.play_area.pos,
-                                  places=0)
+    self.assert_list_almost_equal([dp(333), dp(168)],
+                                  game_widget.play_area.size, places=0)
+    self.assert_list_almost_equal([dp(41.5), dp(216)],
+                                  game_widget.play_area.pos, places=0)
 
   def test_on_action_play_card(self):
     game_widget = GameWidget()
@@ -604,7 +616,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
     self.assert_do_translation(False, ten_spades_widget)
-    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], ten_spades_widget.size)
     self.assertEqual(game_widget.play_area.center,
                      list(ten_spades_widget.center))
 
@@ -619,8 +631,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
     self.assert_do_translation(False, king_clubs_widget)
-    self.assertEqual([38, 59], king_clubs_widget.size)
-    self.assert_list_almost_equal([111.6, 161.8], king_clubs_widget.center)
+    self.assertEqual([dp(38.5), dp(59)], king_clubs_widget.size)
+    self.assert_list_almost_equal([dp(111.6), dp(161.8)],
+                                  king_clubs_widget.center, places=0)
 
   def test_on_action_play_card_by_dragging(self):
     game_state = get_game_state_for_tests()
@@ -628,7 +641,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.init_from_game_state(game_state)
     self.render(game_widget)
 
-    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    drag_pos = game_widget.play_area.x + dp(10), \
+               game_widget.play_area.y + dp(10)
     self.assertNotEqual(game_widget.play_area.center, drag_pos)
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
@@ -644,7 +658,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
     self.assert_do_translation(False, ten_spades_widget)
-    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], ten_spades_widget.size)
     self.assertEqual(drag_pos, ten_spades_widget.center)
 
   def test_on_action_play_card_reply_is_relative_to_first_card(self):
@@ -653,7 +667,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.init_from_game_state(game_state)
     self.render(game_widget)
 
-    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    drag_pos = game_widget.play_area.x + dp(10), \
+               game_widget.play_area.y + dp(10)
     self.assertNotEqual(game_widget.play_area.center, drag_pos)
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
@@ -669,7 +684,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
     self.assert_do_translation(False, ten_spades_widget)
-    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], ten_spades_widget.size)
     self.assertEqual(drag_pos, ten_spades_widget.center)
 
     jack_spades = Card(Suit.SPADES, CardValue.JACK)
@@ -681,8 +696,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(jack_spades_widget.visible)
     self.assertFalse(jack_spades_widget.grayed_out)
     self.assert_do_translation(False, jack_spades_widget)
-    self.assertEqual([38, 59], jack_spades_widget.size)
-    self.assert_list_almost_equal([38.4, 129.8], jack_spades_widget.center)
+    self.assertEqual([dp(38.5), dp(59)], jack_spades_widget.size)
+    self.assert_list_almost_equal([dp(38.5), dp(129.8)],
+                                  jack_spades_widget.center, places=0)
 
   def test_on_action_announce_marriage_reply_is_relative_to_first_card(self):
     game_state = get_game_state_for_tests()
@@ -690,7 +706,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.init_from_game_state(game_state)
     self.render(game_widget)
 
-    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    drag_pos = game_widget.play_area.x + dp(10), \
+               game_widget.play_area.y + dp(10)
     self.assertNotEqual(game_widget.play_area.center, drag_pos)
 
     king_hearts = Card(Suit.HEARTS, CardValue.KING)
@@ -707,7 +724,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
     self.assert_do_translation(False, king_hearts_widget)
-    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], king_hearts_widget.size)
     self.assertEqual(drag_pos, king_hearts_widget.center)
 
     jack_spades = Card(Suit.SPADES, CardValue.JACK)
@@ -719,8 +736,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(jack_spades_widget.visible)
     self.assertFalse(jack_spades_widget.grayed_out)
     self.assert_do_translation(False, jack_spades_widget)
-    self.assertEqual([38, 59], jack_spades_widget.size)
-    self.assert_list_almost_equal([38.4, 129.8], jack_spades_widget.center)
+    self.assertEqual([dp(38.5), dp(59)], jack_spades_widget.size)
+    self.assert_list_almost_equal([dp(38.4), dp(129.8)],
+                                  jack_spades_widget.center, places=0)
 
   def test_on_action_announce_marriage(self):
     game_widget = GameWidget()
@@ -748,11 +766,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
     self.assert_do_translation(False, king_hearts_widget)
-    self.assertEqual([38, 59], queen_hearts_widget.size)
-    self.assertEqual([38, 59], king_hearts_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], queen_hearts_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], king_hearts_widget.size)
     self.assertEqual(game_widget.play_area.center,
                      list(queen_hearts_widget.center))
-    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
+    self.assert_list_almost_equal([dp(96.4), dp(138.2)],
+                                  king_hearts_widget.center, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     game_widget.reset()
@@ -781,11 +800,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(queen_clubs_widget.visible)
     self.assertFalse(queen_clubs_widget.grayed_out)
     self.assert_do_translation(False, queen_clubs_widget)
-    self.assertEqual([38, 59], king_clubs_widget.size)
-    self.assertEqual([38, 59], queen_clubs_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], king_clubs_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], queen_clubs_widget.size)
     self.assert_list_almost_equal(game_widget.play_area.center,
                                   list(king_clubs_widget.center))
-    self.assert_list_almost_equal([111.6, 161.8], queen_clubs_widget.center)
+    self.assert_list_almost_equal([dp(111.6), dp(161.8)],
+                                  queen_clubs_widget.center, places=0)
     self.assert_is_drawn_on_top(king_clubs_widget, queen_clubs_widget)
 
   def test_on_action_announce_marriage_by_dragging(self):
@@ -799,7 +819,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                                            Card(Suit.SPADES, CardValue.KING)))
 
     drag_pos = game_widget.play_area.center
-    self.assertEqual([104.0, 150.0], drag_pos)
+    self.assertEqual([dp(104.0), dp(150.0)], drag_pos)
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     queen_hearts_widget = game_widget.cards[queen_hearts]
@@ -815,8 +835,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(queen_hearts_widget, drag_pos)
     callback.assert_called_once()
 
-    self.assertEqual((104.0, 150.0), queen_hearts_widget.center)
-    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
+    self.assertEqual((dp(104.0), dp(150.0)), queen_hearts_widget.center)
+    self.assert_list_almost_equal([dp(96.4), dp(138.2)],
+                                  king_hearts_widget.center, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
@@ -829,10 +850,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
     self.assert_do_translation(False, king_hearts_widget)
-    self.assertEqual([38, 59], queen_hearts_widget.size)
-    self.assertEqual([38, 59], king_hearts_widget.size)
-    self.assertEqual((104.0, 150.0), queen_hearts_widget.center)
-    self.assertEqual((96.4, 138.2), king_hearts_widget.center)
+    self.assertEqual([dp(38.5), dp(59)], queen_hearts_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], king_hearts_widget.size)
+    self.assertEqual((dp(104.0), dp(150.0)), queen_hearts_widget.center)
+    self.assert_list_almost_equal([dp(96.4), dp(138.2)],
+                                  king_hearts_widget.center, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
   def test_cards_in_play_area_are_updated_on_window_resize(self):
@@ -848,12 +870,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
     self.assert_do_translation(False, ten_spades_widget)
-    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], ten_spades_widget.size)
     self.assertEqual(game_widget.play_area.center,
                      list(ten_spades_widget.center))
     EventLoop.window.size = 640, 480
     self.advance_frames(1)
-    self.assertEqual([77, 118], ten_spades_widget.size)
+    self.assertEqual([dp(77), dp(118.5)], ten_spades_widget.size)
     self.assertEqual(game_widget.play_area.center,
                      list(ten_spades_widget.center))
 
@@ -863,7 +885,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.init_from_game_state(game_state)
     self.render(game_widget)
 
-    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    drag_pos = game_widget.play_area.x + dp(10), \
+               game_widget.play_area.y + dp(10)
     self.assertNotEqual(game_widget.play_area.center, drag_pos)
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
@@ -878,12 +901,12 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
     self.assert_do_translation(False, ten_spades_widget)
-    self.assertEqual([38, 59], ten_spades_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], ten_spades_widget.size)
     self.assertEqual(drag_pos, ten_spades_widget.center)
     self.window.size = 640, 480
     self.advance_frames(1)
-    self.assertEqual([77, 118], ten_spades_widget.size)
-    self.assert_list_almost_equal([61.6, 236.0],
+    self.assertEqual([dp(77), dp(118.5)], ten_spades_widget.size)
+    self.assert_list_almost_equal([dp(61.6), dp(236.0)],
                                   list(ten_spades_widget.center), places=0)
 
   def test_marriage_dragged_in_play_area_is_updated_on_window_resize(self):
@@ -892,9 +915,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.init_from_game_state(game_state)
     self.render(game_widget)
 
-    drag_pos = game_widget.play_area.x + 10, game_widget.play_area.y + 10
+    drag_pos = game_widget.play_area.x + dp(10), \
+               game_widget.play_area.y + dp(10)
     self.assertTrue(game_widget.play_area.collide_point(*drag_pos))
-    self.assert_list_almost_equal([30.8, 118.0], list(drag_pos))
+    self.assert_list_almost_equal([dp(30.8), dp(118.0)], list(drag_pos),
+                                  places=0)
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     queen_hearts_widget = game_widget.cards[queen_hearts]
@@ -910,10 +935,10 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(queen_hearts_widget, drag_pos)
     callback.assert_called_once()
 
-    self.assert_list_almost_equal([30.799999999999997, 118.0],
-                                  list(queen_hearts_widget.center), places=0)
-    self.assert_list_almost_equal([23.2, 106.2],
-                                  list(king_hearts_widget.center), places=0)
+    self.assert_list_almost_equal([dp(30.8), dp(118.0)],
+                                  queen_hearts_widget.center, places=0)
+    self.assert_list_almost_equal([dp(23.2), dp(106.2)],
+                                  king_hearts_widget.center, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
@@ -926,23 +951,23 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
     self.assert_do_translation(False, king_hearts_widget)
-    self.assertEqual([38, 59], queen_hearts_widget.size)
-    self.assertEqual([38, 59], king_hearts_widget.size)
-    self.assert_list_almost_equal([30.799999999999997, 118.0],
-                                  list(queen_hearts_widget.center), places=0)
-    self.assert_list_almost_equal([23.2, 106.2],
-                                  list(king_hearts_widget.center), places=0)
+    self.assertEqual([dp(38.5), dp(59)], queen_hearts_widget.size)
+    self.assertEqual([dp(38.5), dp(59)], king_hearts_widget.size)
+    self.assert_list_almost_equal([dp(30.8), dp(118.0)],
+                                  queen_hearts_widget.center, places=0)
+    self.assert_list_almost_equal([dp(23.2), dp(106.2)],
+                                  king_hearts_widget.center, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     # Resize the window.
     self.window.size = 640, 480
     self.advance_frames(1)
-    self.assertEqual([77, 118], queen_hearts_widget.size)
-    self.assertEqual([77, 118], king_hearts_widget.size)
-    self.assert_list_almost_equal([61.6, 236.0],
-                                  list(queen_hearts_widget.center), places=0)
-    self.assert_list_almost_equal([46.4, 212.4],
-                                  list(king_hearts_widget.center), places=0)
+    self.assertEqual([dp(77), dp(118.5)], queen_hearts_widget.size)
+    self.assertEqual([dp(77), dp(118.5)], king_hearts_widget.size)
+    self.assert_list_almost_equal([dp(61.6), dp(236.0)],
+                                  queen_hearts_widget.center, places=0)
+    self.assert_list_almost_equal([dp(46.4), dp(212.4)],
+                                  king_hearts_widget.center, places=0)
 
 
 class GameWidgetPlayerGraphicTest(GraphicUnitTest):
@@ -1653,8 +1678,8 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     queen_hearts_widget = game_widget.cards[queen_hearts]
     king_hearts_widget = game_widget.cards[queen_hearts.marriage_pair]
-    self.assertEqual((41, 25), king_hearts_widget.pos)
-    self.assertEqual((0, 25), queen_hearts_widget.pos)
+    self.assertEqual((dp(42), dp(25)), king_hearts_widget.pos)
+    self.assertEqual((dp(0), dp(25)), queen_hearts_widget.pos)
 
     # Announce the marriage using the card that is drawn at the bottom, to make
     # sure we test the scenario where it is moved to the top.
@@ -1664,8 +1689,9 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch = UnitTestTouch(*queen_hearts_widget.center)
     touch.touch_down()
     touch.touch_move(*game_widget.tricks_widgets.two.pos)
-    self.assertEqual((189.0, 150.5), queen_hearts_widget.pos)
-    self.assertEqual((181.4, 138.7), king_hearts_widget.pos)
+    self.assertEqual((dp(188.75), dp(150.5)), queen_hearts_widget.pos)
+    self.assert_list_almost_equal([dp(181.05), dp(138.7)],
+                                  king_hearts_widget.pos, places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
     callback.assert_not_called()
 
@@ -1674,8 +1700,8 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     touch.touch_up()
     callback.assert_not_called()
     self.advance_frames(1)
-    self.assertEqual((41, 25), king_hearts_widget.pos)
-    self.assertEqual((0, 25), queen_hearts_widget.pos)
+    self.assertEqual((dp(42), dp(25)), king_hearts_widget.pos)
+    self.assertEqual((dp(0), dp(25)), queen_hearts_widget.pos)
 
     # Dragging the card to the playing area should announce the marriage.
     _drag_card_to_pos(queen_hearts_widget, play_area_pos)
@@ -1686,8 +1712,10 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     self.assertIsInstance(action, AnnounceMarriageAction)
     self.assertEqual(PlayerId.ONE, action.player_id)
     self.assertEqual(queen_hearts, action.card)
-    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
-    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_list_almost_equal([dp(85), dp(120.5)], queen_hearts_widget.pos,
+                                  places=0)
+    self.assert_list_almost_equal([dp(77), dp(108.7)], king_hearts_widget.pos,
+                                  places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     # All the player's cards are grayed out and cannot be dragged.
@@ -1706,16 +1734,20 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(queen_hearts_widget, new_drag_pos)
     self.advance_frames(1)
     callback.assert_not_called()
-    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
-    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_list_almost_equal([dp(85), dp(120.5)], queen_hearts_widget.pos,
+                                  places=0)
+    self.assert_list_almost_equal([dp(77), dp(108.7)], king_hearts_widget.pos,
+                                  places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     # Dragging the marriage pair should have no effect.
     _drag_card_to_pos(king_hearts_widget, new_drag_pos)
     self.advance_frames(1)
     callback.assert_not_called()
-    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
-    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_list_almost_equal([dp(85), dp(120.5)], queen_hearts_widget.pos,
+                                  places=0)
+    self.assert_list_almost_equal([dp(77), dp(108.7)], king_hearts_widget.pos,
+                                  places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     # Dragging other player card should have no effect.
@@ -1723,6 +1755,8 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     ace_spades_widget = game_widget.cards[ace_spades]
     _drag_card_to_pos(ace_spades_widget, new_drag_pos)
     callback.assert_not_called()
-    self.assertEqual((85.0, 120.5), queen_hearts_widget.pos)
-    self.assertEqual((77.4, 108.7), king_hearts_widget.pos)
+    self.assert_list_almost_equal([dp(85), dp(120.5)], queen_hearts_widget.pos,
+                                  places=0)
+    self.assert_list_almost_equal([dp(77), dp(108.7)], king_hearts_widget.pos,
+                                  places=0)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
