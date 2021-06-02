@@ -80,13 +80,16 @@ class GameWidgetTest(UiTestCase):
     card_widgets = game_widget.cards
 
     # Cards for each player are in the right widgets.
-    # TODO(tests): Check the visibility of the cards after adding Card.visible.
     player_card_widgets = game_widget.player_card_widgets
     for player in PlayerId:
       for card in game_state.cards_in_hand[player]:
         self.assertIs(player_card_widgets[player], card_widgets[card].parent)
         self.assertEqual(player == PlayerId.ONE, card_widgets[card].grayed_out)
         self.assert_do_translation(False, card_widgets[card])
+        if player == PlayerId.ONE:
+          self.assertTrue(card_widgets[card].visible)
+        else:
+          self.assertEqual(card.public, card_widgets[card].visible)
 
     # Cards for already played tricks are in the right widgets.
     tricks_widgets = game_widget.tricks_widgets
