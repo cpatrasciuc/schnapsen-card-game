@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
 import logging
 import os.path
 from textwrap import dedent
@@ -55,6 +56,22 @@ def _delete_widget(widget: Widget) -> None:
   if widget.parent is not None:
     widget.parent.remove_widget(widget)
   del widget
+
+
+def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
+  """
+  For the human player (ONE), it sorts the cards in hand based on suit first and
+  then card value. For the computer player (TWO), it sorts the public cards by
+  suit and then card value. The non-public cards are left as they are.
+  """
+  cards_copy = copy.deepcopy(cards)
+  if player == PlayerId.ONE:
+    # noinspection PyTypeChecker
+    return list(sorted(cards_copy))
+  public_cards = [card for card in cards_copy if card.public]
+  non_public_cards = [card for card in cards_copy if not card.public]
+  # noinspection PyTypeChecker
+  return list(sorted(public_cards)) + non_public_cards
 
 
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
@@ -445,11 +462,21 @@ class GameWidget(FloatLayout):
       "Trump Jack not in player's hand"
     trump_card_widget = self._talon.remove_trump_card()
     trump_card_widget.rotation = 0
-    # TODO(ui): Sort the cards in hand.
     card_slots_widget.add_card(trump_card_widget, row, col)
     if player == PlayerId.ONE:
       trump_card_widget.grayed_out = True
     self._talon.set_trump_card(trump_jack_widget)
+    # TODO(ui): Move this to _update_cards_in_hand_for_player() then merge the
+    # on_trick_completed with on_new_cards_drawn.
+    cards_in_hand = []
+    for col in range(5):
+      card_widget = self._player_card_widgets[player].at(0, col)
+      assert card_widget is not None, \
+        "Cannot exchange trump with less then five cards in hand"
+      card = card_widget.card
+      card.public = card_widget.visible
+      cards_in_hand.append(card_widget.card)
+    self._update_cards_in_hand_for_player(player, cards_in_hand)
 
   def _get_card_pos_delta(self, player) -> Tuple[int, int]:
     """
@@ -595,22 +622,26 @@ class GameWidget(FloatLayout):
 
   def _update_cards_in_hand(self,
                             cards_in_hand: PlayerPair[List[Card]]) -> None:
-    for player in PlayerId:
-      for col in range(5):
-        self._player_card_widgets[player].remove_card_at(0, col)
+    self._update_cards_in_hand_for_player(PlayerId.ONE, cards_in_hand.one)
+    self._update_cards_in_hand_for_player(PlayerId.TWO, cards_in_hand.two)
 
-      # noinspection PyTypeChecker
-      for i, card in enumerate(sorted(cards_in_hand[player])):
-        # TODO(ui): Sort this by visibility and then randomize the hidden ones.
-        card_widget = self._cards[card]
-        self._player_card_widgets[player].add_card(card_widget, 0, i)
-        card_widget.do_translation = False
-        card_widget.shadow = True
-        if player == PlayerId.ONE:
-          card_widget.visible = True
-          card_widget.grayed_out = True
-        else:
-          card_widget.visible = card.public
+  def _update_cards_in_hand_for_player(self, player: PlayerId,
+                                       cards: List[Card]) -> None:
+    for col in range(5):
+      self._player_card_widgets[player].remove_card_at(0, col)
+
+    sorted_cards = _sort_cards_for_player(cards, player)
+
+    for i, card in enumerate(sorted_cards):
+      card_widget = self._cards[card]
+      self._player_card_widgets[player].add_card(card_widget, 0, i)
+      card_widget.do_translation = False
+      card_widget.shadow = True
+      if player == PlayerId.ONE:
+        card_widget.visible = True
+        card_widget.grayed_out = True
+      else:
+        card_widget.visible = card.public
 
   def request_next_action(self, game_state: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:

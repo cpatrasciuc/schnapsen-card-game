@@ -74,7 +74,7 @@ class GameWidgetTest(UiTestCase):
     game_widget = GameWidget()
     self._assert_initial_game_widget_state(game_widget)
 
-  def _run_init_from_game_state(self, game_state: GameState):
+  def _run_init_from_game_state(self, game_state: GameState) -> GameWidget:
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
     card_widgets = game_widget.cards
@@ -128,8 +128,12 @@ class GameWidgetTest(UiTestCase):
     self.assertEqual(game_state.is_talon_closed,
                      game_widget.talon_widget.closed)
 
+    return game_widget
+
   def test_init_from_game_state(self):
-    self._run_init_from_game_state(get_game_state_for_tests())
+    game_widget = self._run_init_from_game_state(get_game_state_for_tests())
+    self.assertEqual(Card(Suit.DIAMONDS, CardValue.QUEEN),
+                     game_widget.player_card_widgets.two.at(0, 0).card)
 
   def test_init_from_game_state_with_empty_talon(self):
     self._run_init_from_game_state(get_game_state_with_empty_talon_for_tests())
@@ -200,13 +204,19 @@ class GameWidgetTest(UiTestCase):
       game_widget.on_score_modified(PlayerPair(0, points))
       self.assertEqual(expected_text, game_widget.trick_score_labels.two.text)
 
-  def test_on_action_exchange_trump_card(self):
+  def test_on_action_exchange_trump_card_player_two(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
     trump_card_widget = game_widget.talon_widget.trump_card
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
     trump_jack_widget = game_widget.cards[Card(Suit.CLUBS, CardValue.JACK)]
     self.assertIs(game_widget.player_card_widgets.two, trump_jack_widget.parent)
+    queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    queen_diamonds_widget = game_widget.cards[queen_diamonds]
+    self.assertEqual(queen_diamonds_widget,
+                     game_widget.player_card_widgets.two.at(0, 0))
+    self.assertEqual(trump_jack_widget,
+                     game_widget.player_card_widgets.two.at(0, 2))
     with self.assertRaisesRegex(AssertionError,
                                 "Trump Jack not in player's hand"):
       game_widget.on_action(ExchangeTrumpCardAction(PlayerId.ONE))
@@ -214,8 +224,14 @@ class GameWidgetTest(UiTestCase):
     self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
                      game_widget.talon_widget.trump_card.card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card_widget.parent)
+    self.assertTrue(trump_jack_widget.visible)
+    self.assertTrue(trump_card_widget.visible)
+    self.assertEqual(queen_diamonds_widget,
+                     game_widget.player_card_widgets.two.at(0, 0))
+    self.assertEqual(trump_card_widget,
+                     game_widget.player_card_widgets.two.at(0, 1))
 
-  def test_on_action_exchange_trump_card_visibility_checks(self):
+  def test_on_action_exchange_trump_card_player_one(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
       trump_jack = game_state.cards_in_hand.two.pop(2)
@@ -239,6 +255,10 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.one, trump_card_widget.parent)
     self.assertTrue(trump_card_widget.grayed_out)
     self.assertFalse(trump_jack_widget.grayed_out)
+    self.assertTrue(trump_jack_widget.visible)
+    self.assertTrue(trump_card_widget.visible)
+    self.assertEqual(trump_card_widget,
+                     game_widget.player_card_widgets.one.at(0, 4))
 
   def test_on_action_close_the_talon(self):
     game_widget = GameWidget()
