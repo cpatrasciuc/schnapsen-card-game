@@ -365,13 +365,6 @@ class GameWidget(FloatLayout):
     performed on the game_state object.
     Optionally, one can pass the Bummerl game score through the game_score arg.
     """
-    # TODO(ui): Remove this hack once Card.visible is available.
-    for card_widget in self._cards.values():
-      card_widget.visible = False
-    for suit in game_state.marriage_suits.one + game_state.marriage_suits.two:
-      self._cards[Card(suit, CardValue.QUEEN)].visible = True
-      self._cards[Card(suit, CardValue.KING)].visible = True
-
     # Init the cards for each player.
     self._update_cards_in_hand(game_state.cards_in_hand)
 
@@ -616,6 +609,8 @@ class GameWidget(FloatLayout):
         if player == PlayerId.ONE:
           card_widget.visible = True
           card_widget.grayed_out = True
+        else:
+          card_widget.visible = card.public
 
   def request_next_action(self, game_state: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:
