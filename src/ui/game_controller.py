@@ -113,11 +113,11 @@ class GameController:
 if __name__ == "__main__":
   EventLoop.ensure_window()
   EventLoop.window.maximize()
-  game_widget = GameWidget()
-  game_widget.padding_pct = 0.01
-  game_widget.size_hint = 1, 1
-  game_widget.do_layout()
-  players: PlayerPair[Player] = PlayerPair(game_widget, RandomPlayer())
-  game_controller = GameController(game_widget, players)
-  game_controller.start()
-  runTouchApp(game_widget)
+  _game_widget = GameWidget()
+  _game_widget.padding_pct = 0.01
+  _game_widget.size_hint = 1, 1
+  _game_widget.do_layout()
+  _players: PlayerPair[Player] = PlayerPair(_game_widget, RandomPlayer())
+  _game_controller = GameController(_game_widget, _players)
+  _game_controller.start()
+  runTouchApp(_game_widget)
