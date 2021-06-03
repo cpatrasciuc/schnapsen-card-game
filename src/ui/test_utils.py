@@ -63,3 +63,8 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
   @property
   def window(self) -> Window:
     return self._window
+
+  def tearDown(self, fake=False):
+    for child in self.window.children:
+      self.window.remove_widget(child)
+    return super().tearDown(fake)

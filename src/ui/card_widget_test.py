@@ -291,8 +291,6 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     self._run_test_on_double_tap_with_init_args(
       Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
 
-  # TODO(tests): Investigate why this fails after enabling auto_bring_to_front.
-  @unittest.skip("Needs investigation")
   def test_on_double_tap_with_disabled_transformations(self):
     self._run_test_on_double_tap_with_init_args(
       Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5, do_translation=False,
