@@ -3,9 +3,10 @@
 #  found in the LICENSE file.
 
 # pylint: disable=too-many-lines,too-many-statements,too-many-locals
+# pylint: disable=too-many-public-methods
 
 from collections import Counter
-from typing import Tuple
+from typing import Tuple, List, Optional
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
@@ -75,7 +76,11 @@ class GameWidgetTest(UiTestCase):
     game_widget = GameWidget()
     self._assert_initial_game_widget_state(game_widget)
 
-  def _run_init_from_game_state(self, game_state: GameState) -> GameWidget:
+  def _run_init_from_game_state(self, game_state: GameState,
+                                played_cards: Optional[List[Card]] = None) -> GameWidget:
+    if played_cards is None:
+      played_cards = []
+
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
     card_widgets = game_widget.cards
@@ -84,8 +89,12 @@ class GameWidgetTest(UiTestCase):
     player_card_widgets = game_widget.player_card_widgets
     for player in PlayerId:
       for card in game_state.cards_in_hand[player]:
-        self.assertIs(player_card_widgets[player], card_widgets[card].parent)
-        self.assertEqual(player == PlayerId.ONE, card_widgets[card].grayed_out)
+        if card in played_cards:
+          self.assertIs(game_widget.play_area, card_widgets[card].parent)
+        else:
+          self.assertIs(player_card_widgets[player], card_widgets[card].parent)
+        self.assertEqual(player == PlayerId.ONE and card not in played_cards,
+                         card_widgets[card].grayed_out)
         self.assert_do_translation(False, card_widgets[card])
         if player == PlayerId.ONE:
           self.assertTrue(card_widgets[card].visible)
@@ -150,6 +159,25 @@ class GameWidgetTest(UiTestCase):
   def test_init_from_game_state_with_multiple_cards_in_the_talon(self):
     self._run_init_from_game_state(
       get_game_state_with_multiple_cards_in_the_talon_for_tests())
+
+  def test_init_from_game_state_with_non_empty_current_trick(self):
+    game_state = get_game_state_for_tests()
+    played_card = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    with GameStateValidator(game_state):
+      game_state.current_trick.two = played_card
+    self._run_init_from_game_state(game_state, [played_card])
+
+  def test_init_from_game_state_with_marriage_announced(self):
+    game_state = get_game_state_for_tests()
+    king_hearts = Card(Suit.HEARTS, CardValue.KING)
+    with GameStateValidator(game_state):
+      game_state.current_trick.one = king_hearts
+      game_state.marriage_suits.one.append(Suit.HEARTS)
+      game_state.cards_in_hand.one[0].public = True  # queen diamonds
+      game_state.trick_points = PlayerPair(42, 53)
+      game_state.next_player = PlayerId.TWO
+    self._run_init_from_game_state(game_state,
+                                   [king_hearts, king_hearts.marriage_pair])
 
   def test_init_form_game_state_with_game_score(self):
     test_cases = [

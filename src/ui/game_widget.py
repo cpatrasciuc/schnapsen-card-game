@@ -406,7 +406,19 @@ class GameWidget(FloatLayout):
     if game_state.is_talon_closed:
       self._talon.closed = True
 
-    # TODO(ui): If the current_trick is not empty, play a card to the play area.
+    # If a card is already played check if it was a simple card play or a
+    # marriage announcement and execute the corresponding action.
+    for player in PlayerId:
+      card = game_state.current_trick[player]
+      if card is None:
+        continue
+      if card.suit in game_state.marriage_suits[player] and \
+          card.card_value in [CardValue.QUEEN, CardValue.KING] and \
+          card.marriage_pair in game_state.cards_in_hand[player]:
+        action = AnnounceMarriageAction(player, card)
+      else:
+        action = PlayCardAction(player, card)
+      self.on_action(action)
 
     # Init the scores.
     self.on_score_modified(game_state.trick_points)
