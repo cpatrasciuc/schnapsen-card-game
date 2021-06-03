@@ -590,8 +590,6 @@ class GameWidget(FloatLayout):
     """
     tricks_widget = self._tricks_widgets[winner]
 
-    # TODO(ui): Make sure translations are disabled after the card is dropped on
-    # the play area.
     for card in [trick.one, trick.two]:
       card_widget = self._cards[card]
       self._play_area.remove_widget(card_widget)
