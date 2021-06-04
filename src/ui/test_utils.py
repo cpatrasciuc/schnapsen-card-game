@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from kivy.base import EventLoop
 from kivy.core.window import Window
+from kivy.metrics import dp
 from kivy.tests.common import GraphicUnitTest as BaseGraphicUnitTest
 from kivy.uix.widget import Widget
 
@@ -26,13 +27,14 @@ def get_children_index(parent: Widget, child: Widget) -> Optional[int]:
 
 
 class UiTestCase(unittest.TestCase):
-  def assert_list_almost_equal(self, first: List, second: List,
-                               places: int = 7, msg: str = ""):
+  def assert_list_almost_equal(self, first: List, second: List, **kwargs):
+    msg = kwargs.get("msg", "")
+    kwargs.pop("msg", None)
     self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
     for i, item in enumerate(first):
       self.assertAlmostEqual(item, second[i],
                              msg=msg + f"\nFirst diff at index {i}.",
-                             places=places)
+                             **kwargs)
 
   def assert_is_drawn_on_top(self, top: Widget, bottom: Widget):
     """
@@ -68,3 +70,8 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
     for child in self.window.children:
       self.window.remove_widget(child)
     return super().tearDown(fake)
+
+  def assert_pixels_almost_equal(self, first: List, second: List, **kwargs):
+    if "delta" not in kwargs and "places" not in kwargs:
+      kwargs["delta"] = dp(1)
+    self.assert_list_almost_equal(first, second, **kwargs)
