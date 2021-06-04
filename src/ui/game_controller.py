@@ -66,15 +66,19 @@ class GameController:
       if game_state.current_trick == PlayerPair(None, None):
         last_trick_winner = game_state.next_player
         last_trick = game_state.won_tricks[last_trick_winner][-1]
-        logging.info("GameController: Trick completed: %s, Winner %s",
-                     last_trick, last_trick_winner)
-        self._game_widget.on_trick_completed(last_trick, last_trick_winner)
 
+        draw_new_cards = False
         total_tricks_played = len(game_state.won_tricks.one) + len(
           game_state.won_tricks.two)
         if not game.game_state.is_talon_closed and total_tricks_played <= 5:
-          logging.info("GameController: New cards drawn.")
-          self._game_widget.on_new_cards_drawn(game.game_state.cards_in_hand)
+          draw_new_cards = True
+
+        logging.info(
+          "GameController: Trick completed: %s, Winner %s, Draw new cards %s",
+          last_trick, last_trick_winner, draw_new_cards)
+        self._game_widget.on_trick_completed(last_trick, last_trick_winner,
+                                             game_state.cards_in_hand,
+                                             draw_new_cards)
 
     new_score = trick_points.one, trick_points.two
     if old_score != new_score:

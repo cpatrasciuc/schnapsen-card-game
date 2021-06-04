@@ -593,12 +593,17 @@ class GameWidget(FloatLayout):
     else:
       assert False, "Should not reach this code"
 
-  def on_trick_completed(self, trick: Trick, winner: PlayerId) -> None:
+  def on_trick_completed(self, trick: Trick, winner: PlayerId,
+                         cards_in_hand: PlayerPair[List[Card]],
+                         draw_new_cards: bool) -> None:
     """
     This method should be called whenever a trick is completed in a game of
     Schnapsen, in order to update the state of this GameWidget accordingly.
     :param trick: The trick that just got completed.
     :param winner: The player that won the trick.
+    :param cards_in_hand: The updated list of cards that each player holds.
+    :param draw_new_cards: If True, it means that each player drew a new card
+    from the talon at the end of the trick.
     """
     tricks_widget = self._tricks_widgets[winner]
 
@@ -615,19 +620,13 @@ class GameWidget(FloatLayout):
       self._player_card_widgets[player].add_card(card_widget)
       self._marriage_card = None
 
-  def on_new_cards_drawn(self, cards_in_hand: PlayerPair[List[Card]]) -> None:
-    """
-    This method should be called every time new cards are drawn from the talon
-    after a trick is completed, in order to update the state of this GameWidget
-    accordingly.
-    :param cards_in_hand: The updated list of cards that each play holds.
-    """
-    self._talon.pop_card()
-    if self._talon.pop_card() is None:
-      # TODO(ui): Leave an image with the trump suit.
-      # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
-      trump_card = self._talon.remove_trump_card()
-      trump_card.rotation = 0
+    if draw_new_cards:
+      self._talon.pop_card()
+      if self._talon.pop_card() is None:
+        # TODO(ui): Leave an image with the trump suit.
+        # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
+        trump_card = self._talon.remove_trump_card()
+        trump_card.rotation = 0
     self._update_cards_in_hand(cards_in_hand)
 
   def _update_cards_in_hand(self,
