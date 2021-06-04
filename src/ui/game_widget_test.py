@@ -309,10 +309,13 @@ class GameWidgetTest(UiTestCase):
     with self.assertRaisesRegex(AssertionError, "Should not reach this code"):
       game_widget.on_action(UnsupportedAction(PlayerId.ONE))
 
+
+class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_trick_completed_player_one_wins(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
@@ -329,8 +332,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.ONE,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(game_widget.tricks_widgets.one, ace_spades_widget.parent)
     self.assertIs(game_widget.tricks_widgets.one, queen_diamonds_widget.parent)
 
@@ -340,6 +346,7 @@ class GameWidgetTest(UiTestCase):
       game_state.next_player = PlayerId.TWO
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
@@ -356,9 +363,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.TWO,
-                                   game_state.cards_in_hand,
-                                   True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
     self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
 
@@ -366,6 +375,7 @@ class GameWidgetTest(UiTestCase):
     game_widget = GameWidget()
     game_state = get_game_state_for_tests()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     king_hearts = Card(Suit.HEARTS, CardValue.KING)
     king_hearts_widget = game_widget.cards[king_hearts]
@@ -385,8 +395,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
 
     trick = PlayerPair(king_hearts, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.TWO,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(game_widget.tricks_widgets.two, king_hearts_widget.parent)
     self.assertIs(game_widget.player_card_widgets.one,
                   queen_hearts_widget.parent)
@@ -399,6 +412,7 @@ class GameWidgetTest(UiTestCase):
       game_state.close_talon()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
     second_talon_card = game_widget.cards[game_state.talon[1]]
@@ -416,9 +430,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
 
     trick = PlayerPair(queen_hearts, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.TWO,
-                                   game_state.cards_in_hand, False)
-
+                                   game_state.cards_in_hand, False,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertFalse(first_talon_card.visible)
     self.assertFalse(first_talon_card.grayed_out)
@@ -434,6 +450,7 @@ class GameWidgetTest(UiTestCase):
     game_state = get_game_state_with_empty_talon_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     ace_clubs = Card(Suit.CLUBS, CardValue.ACE)
     ace_clubs_widget = game_widget.cards[ace_clubs]
@@ -450,8 +467,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.play_area, jack_clubs_widget.parent)
 
     trick = PlayerPair(ace_clubs, jack_clubs)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.ONE,
-                                   game_state.cards_in_hand, False)
+                                   game_state.cards_in_hand, False,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(game_widget.tricks_widgets.one, ace_clubs_widget.parent)
     self.assertIs(game_widget.tricks_widgets.one, jack_clubs_widget.parent)
 
@@ -459,6 +479,7 @@ class GameWidgetTest(UiTestCase):
     game_widget = GameWidget()
     game_state = get_game_state_for_tests()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
@@ -479,8 +500,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIsNotNone(last_talon_card)
     trump_card = game_widget.talon_widget.trump_card
     self.assertIsNotNone(trump_card)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.TWO,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
     self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
     self.assertIs(game_widget.tricks_widgets.two, queen_diamonds_widget.parent)
     self.assertIsNone(game_widget.talon_widget.top_card())
@@ -502,6 +526,7 @@ class GameWidgetTest(UiTestCase):
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
@@ -523,8 +548,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIsNotNone(trump_card)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.ONE,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
 
     self.assertIs(game_widget.tricks_widgets.one, ace_spades_widget.parent)
     self.assertIs(game_widget.tricks_widgets.one, queen_diamonds_widget.parent)
@@ -545,6 +573,7 @@ class GameWidgetTest(UiTestCase):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
     second_talon_card = game_widget.cards[game_state.talon[1]]
@@ -562,8 +591,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
 
     trick = PlayerPair(queen_hearts, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.ONE,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
 
     self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.player_card_widgets.one, first_talon_card.parent)
@@ -583,6 +615,7 @@ class GameWidgetTest(UiTestCase):
       game_state.next_player = PlayerId.TWO
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
     second_talon_card = game_widget.cards[game_state.talon[1]]
@@ -600,8 +633,11 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
 
     trick = PlayerPair(queen_hearts, queen_diamonds)
+    done_callback = Mock()
     game_widget.on_trick_completed(trick, PlayerId.TWO,
-                                   game_state.cards_in_hand, True)
+                                   game_state.cards_in_hand, True,
+                                   done_callback)
+    self.wait_for_mock_callback(done_callback)
 
     self.assertIsNot(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.player_card_widgets.two, first_talon_card.parent)
@@ -615,8 +651,6 @@ class GameWidgetTest(UiTestCase):
     self.assertTrue(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
 
-
-class GameWidgetGraphicTest(GraphicUnitTest):
   # pylint: disable=too-many-statements
   def test_do_layout(self):
     game_widget = GameWidget()

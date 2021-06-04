@@ -83,9 +83,13 @@ class GameController:
           last_trick, last_trick_winner, draw_new_cards)
         self._game_widget.on_trick_completed(last_trick, last_trick_winner,
                                              game_state.cards_in_hand,
-                                             draw_new_cards)
+                                             draw_new_cards,
+                                             self.check_if_game_is_over)
+        return
+    self.check_if_game_is_over()
 
-    if game.game_state.is_game_over:
+  def check_if_game_is_over(self):
+    if self._bummerl.game.game_state.is_game_over:
       logging.info("GameController: Game is over")
       self._bummerl.finalize_game()
       if self._bummerl.is_over:

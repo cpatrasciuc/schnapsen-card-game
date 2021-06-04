@@ -29,6 +29,8 @@ from ui.card_widget import CardWidget
 from ui.player import Player
 from ui.talon_widget import TalonWidget
 
+Closure = Callable[[], None]
+
 
 def _get_trick_points_color(points: int) -> str:
   """Returns the markup color that should be used to display the trick score."""
@@ -600,7 +602,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
 
   def on_trick_completed(self, trick: Trick, winner: PlayerId,
                          cards_in_hand: PlayerPair[List[Card]],
-                         draw_new_cards: bool) -> None:
+                         draw_new_cards: bool,
+                         done_callback: Closure) -> None:
     """
     This method should be called whenever a trick is completed in a game of
     Schnapsen, in order to update the state of this GameWidget accordingly.
@@ -609,6 +612,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
     :param cards_in_hand: The updated list of cards that each player holds.
     :param draw_new_cards: If True, it means that each player drew a new card
     from the talon at the end of the trick.
+    :param done_callback Closure to be called when the GameWidget has finished
+    updating itself based on this trick-completed event.
     """
     tricks_widget = self._tricks_widgets[winner]
 
@@ -633,6 +638,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
         trump_card = self._talon.remove_trump_card()
         trump_card.rotation = 0
     self._update_cards_in_hand(cards_in_hand)
+
+    done_callback()
 
   def _update_cards_in_hand(self,
                             cards_in_hand: PlayerPair[List[Card]]) -> None:
