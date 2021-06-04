@@ -26,6 +26,7 @@ from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
+from ui.player import Player
 from ui.talon_widget import TalonWidget
 
 
@@ -220,7 +221,11 @@ Builder.load_string(dedent("""
   """))
 
 
-class GameWidget(FloatLayout):
+class GameWidgetMetaclass(type(FloatLayout), type(Player)):
+  pass
+
+
+class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
   """The main widget used to view/play a game of Schnapsen."""
 
   # pylint: disable=too-many-instance-attributes
