@@ -223,11 +223,11 @@ Builder.load_string(dedent("""
   """))
 
 
-class GameWidgetMetaclass(type(FloatLayout), type(Player)):
+class GameWidgetMeta(FloatLayout.__metaclass__, Player.__metaclass__):
   pass
 
 
-class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
+class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
   """The main widget used to view/play a game of Schnapsen."""
 
   # pylint: disable=too-many-instance-attributes
@@ -600,6 +600,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMetaclass):
     else:
       assert False, "Should not reach this code"
 
+  # pylint: disable=too-many-arguments
   def on_trick_completed(self, trick: Trick, winner: PlayerId,
                          cards_in_hand: PlayerPair[List[Card]],
                          draw_new_cards: bool,

@@ -18,6 +18,8 @@ class Player(abc.ABC):
 
   # pylint: disable=too-few-public-methods
 
+  __metaclass__ = abc.ABCMeta
+
   # TODO(player): Add a GameView class and a GameView argument to this function.
   @abc.abstractmethod
   def request_next_action(self, game_state: GameState,
