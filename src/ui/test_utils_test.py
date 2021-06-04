@@ -4,7 +4,7 @@
 
 from kivy.uix.widget import Widget
 
-from ui.test_utils import get_children_index, UiTestCase
+from ui.test_utils import get_children_index, UiTestCase, GraphicUnitTest
 
 
 class TestUtilsTest(UiTestCase):
@@ -47,3 +47,13 @@ class TestUtilsTest(UiTestCase):
 
     with self.assertRaisesRegex(AssertionError, "Different lengths"):
       self.assert_list_almost_equal([10, 20, 30], [10, 20])
+
+
+class GraphicUnitTestTest(GraphicUnitTest):
+  def test_assert_almost_equal_pixels(self):
+    self.assert_pixels_almost_equal([30, 50], [31, 49])
+    self.assert_pixels_almost_equal([30, 50], [31, 49], places=-1)
+    with self.assertRaisesRegex(AssertionError, "First diff at index 0"):
+      self.assert_pixels_almost_equal([30, 50], [31, 49], delta=0.9)
+    with self.assertRaisesRegex(AssertionError, "First diff at index 0"):
+      self.assert_pixels_almost_equal([30, 50], [31, 49], places=0)

@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from kivy.base import EventLoop
 from kivy.core.window import Window
+from kivy.metrics import dp
 from kivy.tests.common import GraphicUnitTest as BaseGraphicUnitTest
 from kivy.uix.widget import Widget
 
@@ -64,3 +65,8 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
   @property
   def window(self) -> Window:
     return self._window
+
+  def assert_pixels_almost_equal(self, first: List, second: List, **kwargs):
+    if "delta" not in kwargs and "places" not in kwargs:
+      kwargs["delta"] = dp(1)
+    self.assert_list_almost_equal(first, second, **kwargs)
