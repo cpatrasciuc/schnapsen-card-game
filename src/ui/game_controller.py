@@ -62,6 +62,11 @@ class GameController:
     game_state = game.game_state
     trick_points = game_state.trick_points
 
+    new_score = trick_points.one, trick_points.two
+    if old_score != new_score:
+      logging.info("GameController: Score updated: %s", trick_points)
+      self._game_widget.on_score_modified(trick_points)
+
     if isinstance(action, PlayCardAction):
       if game_state.current_trick == PlayerPair(None, None):
         last_trick_winner = game_state.next_player
@@ -79,11 +84,6 @@ class GameController:
         self._game_widget.on_trick_completed(last_trick, last_trick_winner,
                                              game_state.cards_in_hand,
                                              draw_new_cards)
-
-    new_score = trick_points.one, trick_points.two
-    if old_score != new_score:
-      logging.info("GameController: Score updated: %s", trick_points)
-      self._game_widget.on_score_modified(trick_points)
 
     if game.game_state.is_game_over:
       logging.info("GameController: Game is over")
