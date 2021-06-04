@@ -3,7 +3,7 @@
 #  found in the LICENSE file.
 
 import unittest
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from kivy.base import EventLoop
 from kivy.core.window import Window
@@ -27,7 +27,8 @@ def get_children_index(parent: Widget, child: Widget) -> Optional[int]:
 
 
 class UiTestCase(unittest.TestCase):
-  def assert_list_almost_equal(self, first: List, second: List, **kwargs):
+  def assert_list_almost_equal(self, first: Sequence, second: Sequence,
+                               **kwargs):
     msg = kwargs.get("msg", "")
     kwargs.pop("msg", None)
     self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
@@ -71,7 +72,8 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
       self.window.remove_widget(child)
     return super().tearDown(fake)
 
-  def assert_pixels_almost_equal(self, first: List, second: List, **kwargs):
+  def assert_pixels_almost_equal(self, first: Sequence, second: Sequence,
+                                 **kwargs):
     if "delta" not in kwargs and "places" not in kwargs:
       kwargs["delta"] = dp(1)
     self.assert_list_almost_equal(first, second, **kwargs)
