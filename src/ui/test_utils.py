@@ -26,13 +26,14 @@ def get_children_index(parent: Widget, child: Widget) -> Optional[int]:
 
 
 class UiTestCase(unittest.TestCase):
-  def assert_list_almost_equal(self, first: List, second: List,
-                               places: int = 7, msg: str = ""):
+  def assert_list_almost_equal(self, first: List, second: List, **kwargs):
+    msg = kwargs.get("msg", "")
+    kwargs.pop("msg", None)
     self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
     for i, item in enumerate(first):
       self.assertAlmostEqual(item, second[i],
                              msg=msg + f"\nFirst diff at index {i}.",
-                             places=places)
+                             **kwargs)
 
   def assert_is_drawn_on_top(self, top: Widget, bottom: Widget):
     """
