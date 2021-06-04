@@ -2,6 +2,9 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+from unittest.mock import Mock
+
+from kivy.clock import Clock
 from kivy.uix.widget import Widget
 
 from ui.test_utils import get_children_index, UiTestCase, GraphicUnitTest
@@ -57,3 +60,16 @@ class GraphicUnitTestTest(GraphicUnitTest):
       self.assert_pixels_almost_equal([30, 50], [31, 49], delta=0.9)
     with self.assertRaisesRegex(AssertionError, "First diff at index 0"):
       self.assert_pixels_almost_equal([30, 50], [31, 49], places=0)
+
+  def test_wait_for_mock_callback(self):
+    called_in_2_seconds = Mock()
+    Clock.schedule_once(called_in_2_seconds, 2)
+    called_in_2_seconds.assert_not_called()
+    self.wait_for_mock_callback(called_in_2_seconds, timeout_seconds=5)
+    called_in_2_seconds.assert_called_once()
+
+    called_in_2_seconds.reset_mock()
+    Clock.schedule_once(called_in_2_seconds, 2)
+    called_in_2_seconds.assert_not_called()
+    with self.assertRaisesRegex(AssertionError, "not called within 1 second"):
+      self.wait_for_mock_callback(called_in_2_seconds, timeout_seconds=1)

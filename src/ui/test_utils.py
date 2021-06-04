@@ -2,8 +2,10 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import time
 import unittest
 from typing import Optional, Sequence
+from unittest.mock import Mock
 
 from kivy.base import EventLoop
 from kivy.core.window import Window
@@ -77,3 +79,14 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
     if "delta" not in kwargs and "places" not in kwargs:
       kwargs["delta"] = dp(1)
     self.assert_list_almost_equal(first, second, **kwargs)
+
+  def wait_for_mock_callback(self, mock_callback: Mock,
+                             timeout_seconds: int = 5):
+    start_seconds = current_seconds = time.time()
+    while not mock_callback.called and \
+        current_seconds - start_seconds < timeout_seconds:
+      self.advance_frames(1)
+      current_seconds = time.time()
+    if current_seconds - start_seconds >= timeout_seconds:
+      self.fail(
+        f"The callback was not called within {timeout_seconds} second(s)")
