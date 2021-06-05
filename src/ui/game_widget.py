@@ -421,9 +421,15 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.on_score_modified(game_state.trick_points)
     self._update_game_score(game_score)
 
+    # Wait one frame so that do_layout() is called to update the widget after
+    # all the changes above, then call done_callback()
+    def call_done_callback_after_one_frame():
+      Clock.schedule_once(lambda _: done_callback(), 0)
+
+    callback_is_forwarded = False
+
     # If a card is already played check if it was a simple card play or a
     # marriage announcement and execute the corresponding action.
-    callback_is_forwarded = False
     for player in PlayerId:
       card = game_state.current_trick[player]
       if card is None:
@@ -435,13 +441,11 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       else:
         action = PlayCardAction(player, card)
       callback_is_forwarded = True
-      self.on_action(action, done_callback)
+      self.on_action(action, call_done_callback_after_one_frame)
 
     # If we didn't call on_action() above, we are done with the initialization.
-    # Wait one frame so that do_layout() is called to update the widget after
-    # all the changes above, then call done_callback().
     if not callback_is_forwarded:
-      Clock.schedule_once(lambda _: done_callback(), 0)
+      call_done_callback_after_one_frame()
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """

@@ -54,6 +54,7 @@ class _GameWidgetBaseTest(GraphicUnitTest):
     game_widget.on_action(action, done_callback)
     self.wait_for_mock_callback(done_callback)
 
+  # pylint: disable=too-many-arguments
   def _on_trick_completed(self, game_widget: GameWidget, trick: Trick,
                           winner: PlayerId,
                           cards_in_hand: PlayerPair[List[Card]],
@@ -103,6 +104,7 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
     self.render(game_widget)
     self._assert_initial_game_widget_state(game_widget)
 
+  # pylint: disable=too-many-branches
   def _run_init_from_game_state(self, game_state: GameState,
                                 played_cards: Optional[
                                   List[Card]] = None) -> GameWidget:
@@ -166,6 +168,13 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
     self.assertIsNone(game_widget.talon_widget.pop_card())
     self.assertEqual(game_state.is_talon_closed,
                      game_widget.talon_widget.closed)
+
+    # If there are cards in the play area, they should have the same size as the
+    # cards in the players hand.
+    for child in game_widget.play_area.children:
+      if isinstance(child, CardWidget):
+        self.assertEqual(list(game_widget.player_card_widgets.one.card_size),
+                         child.size)
 
     return game_widget
 
