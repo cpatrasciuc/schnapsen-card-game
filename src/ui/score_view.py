@@ -3,7 +3,7 @@
 #  found in the LICENSE file.
 
 from textwrap import dedent
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 from kivy.base import runTouchApp, stopTouchApp
 from kivy.lang import Builder
@@ -65,14 +65,16 @@ def _create_score_label(trick_points: int,
   return label
 
 
+ScoreHistory = List[Tuple[PlayerPair[int], PlayerPair[int]]]
+"""A list of tuples in the format: (trick_points, game_points)."""
+
+
 class ScoreView(ModalView):
   """
   A model view used to display the score at the end of a game of Schnapsen.
   """
 
-  def __init__(self,
-               score_history: List[Tuple[PlayerPair[int], PlayerPair[int]]],
-               **kwargs):
+  def __init__(self, score_history: ScoreHistory, **kwargs):
     """
     Instantiates a new ScoreView.
     :param score_history: A list of tuples in the format (trick_points,
@@ -91,14 +93,24 @@ class ScoreView(ModalView):
                                   winner=game_points.two > 0)
       self.ids.score_grid.add_widget(label)
 
+  @staticmethod
+  def show_score_view(score_history: ScoreHistory,
+                      dismiss_callback: Callable[[], None]) -> "ScoreView":
+    """
+    Static method that can be passed as a ScoreViewCallback to a GameController.
+    """
+    score_view = ScoreView(score_history)
+    score_view.bind(on_dismiss=lambda _: dismiss_callback())
+    score_view.open()
+    return score_view
+
 
 if __name__ == "__main__":
-  score_view = ScoreView([(PlayerPair(85, 20), PlayerPair(2, 0)),
-                          (PlayerPair(30, 24), PlayerPair(0, 3)),
-                          (PlayerPair(85, 20), PlayerPair(2, 0)),
-                          (PlayerPair(30, 24), PlayerPair(0, 3)),
-                          (PlayerPair(85, 20), PlayerPair(2, 0)),
-                          (PlayerPair(30, 24), PlayerPair(0, 3))])
-  score_view.bind(on_dismiss=lambda _: stopTouchApp())
-  score_view.open()
-  runTouchApp(score_view)
+  runTouchApp(ScoreView.show_score_view(
+    [(PlayerPair(85, 20), PlayerPair(2, 0)),
+     (PlayerPair(30, 24), PlayerPair(0, 3)),
+     (PlayerPair(85, 20), PlayerPair(2, 0)),
+     (PlayerPair(30, 24), PlayerPair(0, 3)),
+     (PlayerPair(85, 20), PlayerPair(2, 0)),
+     (PlayerPair(30, 24), PlayerPair(0, 3))],
+    stopTouchApp))
