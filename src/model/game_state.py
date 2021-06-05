@@ -72,12 +72,6 @@ players to play their card.
 """
 
 
-class InvalidGameStateError(Exception):
-  """
-  An exception thrown by GameState.validate() if an inconsistency is found.
-  """
-
-
 @dataclasses.dataclass
 class GameState:
   """Stores all the information about a game at a specific point in time."""
@@ -173,13 +167,10 @@ class GameState:
     trick points. Can only be called before a card is played by the player that
     is to lead.
     """
-    if self.is_talon_closed:
-      raise InvalidGameStateError("The talon is already closed")
-    if len(self.talon) == 0:
-      raise InvalidGameStateError("An empty talon cannot be closed")
-    if not self.is_to_lead(self.next_player):
-      raise InvalidGameStateError(
-        "The talon can only be closed by the player that is to lead")
+    assert not self.is_talon_closed, "The talon is already closed"
+    assert len(self.talon) > 0, "An empty talon cannot be closed"
+    assert self.is_to_lead(self.next_player), \
+      "The talon can only be closed by the player that is to lead"
     self.player_that_closed_the_talon = self.next_player
     self.opponent_points_when_talon_was_closed = self.trick_points[
       self.player_that_closed_the_talon.opponent()]

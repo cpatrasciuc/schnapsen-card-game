@@ -264,6 +264,31 @@ class GameStateTest(unittest.TestCase):
       game_state.next_player = PlayerId.TWO
     self.assertEqual(PlayerPair(0, 1), game_state.game_points)
 
+  def test_empty_talon_cannot_be_closed(self):
+    game_state = get_game_state_with_empty_talon_for_tests()
+    with self.assertRaisesRegex(AssertionError,
+                                "An empty talon cannot be closed"):
+      game_state.close_talon()
+
+  def test_cannot_close_the_talon_twice(self):
+    game_state = get_game_state_for_tests()
+    game_state.close_talon()
+    with self.assertRaisesRegex(AssertionError,
+                                "The talon is already closed"):
+      game_state.close_talon()
+
+  def test_can_only_close_talon_before_a_new_trick_is_played(self):
+    game_state = get_game_state_for_tests()
+    next_player = game_state.next_player
+    self.assertTrue(game_state.is_to_lead(next_player))
+    with GameStateValidator(game_state):
+      game_state.current_trick[next_player] = \
+        game_state.cards_in_hand[next_player][0]
+      game_state.next_player = next_player.opponent()
+    with self.assertRaisesRegex(AssertionError,
+                                "only be closed by the player that is to lead"):
+      game_state.close_talon()
+
 
 class GetGamePointsTest(unittest.TestCase):
   """Tests for the get_game_points() function."""

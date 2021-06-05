@@ -8,9 +8,15 @@ from typing import List
 
 from model.card import Card
 from model.card_value import CardValue
-from model.game_state import InvalidGameStateError, GameState
+from model.game_state import GameState
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+
+
+class InvalidGameStateError(Exception):
+  """
+  An exception thrown by validate() if an inconsistency is found.
+  """
 
 
 def _get_played_cards(game_state: GameState) -> List[Card]:
