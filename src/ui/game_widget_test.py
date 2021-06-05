@@ -234,9 +234,17 @@ class GameWidgetTest(UiTestCase):
       game_widget.on_score_modified(PlayerPair(0, points))
       self.assertEqual(expected_text, game_widget.trick_score_labels.two.text)
 
+
+class GameWidgetGraphicTest(GraphicUnitTest):
+  def on_action(self, game_widget: GameWidget, action: PlayerAction):
+    done_callback = Mock()
+    game_widget.on_action(action, done_callback)
+    self.wait_for_mock_callback(done_callback)
+
   def test_on_action_exchange_trump_card_player_two(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
+    self.render(game_widget)
     trump_card_widget = game_widget.talon_widget.trump_card
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
     trump_jack_widget = game_widget.cards[Card(Suit.CLUBS, CardValue.JACK)]
@@ -249,8 +257,8 @@ class GameWidgetTest(UiTestCase):
                      game_widget.player_card_widgets.two.at(0, 2))
     with self.assertRaisesRegex(AssertionError,
                                 "Trump Jack not in player's hand"):
-      game_widget.on_action(ExchangeTrumpCardAction(PlayerId.ONE))
-    game_widget.on_action(ExchangeTrumpCardAction(PlayerId.TWO))
+      self.on_action(game_widget, ExchangeTrumpCardAction(PlayerId.ONE))
+    self.on_action(game_widget, ExchangeTrumpCardAction(PlayerId.TWO))
     self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
                      game_widget.talon_widget.trump_card.card)
     self.assertIs(game_widget.player_card_widgets.two, trump_card_widget.parent)
@@ -270,6 +278,7 @@ class GameWidgetTest(UiTestCase):
       game_state.cards_in_hand.one.append(trump_jack)
     game_widget = GameWidget()
     game_widget.init_from_game_state(game_state)
+    self.render(game_widget)
     trump_card_widget = game_widget.talon_widget.trump_card
     self.assertFalse(trump_card_widget.grayed_out)
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
@@ -278,8 +287,8 @@ class GameWidgetTest(UiTestCase):
     self.assertIs(game_widget.player_card_widgets.one, trump_jack_widget.parent)
     with self.assertRaisesRegex(AssertionError,
                                 "Trump Jack not in player's hand"):
-      game_widget.on_action(ExchangeTrumpCardAction(PlayerId.TWO))
-    game_widget.on_action(ExchangeTrumpCardAction(PlayerId.ONE))
+      self.on_action(game_widget, ExchangeTrumpCardAction(PlayerId.TWO))
+    self.on_action(game_widget, ExchangeTrumpCardAction(PlayerId.ONE))
     self.assertEqual(Card(Suit.CLUBS, CardValue.JACK),
                      game_widget.talon_widget.trump_card.card)
     self.assertIs(game_widget.player_card_widgets.one, trump_card_widget.parent)
@@ -293,8 +302,9 @@ class GameWidgetTest(UiTestCase):
   def test_on_action_close_the_talon(self):
     game_widget = GameWidget()
     game_widget.init_from_game_state(get_game_state_for_tests())
+    self.render(game_widget)
     self.assertFalse(game_widget.talon_widget.closed)
-    game_widget.on_action(CloseTheTalonAction(PlayerId.ONE))
+    self.on_action(game_widget, CloseTheTalonAction(PlayerId.ONE))
     self.assertTrue(game_widget.talon_widget.closed)
 
   def test_on_action_unsupported_action(self):
@@ -306,11 +316,10 @@ class GameWidgetTest(UiTestCase):
         pass
 
     game_widget = GameWidget()
+    self.render(game_widget)
     with self.assertRaisesRegex(AssertionError, "Should not reach this code"):
-      game_widget.on_action(UnsupportedAction(PlayerId.ONE))
+      self.on_action(game_widget, UnsupportedAction(PlayerId.ONE))
 
-
-class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_trick_completed_player_one_wins(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
@@ -321,14 +330,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
@@ -352,14 +361,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
@@ -382,7 +391,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_hearts_widget = game_widget.cards[king_hearts.marriage_pair]
     action = AnnounceMarriageAction(PlayerId.ONE, king_hearts)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
 
@@ -390,7 +399,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
 
@@ -420,11 +429,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
@@ -456,14 +465,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     ace_clubs_widget = game_widget.cards[ace_clubs]
     action = PlayCardAction(PlayerId.ONE, ace_clubs)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_clubs_widget.parent)
 
     jack_clubs = Card(Suit.CLUBS, CardValue.JACK)
     jack_clubs_widget = game_widget.cards[jack_clubs]
     action = PlayCardAction(PlayerId.TWO, jack_clubs)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, jack_clubs_widget.parent)
 
     trick = PlayerPair(ace_clubs, jack_clubs)
@@ -485,14 +494,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
@@ -532,14 +541,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     last_talon_card = game_widget.talon_widget.top_card()
@@ -581,11 +590,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
@@ -623,11 +632,11 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     action.execute(game_state)
-    game_widget.on_action(action)
+    self.on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
@@ -776,13 +785,14 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold J♥"):
-      game_widget.on_action(PlayCardAction(PlayerId.ONE,
-                                           Card(Suit.HEARTS, CardValue.JACK)))
+      self.on_action(game_widget,
+                     PlayCardAction(PlayerId.ONE,
+                                    Card(Suit.HEARTS, CardValue.JACK)))
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
     ten_spades_widget = game_widget.cards[ten_spades]
     self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
-    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
@@ -797,7 +807,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertFalse(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
     self.assert_do_translation(False, king_clubs_widget)
-    game_widget.on_action(PlayCardAction(PlayerId.TWO, king_clubs))
+    self.on_action(game_widget, PlayCardAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
     self.assertFalse(king_clubs_widget.grayed_out)
@@ -824,7 +834,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(ten_spades_widget, drag_pos)
     self.advance_frames(1)
     callback.assert_called_once()
-    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
@@ -850,7 +860,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(ten_spades_widget, drag_pos)
     self.advance_frames(1)
     callback.assert_called_once()
-    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
@@ -862,7 +872,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     jack_spades_widget = game_widget.cards[jack_spades]
     self.assertIs(game_widget.player_card_widgets.two,
                   jack_spades_widget.parent)
-    game_widget.on_action(PlayCardAction(PlayerId.TWO, jack_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.TWO, jack_spades))
     self.assertIs(game_widget.play_area, jack_spades_widget.parent)
     self.assertTrue(jack_spades_widget.visible)
     self.assertFalse(jack_spades_widget.grayed_out)
@@ -890,7 +900,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     _drag_card_to_pos(king_hearts_widget, drag_pos)
     self.advance_frames(1)
     callback.assert_called_once()
-    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, king_hearts))
+    self.on_action(game_widget,
+                   AnnounceMarriageAction(PlayerId.ONE, king_hearts))
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertTrue(king_hearts_widget.visible)
     self.assertFalse(king_hearts_widget.grayed_out)
@@ -902,7 +913,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     jack_spades_widget = game_widget.cards[jack_spades]
     self.assertIs(game_widget.player_card_widgets.two,
                   jack_spades_widget.parent)
-    game_widget.on_action(PlayCardAction(PlayerId.TWO, jack_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.TWO, jack_spades))
     self.assertIs(game_widget.play_area, jack_spades_widget.parent)
     self.assertTrue(jack_spades_widget.visible)
     self.assertFalse(jack_spades_widget.grayed_out)
@@ -917,8 +928,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
-      game_widget.on_action(PlayCardAction(PlayerId.ONE,
-                                           Card(Suit.SPADES, CardValue.KING)))
+      self.on_action(game_widget,
+                     PlayCardAction(PlayerId.ONE,
+                                    Card(Suit.SPADES, CardValue.KING)))
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     queen_hearts_widget = game_widget.cards[queen_hearts]
@@ -928,7 +940,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                   queen_hearts_widget.parent)
     self.assertIs(game_widget.player_card_widgets.one,
                   king_hearts_widget.parent)
-    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+    self.on_action(game_widget,
+                   AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertTrue(queen_hearts_widget.visible)
@@ -962,7 +975,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assertFalse(queen_clubs_widget.visible)
     self.assertFalse(queen_clubs_widget.grayed_out)
     self.assert_do_translation(False, queen_clubs_widget)
-    game_widget.on_action(AnnounceMarriageAction(PlayerId.TWO, king_clubs))
+    self.on_action(game_widget,
+                   AnnounceMarriageAction(PlayerId.TWO, king_clubs))
     self.assertIs(game_widget.play_area, king_clubs_widget.parent)
     self.assertIs(game_widget.play_area, queen_clubs_widget.parent)
     self.assertTrue(king_clubs_widget.visible)
@@ -986,8 +1000,9 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
-      game_widget.on_action(PlayCardAction(PlayerId.ONE,
-                                           Card(Suit.SPADES, CardValue.KING)))
+      self.on_action(game_widget,
+                     PlayCardAction(PlayerId.ONE,
+                                    Card(Suit.SPADES, CardValue.KING)))
 
     drag_pos = game_widget.play_area.center
     self.assert_pixels_almost_equal([dp(104), dp(150)], drag_pos)
@@ -1012,7 +1027,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                                     king_hearts_widget.center)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
-    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+    self.on_action(game_widget,
+                   AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
 
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
@@ -1038,7 +1054,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
     ten_spades_widget = game_widget.cards[ten_spades]
     self.assertIs(game_widget.player_card_widgets.one, ten_spades_widget.parent)
-    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
@@ -1069,7 +1085,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_widget.request_next_action(game_state, callback)
     _drag_card_to_pos(ten_spades_widget, drag_pos)
     callback.assert_called_once()
-    game_widget.on_action(PlayCardAction(PlayerId.ONE, ten_spades))
+    self.on_action(game_widget, PlayCardAction(PlayerId.ONE, ten_spades))
     self.assertIs(game_widget.play_area, ten_spades_widget.parent)
     self.assertTrue(ten_spades_widget.visible)
     self.assertFalse(ten_spades_widget.grayed_out)
@@ -1113,7 +1129,8 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                                     king_hearts_widget.center)
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
-    game_widget.on_action(AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
+    self.on_action(game_widget,
+                   AnnounceMarriageAction(PlayerId.ONE, queen_hearts))
 
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)

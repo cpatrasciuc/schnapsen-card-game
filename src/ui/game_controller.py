@@ -53,9 +53,11 @@ class GameController:
 
     old_score = trick_points.one, trick_points.two
     game.play_action(action)
-    self._game_widget.on_action(action)
-    Clock.schedule_once(lambda _: self.process_last_action(action, old_score),
-                        DELAY)
+    self._game_widget.on_action(action,
+                                lambda: Clock.schedule_once(
+                                  lambda _: self.process_last_action(action,
+                                                                     old_score),
+                                  DELAY))
 
   def process_last_action(self, action, old_score):
     game = self._bummerl.game

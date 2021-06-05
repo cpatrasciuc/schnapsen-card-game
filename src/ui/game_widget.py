@@ -425,7 +425,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         action = AnnounceMarriageAction(player, card)
       else:
         action = PlayCardAction(player, card)
-      self.on_action(action)
+      # TODO(ui): Add a done_callback to this method and use it here.
+      self.on_action(action, lambda: None)
 
     # Init the scores.
     self.on_score_modified(game_state.trick_points)
@@ -574,11 +575,13 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._prev_play_area_size = self._play_area.size[0], self._play_area.size[1]
     self._prev_play_area_pos = self._play_area.pos[0], self._play_area.pos[1]
 
-  def on_action(self, action: PlayerAction) -> None:
+  def on_action(self, action: PlayerAction, done_callback: Closure) -> None:
     """
     This method should be called whenever a new player action was performed in a
     game of Schnapsen, in order to update the state of the widget accordingly.
     :param action: The latest action performed by one of the players.
+    :param done_callback: The closure to be called once the GameWidget is done
+    updating itself according to the player action.
     """
     logging.info("GameWidget: on_action: %s", action)
     if isinstance(action, ExchangeTrumpCardAction):
@@ -599,6 +602,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       self._move_player_card_to_play_area(action.player_id, action.card, center)
     else:
       assert False, "Should not reach this code"
+    done_callback()
 
   # pylint: disable=too-many-arguments
   def on_trick_completed(self, trick: Trick, winner: PlayerId,
