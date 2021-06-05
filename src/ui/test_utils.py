@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import gc
 import time
 import unittest
 from typing import Optional, Sequence
@@ -64,14 +65,22 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
     EventLoop.ensure_window()
     EventLoop.window.size = 320, 240
     self._window = EventLoop.window
+    self._render_was_called = False
 
   @property
   def window(self) -> Window:
     return self._window
 
+  def render(self, *args, **kwargs):
+    self._render_was_called = True
+    super().render(*args, **kwargs)
+
   def tearDown(self, fake=False):
     for child in self.window.children:
       self.window.remove_widget(child)
+    gc.collect()
+    self.assertTrue(self._render_was_called,
+                    "self.render() was not called during the test case")
     return super().tearDown(fake)
 
   def assert_pixels_almost_equal(self, first: Sequence, second: Sequence,

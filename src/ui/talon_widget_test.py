@@ -12,7 +12,7 @@ from model.card_value import CardValue
 from model.suit import Suit
 from ui.card_widget import CardWidget
 from ui.talon_widget import TalonWidget
-from ui.test_utils import UiTestCase, GraphicUnitTest
+from ui.test_utils import GraphicUnitTest
 
 
 def _get_test_card(ratio=0.5):
@@ -23,9 +23,11 @@ def _get_test_card(ratio=0.5):
   return card_widget
 
 
-class TalonWidgetTest(UiTestCase):
+class TalonWidgetGraphicTest(GraphicUnitTest):
   def test_set_and_remove_trump_card(self):
     talon_widget = TalonWidget()
+    self.render(talon_widget)
+
     self.assertIsNone(talon_widget.trump_card)
     with self.assertRaisesRegex(AssertionError, "No trump card set"):
       talon_widget.remove_trump_card()
@@ -47,6 +49,8 @@ class TalonWidgetTest(UiTestCase):
 
   def test_add_and_remove_cards(self):
     talon_widget = TalonWidget()
+    self.render(talon_widget)
+
     self.assertIsNone(talon_widget.top_card())
     self.assertIsNone(talon_widget.pop_card())
     with self.assertRaisesRegex(AssertionError, "Card widget cannot be None"):
@@ -73,6 +77,8 @@ class TalonWidgetTest(UiTestCase):
 
   def test_trump_card_z_index_relative_to_other_talon_cards(self):
     talon_widget = TalonWidget()
+    self.render(talon_widget)
+
     card_1 = _get_test_card()
     talon_widget.push_card(card_1)
     trump_card = _get_test_card()
@@ -115,15 +121,13 @@ class TalonWidgetTest(UiTestCase):
 
   def test_close_talon(self):
     talon_widget = TalonWidget(aspect_ratio=0.5)
-    # pylint: disable=protected-access
-    talon_widget._trigger_layout = talon_widget.do_layout
-    # pylint: enable=protected-access
+    self.render(talon_widget)
 
     trump_card = _get_test_card()
     talon_widget.set_trump_card(trump_card)
     talon_card = _get_test_card()
     talon_widget.push_card(talon_card)
-    talon_widget.do_layout()
+    self.advance_frames(1)
 
     self.assertFalse(talon_widget.closed)
     self.assert_is_drawn_on_top(talon_card, trump_card)
@@ -131,24 +135,29 @@ class TalonWidgetTest(UiTestCase):
     self.assertEqual(90, trump_card.rotation)
 
     talon_widget.closed = True
+    self.advance_frames(1)
     self.assertTrue(talon_widget.closed)
     self.assert_is_drawn_on_top(trump_card, talon_card)
     self.assertEqual(talon_card.center, trump_card.center)
-    self.assertEqual(10, trump_card.rotation)
+    self.assertAlmostEqual(10, trump_card.rotation, places=0)
 
     talon_widget.closed = False
+    self.advance_frames(1)
     self.assertFalse(talon_widget.closed)
     self.assert_is_drawn_on_top(talon_card, trump_card)
     self.assertNotEqual(talon_card.center, trump_card.center)
-    self.assertEqual(90, trump_card.rotation)
+    self.assertAlmostEqual(90, trump_card.rotation, places=0)
 
   def test_setting_closed_to_the_current_value_does_not_trigger_layout(self):
     talon_widget = TalonWidget(aspect_ratio=0.5)
+    self.render(talon_widget)
+
     trump_card = _get_test_card()
     talon_widget.set_trump_card(trump_card)
     talon_card = _get_test_card()
+    talon_card.visible = False
     talon_widget.push_card(talon_card)
-    talon_widget.do_layout()
+    self.advance_frames(1)
 
     mock = Mock()
     # pylint: disable=protected-access
@@ -166,19 +175,19 @@ class TalonWidgetTest(UiTestCase):
     talon_widget.closed = False
     mock.assert_called_once()
 
-  @staticmethod
-  def test_can_close_talon_widget_without_setting_a_trump_card():
+  def test_can_close_talon_widget_without_setting_a_trump_card(self):
     talon_widget = TalonWidget(aspect_ratio=0.5)
+    self.render(talon_widget)
     talon_widget.closed = True
     talon_widget.closed = False
 
-
-class TalonWidgetGraphicTest(GraphicUnitTest):
   def test_use_all_height(self):
     # pylint: disable=too-many-statements
     talon_widget = TalonWidget(aspect_ratio=0.5)
     talon_widget.size = 800, 100
     talon_widget.pos = 0, 0
+    talon_widget.size_hint = None, None
+    self.render(talon_widget)
 
     talon_card = _get_test_card()
     talon_card.pos = 12, 34
@@ -246,6 +255,8 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     talon_widget = TalonWidget(aspect_ratio=0.5)
     talon_widget.size = 100, 800
     talon_widget.pos = 0, 0
+    talon_widget.size_hint = None, None
+    self.render(talon_widget)
 
     talon_card = _get_test_card()
     talon_card.pos = 12, 34
@@ -325,6 +336,8 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
       ratio, size, card_size, talon_pos, trump_pos = test_case
       talon_widget = TalonWidget(aspect_ratio=ratio)
       talon_widget.size = size
+      talon_widget.size_hint = None, None
+      self.render(talon_widget)
 
       talon_card = _get_test_card(ratio)
       talon_card.pos = 12, 34
@@ -358,6 +371,7 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
       layout.pos = 37, 37
       layout.size_hint = None, None
       layout.add_widget(talon_widget)
+      self.render(layout)
 
       talon_card = _get_test_card()
       talon_card.pos = 12, 34
