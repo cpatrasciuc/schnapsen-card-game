@@ -6,6 +6,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.game_state_validation import GameStateValidator
+from model.player_action import PlayCardAction, CloseTheTalonAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -167,3 +168,41 @@ def get_game_state_with_multiple_cards_in_the_talon_for_tests() -> GameState:
     game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
     game_state.talon.extend([trick.one, trick.two])
   return game_state
+
+
+def get_actions_for_one_complete_game(first_player: PlayerId):
+  """
+  Returns a list of actions that will fully play a game if it is initialized
+  using seed=2 and dealer=first_player.opponent().
+  """
+  player_a = first_player
+  player_b = player_a.opponent()
+  actions = [
+    # Player A wins the first trick. Score: 0-6.
+    PlayCardAction(player_a, Card(Suit.HEARTS, CardValue.JACK)),
+    PlayCardAction(player_b, Card(Suit.CLUBS, CardValue.KING)),
+
+    # Player A closes the talon.
+    CloseTheTalonAction(player_a),
+
+    # Player A wins the second trick. Score: 0-18.
+    PlayCardAction(player_a, Card(Suit.DIAMONDS, CardValue.TEN)),
+    PlayCardAction(player_b, Card(Suit.DIAMONDS, CardValue.JACK)),
+
+    # Player A wins the third trick. Score: 0-31.
+    PlayCardAction(player_a, Card(Suit.HEARTS, CardValue.TEN)),
+    PlayCardAction(player_b, Card(Suit.SPADES, CardValue.QUEEN)),
+
+    # Player B wins the forth trick. Score: 13-31.
+    PlayCardAction(player_a, Card(Suit.CLUBS, CardValue.JACK)),
+    PlayCardAction(player_b, Card(Suit.CLUBS, CardValue.ACE)),
+
+    # Player A wins the fifth trick. Score: 13-52.
+    PlayCardAction(player_b, Card(Suit.SPADES, CardValue.TEN)),
+    PlayCardAction(player_a, Card(Suit.SPADES, CardValue.ACE)),
+
+    # Player A wins the sixth trick. Score: 13-67.
+    PlayCardAction(player_a, Card(Suit.HEARTS, CardValue.ACE)),
+    PlayCardAction(player_b, Card(Suit.SPADES, CardValue.KING))
+  ]
+  return actions
