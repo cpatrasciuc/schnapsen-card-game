@@ -9,6 +9,7 @@ from textwrap import dedent
 from typing import Dict, Tuple, Optional, List, Callable
 
 from kivy.base import runTouchApp
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
 from kivy.uix.floatlayout import FloatLayout
@@ -379,7 +380,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     """
     return self._game_score_labels
 
-  def init_from_game_state(self, game_state: GameState,
+  def init_from_game_state(self, game_state: GameState, done_callback: Closure,
                            game_score: PlayerPair[int] = PlayerPair(0,
                                                                     0)) -> None:
     """
@@ -387,7 +388,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     an argument. It does not hold a reference to the game_state object. This
     GameWidget will not update itself automatically if subsequent changes are
     performed on the game_state object.
-    Optionally, one can pass the Bummerl game score through the game_score arg.
+    :param game_state The initial game_state that this widget should represent.
+    :param done_callback The closure that should be called once the GameWidget
+    has finished initializing itself.
+    :param game_score The Bummerl game score.
     """
     # Init the cards for each player.
     self._update_cards_in_hand(game_state.cards_in_hand)
@@ -413,8 +417,13 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if game_state.is_talon_closed:
       self._talon.closed = True
 
+    # Init the scores.
+    self.on_score_modified(game_state.trick_points)
+    self._update_game_score(game_score)
+
     # If a card is already played check if it was a simple card play or a
     # marriage announcement and execute the corresponding action.
+    callback_is_forwarded = False
     for player in PlayerId:
       card = game_state.current_trick[player]
       if card is None:
@@ -425,12 +434,14 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         action = AnnounceMarriageAction(player, card)
       else:
         action = PlayCardAction(player, card)
-      # TODO(ui): Add a done_callback to this method and use it here.
-      self.on_action(action, lambda: None)
+      callback_is_forwarded = True
+      self.on_action(action, done_callback)
 
-    # Init the scores.
-    self.on_score_modified(game_state.trick_points)
-    self._update_game_score(game_score)
+    # If we didn't call on_action() above, we are done with the initialization.
+    # Wait one frame so that do_layout() is called to update the widget after
+    # all the changes above, then call done_callback().
+    if not callback_is_forwarded:
+      Clock.schedule_once(lambda _: done_callback(), 0)
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """
@@ -781,6 +792,5 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 if __name__ == "__main__":
   game_widget = GameWidget()
   game_widget.size_hint = 1, 1
-  game_widget.init_from_game_state(get_game_state_for_tests())
-  game_widget.do_layout()
+  game_widget.init_from_game_state(get_game_state_for_tests(), lambda: None)
   runTouchApp(game_widget)

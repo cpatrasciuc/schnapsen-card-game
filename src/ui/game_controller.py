@@ -34,8 +34,8 @@ class GameController:
     if self._bummerl.game is None:
       self._bummerl.start_game()
     self._game_widget.init_from_game_state(self._bummerl.game.game_state,
+                                           self.request_next_action,
                                            self._bummerl.game_points)
-    self.request_next_action()
 
   def request_next_action(self):
     game_state = self._bummerl.game.game_state

@@ -28,7 +28,7 @@ from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.card_widget import CardWidget
 from ui.game_widget import GameWidget
-from ui.test_utils import GraphicUnitTest, UiTestCase
+from ui.test_utils import GraphicUnitTest
 
 
 def _drag_card_to_pos(card_widget: CardWidget, position: Tuple[int, int]):
@@ -38,7 +38,19 @@ def _drag_card_to_pos(card_widget: CardWidget, position: Tuple[int, int]):
   touch.touch_up()
 
 
-class GameWidgetTest(UiTestCase):
+class _GameWidgetBaseTest(GraphicUnitTest):
+  def _init_from_game_state(self, game_widget: GameWidget,
+                            game_state: GameState,
+                            game_score: Optional[PlayerPair[int]] = None):
+    done_callback = Mock()
+    if game_score is None:
+      game_widget.init_from_game_state(game_state, done_callback)
+    else:
+      game_widget.init_from_game_state(game_state, done_callback, game_score)
+    self.wait_for_mock_callback(done_callback)
+
+
+class GameWidgetInitTest(_GameWidgetBaseTest):
   def _assert_initial_game_widget_state(self, game_widget: GameWidget) -> None:
     # Creates all the cards without a parent widget.
     self.assertEqual(20, len(game_widget.cards.keys()))
@@ -74,6 +86,7 @@ class GameWidgetTest(UiTestCase):
 
   def test_create_empty_widget(self):
     game_widget = GameWidget()
+    self.render(game_widget)
     self._assert_initial_game_widget_state(game_widget)
 
   def _run_init_from_game_state(self, game_state: GameState,
@@ -83,7 +96,8 @@ class GameWidgetTest(UiTestCase):
       played_cards = []
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
+    self.render(game_widget)
     card_widgets = game_widget.cards
 
     # Cards for each player are in the right widgets.
@@ -192,24 +206,30 @@ class GameWidgetTest(UiTestCase):
     ]
     for points, expected_text in test_cases:
       game_widget = GameWidget()
-      game_widget.init_from_game_state(GameState.new(), PlayerPair(points, 0))
+      self.render(game_widget)
+      self._init_from_game_state(game_widget, GameState.new(),
+                                 PlayerPair(points, 0))
       self.assertEqual(expected_text, game_widget.game_score_labels.one.text)
       game_widget = GameWidget()
-      game_widget.init_from_game_state(GameState.new(), PlayerPair(0, points))
+      self.render(game_widget)
+      self._init_from_game_state(game_widget, GameState.new(),
+                                 PlayerPair(0, points))
       self.assertEqual(expected_text, game_widget.game_score_labels.two.text)
     with self.assertRaisesRegex(AssertionError, "Invalid game score"):
       game_widget = GameWidget()
-      game_widget.init_from_game_state(GameState.new(), PlayerPair(7, 4))
+      self._init_from_game_state(game_widget, GameState.new(), PlayerPair(7, 4))
     with self.assertRaisesRegex(AssertionError, "Invalid game score"):
       game_widget = GameWidget()
-      game_widget.init_from_game_state(GameState.new(), PlayerPair(0, -1))
+      self._init_from_game_state(game_widget, GameState.new(),
+                                 PlayerPair(0, -1))
 
   def test_reset(self):
     game_widget = GameWidget()
     self._assert_initial_game_widget_state(game_widget)
+    self.render(game_widget)
     game_widget.reset()
     self._assert_initial_game_widget_state(game_widget)
-    game_widget.init_from_game_state(GameState.new())
+    self._init_from_game_state(game_widget, GameState.new())
     with self.assertRaises(AssertionError):
       self._assert_initial_game_widget_state(game_widget)
     game_widget.reset()
@@ -217,6 +237,7 @@ class GameWidgetTest(UiTestCase):
 
   def test_on_score_modified(self):
     game_widget = GameWidget()
+    self.render(game_widget)
     test_cases = [
       (0, "[color=ff3333]Trick points: 0[/color]"),
       (1, "[color=ffff33]Trick points: 1[/color]"),
@@ -235,7 +256,7 @@ class GameWidgetTest(UiTestCase):
       self.assertEqual(expected_text, game_widget.trick_score_labels.two.text)
 
 
-class GameWidgetGraphicTest(GraphicUnitTest):
+class GameWidgetGraphicTest(_GameWidgetBaseTest):
   def on_action(self, game_widget: GameWidget, action: PlayerAction):
     done_callback = Mock()
     game_widget.on_action(action, done_callback)
@@ -243,7 +264,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
   def test_on_action_exchange_trump_card_player_two(self):
     game_widget = GameWidget()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
     trump_card_widget = game_widget.talon_widget.trump_card
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), trump_card_widget.card)
@@ -277,7 +298,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
       game_state.cards_in_hand.two.append(ten_hearts)
       game_state.cards_in_hand.one.append(trump_jack)
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
     trump_card_widget = game_widget.talon_widget.trump_card
     self.assertFalse(trump_card_widget.grayed_out)
@@ -301,7 +322,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
   def test_on_action_close_the_talon(self):
     game_widget = GameWidget()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
     self.assertFalse(game_widget.talon_widget.closed)
     self.on_action(game_widget, CloseTheTalonAction(PlayerId.ONE))
@@ -323,7 +344,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_trick_completed_player_one_wins(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
@@ -354,7 +375,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
@@ -383,7 +404,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_trick_completed_after_marriage_announced(self):
     game_widget = GameWidget()
     game_state = get_game_state_for_tests()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     king_hearts = Card(Suit.HEARTS, CardValue.KING)
@@ -420,7 +441,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
       game_state.next_player = PlayerId.TWO
       game_state.close_talon()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
@@ -458,7 +479,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_trick_completed_talon_is_empty(self):
     game_state = get_game_state_with_empty_talon_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     ace_clubs = Card(Suit.CLUBS, CardValue.ACE)
@@ -487,7 +508,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_new_cards_drawn_last_talon_card_player_one_wins(self):
     game_widget = GameWidget()
     game_state = get_game_state_for_tests()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
@@ -534,7 +555,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
@@ -581,7 +602,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
@@ -623,7 +644,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     first_talon_card = game_widget.cards[game_state.talon[0]]
@@ -781,7 +802,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
   def test_on_action_play_card(self):
     game_widget = GameWidget()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold J♥"):
@@ -819,7 +840,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_action_play_card_by_dragging(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     drag_pos = game_widget.play_area.x + dp(10), \
@@ -845,7 +866,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_action_play_card_reply_is_relative_to_first_card(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     drag_pos = game_widget.play_area.x + dp(10), \
@@ -884,7 +905,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_action_announce_marriage_reply_is_relative_to_first_card(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     drag_pos = game_widget.play_area.x + dp(10), \
@@ -924,7 +945,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
   def test_on_action_announce_marriage(self):
     game_widget = GameWidget()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
@@ -959,7 +980,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
     self.assert_is_drawn_on_top(queen_hearts_widget, king_hearts_widget)
 
     game_widget.reset()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
 
     king_clubs = Card(Suit.CLUBS, CardValue.KING)
@@ -996,7 +1017,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_on_action_announce_marriage_by_dragging(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     with self.assertRaisesRegex(AssertionError, "Player ONE does not hold K♠"):
@@ -1048,7 +1069,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
 
   def test_cards_in_play_area_are_updated_on_window_resize(self):
     game_widget = GameWidget()
-    game_widget.init_from_game_state(get_game_state_for_tests())
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
     self.render(game_widget)
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
@@ -1071,7 +1092,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_cards_dragged_in_play_area_are_updated_on_window_resize(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     drag_pos = game_widget.play_area.x + dp(10), \
@@ -1101,7 +1122,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
   def test_marriage_dragged_in_play_area_is_updated_on_window_resize(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     drag_pos = game_widget.play_area.x + dp(10), \
@@ -1159,7 +1180,7 @@ class GameWidgetGraphicTest(GraphicUnitTest):
                                     king_hearts_widget.center)
 
 
-class GameWidgetPlayerGraphicTest(GraphicUnitTest):
+class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
   def test_exchange_trump_card_with_double_click(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
@@ -1169,7 +1190,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
       game_state.cards_in_hand.one.append(trump_jack)
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     trump_card_widget = game_widget.talon_widget.trump_card
@@ -1214,7 +1235,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
       game_state.cards_in_hand.one.append(trump_jack)
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     trump_card_widget = game_widget.talon_widget.trump_card
@@ -1285,7 +1306,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
       game_state.next_player = PlayerId.TWO
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     action = PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN))
     action.execute(game_state)
     self.render(game_widget)
@@ -1342,7 +1363,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
       game_state.cards_in_hand.one.append(trump_jack)
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     trump_jack_widget = game_widget.cards[trump_jack]
@@ -1383,7 +1404,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_dragging_non_trump_jack_card_over_the_trump_card(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     ten_spades = Card(Suit.SPADES, CardValue.TEN)
@@ -1433,7 +1454,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_double_click_trump_card_when_cannot_exchange_trump_card(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     trump_card_widget = game_widget.talon_widget.trump_card
@@ -1458,7 +1479,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_close_the_talon_with_double_click(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     top_talon_card = game_widget.talon_widget.top_card()
@@ -1509,7 +1530,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     action.execute(game_state)
 
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     top_talon_card = game_widget.talon_widget.top_card()
@@ -1533,7 +1554,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_play_a_card_using_double_click(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     # A double-click on any player card should have no effect.
@@ -1593,7 +1614,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_play_a_card_by_dragging(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     play_area_pos = game_widget.play_area.center[0], \
@@ -1689,7 +1710,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
     action.execute(game_state)
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     # A double-click on any player card should have no effect.
@@ -1727,7 +1748,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
     action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
     action.execute(game_state)
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     play_area_pos = game_widget.play_area.center[0], \
@@ -1768,7 +1789,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_announce_marriage_using_double_click(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     # A double-click on any player card should have no effect.
@@ -1836,7 +1857,7 @@ class GameWidgetPlayerGraphicTest(GraphicUnitTest):
   def test_announce_marriage_by_dragging(self):
     game_state = get_game_state_for_tests()
     game_widget = GameWidget()
-    game_widget.init_from_game_state(game_state)
+    self._init_from_game_state(game_widget, game_state)
     self.render(game_widget)
 
     play_area_pos = game_widget.play_area.center[0], \
