@@ -102,7 +102,93 @@ class GameControllerTest(GraphicUnitTest):
     self.assertEqual(PlayerPair(0, 0), actual_game_state.trick_points)
     self.assertEqual(PlayerPair(0, 3), game_points)
 
-  # TODO(tests): Add a test that checks the end of a Bummerl.
+  def test_new_bummerl_is_started_after_the_current_one_is_over(self):
+    self.render(None)
+
+    game_widget = Mock()
+    players = PlayerPair(Mock(), Mock())
+    score_view = Mock()
+    # noinspection PyTypeChecker
+    game_controller = GameController(game_widget, players, score_view)
+
+    # Play an entire Bummerl except the last action.
+    last_action = None
+    bummerl = Bummerl(next_dealer=PlayerId.ONE)
+    for i in range(5):
+      bummerl.start_game(seed=2)
+      actions = get_actions_for_one_complete_game(
+        bummerl.game.game_state.next_player)
+      actions_to_play = actions if i != 4 else actions[:-1]
+      for action in actions_to_play:
+        bummerl.game.play_action(action)
+      if i == 4:
+        last_action = actions[-1]
+        break
+      bummerl.finalize_game()
+
+    game_controller.start(bummerl)
+
+    # Initializes the game widget.
+    game_widget.reset.assert_called_once()
+    game_widget.init_from_game_state.assert_called_once()
+    actual_game_state, done_callback, game_points = \
+      game_widget.init_from_game_state.call_args.args
+    self.assertEqual(bummerl.game.game_state, actual_game_state)
+    self.assertEqual(PlayerPair(6, 6), game_points)
+    game_widget.reset_mock()
+    done_callback()
+
+    # Player action is requested.
+    players[last_action.player_id].request_next_action.assert_called_once()
+    actual_game_state, action_callback = \
+      players[last_action.player_id].request_next_action.call_args.args
+    self.assertEqual(bummerl.game.game_state, actual_game_state)
+    players[last_action.player_id].reset_mock()
+
+    # Player responds with an action.
+    action_callback(last_action)
+
+    # GameWidget.on_action() is called to update the UI.
+    game_widget.on_action.assert_called_once()
+    actual_action, done_callback = game_widget.on_action.call_args.args
+    self.assertEqual(last_action, actual_action)
+    game_widget.reset_mock()
+    done_callback()
+
+    # GameWidget.on_score_modified() is called to update the score.
+    game_widget.on_score_modified.assert_called_once()
+    actual_score = game_widget.on_score_modified.call_args.args[0]
+    self.assertEqual(PlayerPair(13, 67), actual_score)
+
+    # GameWidget.on_trick_completed() is called.
+    self.wait_for_mock_callback(game_widget.on_trick_completed)
+    last_trick, winner, cards_in_hard, draw_new_cards, done_callback = \
+      game_widget.on_trick_completed.call_args.args
+    self.assertEqual(bummerl.game.game_state.won_tricks.two[-1], last_trick)
+    self.assertEqual(PlayerId.TWO, winner)
+    self.assertEqual(bummerl.game.game_state.cards_in_hand, cards_in_hard)
+    self.assertEqual(False, draw_new_cards)
+    game_widget.reset_mock()
+    done_callback()
+
+    # The game is over. The score_view_callback is called.
+    score_view.assert_called_once()
+    score_history, dismiss_callback = score_view.call_args.args
+    self.assertEqual([(PlayerPair(13, 67), PlayerPair(0, 3)),
+                      (PlayerPair(67, 13), PlayerPair(3, 0)),
+                      (PlayerPair(13, 67), PlayerPair(0, 3)),
+                      (PlayerPair(67, 13), PlayerPair(3, 0)),
+                      (PlayerPair(13, 67), PlayerPair(0, 3))], score_history)
+    score_view.reset_mock()
+    dismiss_callback()
+
+    # A new bummerl and a new game is started.
+    game_widget.reset.assert_called_once()
+    game_widget.init_from_game_state.assert_called_once()
+    actual_game_state, done_callback, game_points = \
+      game_widget.init_from_game_state.call_args.args
+    self.assertEqual(PlayerPair(0, 0), actual_game_state.trick_points)
+    self.assertEqual(PlayerPair(0, 0), game_points)
 
   def test_two_bummerl_with_random_players(self):
     class TestScoreViewWithBummerlCount:
