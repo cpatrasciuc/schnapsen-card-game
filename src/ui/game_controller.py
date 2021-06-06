@@ -176,9 +176,9 @@ if __name__ == "__main__":
   _game_widget = GameWidget()
   _game_widget.padding_pct = 0.01
   _game_widget.size_hint = 1, 1
-  # TODO(model): Use Type[C] instead of C for type hints that allow subclasses.
-  # noinspection PyTypeChecker
-  _players: PlayerPair[Player] = PlayerPair(_game_widget, RandomPlayer())
+  _human_player: Player = _game_widget
+  _computer_player: Player = RandomPlayer()
+  _players: PlayerPair[Player] = PlayerPair(_human_player, _computer_player)
   _game_controller = GameController(_game_widget, _players)
   Clock.schedule_once(lambda _: _game_controller.start(), 0)
   runTouchApp(_game_widget)
