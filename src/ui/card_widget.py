@@ -80,13 +80,13 @@ class CardWidget(Scatter):
     image = Image(source=_get_card_filename(card))
     image.keep_ratio = False
     image.allow_stretch = True
+    self.fbind("size", image.setter("size"))
     self.add_widget(image)
     self._ratio = aspect_ratio
     self.width = self.height * self._ratio
     self.size_hint = None, None
     self.register_event_type("on_double_tap")
     self.register_event_type("on_card_moved")
-    self.fbind("size", image.setter("size"))
     # noinspection PyUnreachableCode
     if __debug__:
       self.fbind("size", self._assert_aspect_ratio)

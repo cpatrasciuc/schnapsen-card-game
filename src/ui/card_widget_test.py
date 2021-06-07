@@ -21,6 +21,13 @@ class CardWidgetTest(UiTestCase):
     for card, card_widget in card_dict.items():
       self.assertEqual(card, card_widget.card)
 
+  def test_aspect_ratio_is_set_in_constructor(self):
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
+    self.assertEqual([50, 100], card_widget.children[0].size)
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE),
+                             aspect_ratio=0.25)
+    self.assertEqual([25, 100], card_widget.children[0].size)
+
   def test_aspect_ratio_is_enforced(self):
     card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
     card_widget.size = 10, 20
