@@ -34,6 +34,7 @@ def run_pylint():
   ]
   pylint_opts = [
     "--indent-string='  '",
+    "--ignore-imports=yes",
     "--generated-members=" + ",".join(generated_members),
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
