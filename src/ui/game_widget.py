@@ -25,6 +25,7 @@ from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
   get_available_actions
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from ui.animation_controller import AnimationController
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
 from ui.player import Player
@@ -278,6 +279,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     # associated to each card that can be double clicked.
     self._actions: Dict[CardWidget, PlayerAction] = {}
 
+    # AnimationController that coordinates all card animations.
+    self._animation_controller = AnimationController()
+
     self._init_widgets()
 
   def _init_widgets(self):
@@ -323,6 +327,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     Resets the GameWidget and leaves it ready to be initialized from a new game
     state.
     """
+    if self._animation_controller.is_running:
+      self._animation_controller.cancel()
     _delete_widget(self._player_card_widgets.one)
     _delete_widget(self._player_card_widgets.two)
     self._player_card_widgets = None
@@ -471,6 +477,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     This function is called when a layout is called by a trigger. That means
     whenever the position, the size or the children of this layout change.
     """
+    # TODO(tests): Add a test for the scenario where the window is resized
+    # during animations.
+    if self._animation_controller.is_running:
+      self._animation_controller.cancel()
     self.ids.computer_tricks_placeholder.height = 0.25 * self.height
     self.ids.human_tricks_placeholder.height = \
       self.ids.computer_tricks_placeholder.height
@@ -599,6 +609,12 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     updating itself according to the player action.
     """
     logging.info("GameWidget: on_action: %s", action)
+    assert not self._animation_controller.is_running
+    self._animation_controller.start(
+      lambda: self._on_action_after_animations(action, done_callback))
+
+  def _on_action_after_animations(self, action: PlayerAction,
+                                  done_callback: Closure) -> None:
     if isinstance(action, ExchangeTrumpCardAction):
       self._exchange_trump_card(action.player_id)
     elif isinstance(action, CloseTheTalonAction):
@@ -635,6 +651,19 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     :param done_callback Closure to be called when the GameWidget has finished
     updating itself based on this trick-completed event.
     """
+    assert not self._animation_controller.is_running
+    self._animation_controller.start(
+      lambda: self._on_trick_completed_after_animations(trick, winner,
+                                                        cards_in_hand,
+                                                        draw_new_cards,
+                                                        done_callback))
+
+  # pylint: disable=too-many-arguments
+  def _on_trick_completed_after_animations(self, trick: Trick, winner: PlayerId,
+                                           cards_in_hand: PlayerPair[
+                                             List[Card]],
+                                           draw_new_cards: bool,
+                                           done_callback: Closure) -> None:
     tricks_widget = self._tricks_widgets[winner]
 
     for card in [trick.one, trick.two]:
