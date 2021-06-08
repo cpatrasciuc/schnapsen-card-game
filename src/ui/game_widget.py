@@ -508,6 +508,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_jack_widget = self._cards[trump_jack]
     return trump_jack_widget
 
+  # TODO(refactor): See if this can be split/simplified.
+  # pylint: disable=too-many-locals
   def _animate_exchange_trump_card(self, player: PlayerId) -> None:
     trump_jack_widget = self._get_trump_jack_widget()
     trump_jack_widget.visible = True
@@ -531,13 +533,42 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                       duration=_EXCHANGE_DURATION / 4)
     self._add_animation(trump_jack_widget, trump_jack_animation)
 
+    # TODO(refactor): Extract this as CardSlotsLayout.get_cards().
+    # TODO(refactor): Maybe refactor some duplicated parts between this and draw
+    # new cards code.
+    cards_in_hand = []
+    for col in range(5):
+      card_widget = self._player_card_widgets[player].at(0, col)
+      if card_widget is None:
+        continue
+      card = card_widget.card
+      card.public = card_widget.visible
+      cards_in_hand.append(card_widget.card)
+    cards_in_hand.append(trump_card_widget.card)
+    cards_in_hand[-1].public = True
+    assert len(cards_in_hand) == 5
+
+    trump_card_col = None
+    # TODO(refactor): Maybe this reshuffle in-hand code is similar to the code
+    # for updating the cards in-hand after a trick is completed.
+    for i, card in enumerate(_sort_cards_for_player(cards_in_hand, player)):
+      if card == trump_card_widget.card:
+        trump_card_col = i
+        continue
+      card_widget = self._cards[card]
+      if self._player_card_widgets[player].at(0, i) == card_widget:
+        continue
+      pos = self._player_card_widgets[player].get_card_pos(0, i)
+      animation = Animation(x=pos[0], y=pos[1], duration=_EXCHANGE_DURATION / 4)
+      self._add_animation(card_widget, animation)
+
     def bring_trump_card_to_front(*_):
       self.remove_widget(trump_card_widget)
       self.add_widget(trump_card_widget)
       self.remove_widget(trump_jack_widget)
       self.add_widget(trump_jack_widget, index=len(self.children))
 
-    pos = card_slots_widget.get_card_pos(row, col)
+    pos = card_slots_widget.get_card_pos(0, trump_card_col)
     pos = pos[0] + trump_jack_widget.width / 2, \
           pos[1] + trump_jack_widget.height / 2
     trump_card_animation = Animation(center_x=exchange_pos[0],
@@ -574,18 +605,16 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if player == PlayerId.ONE:
       trump_card_widget.grayed_out = True
 
-    # TODO(ui): Animate this.
-    if self._enable_animations or player == PlayerId.TWO:
-      cards_in_hand = []
-      for col in range(5):
-        card_widget = self._player_card_widgets[player].at(0, col)
-        assert card_widget is not None, \
-          "Cannot exchange trump with less then five cards in hand"
-        card = card_widget.card
-        card.public = card_widget.visible
-        cards_in_hand.append(card_widget.card)
-      self._update_cards_in_hand_for_player_after_animation(player,
-                                                            cards_in_hand)
+    cards_in_hand = []
+    for col in range(5):
+      card_widget = self._player_card_widgets[player].at(0, col)
+      assert card_widget is not None, \
+        "Cannot exchange trump with less then five cards in hand"
+      card = card_widget.card
+      card.public = card_widget.visible
+      cards_in_hand.append(card_widget.card)
+    self._update_cards_in_hand_for_player_after_animation(player,
+                                                          cards_in_hand)
 
   def _animate_talon_closed(self):
     trump_card_widget = self._talon.remove_trump_card()
