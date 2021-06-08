@@ -82,6 +82,7 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
 
 _MOVE_DURATION = 0.5
 _EXCHANGE_DURATION = 1.5
+_CLOSE_DURATION = 0.5
 _TRICK_DURATION = 0.5
 
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
@@ -515,8 +516,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.add_widget(trump_card_widget, index=len(self.children))
     self.add_widget(trump_jack_widget)
 
-    exchange_pos = self._talon.pos[0], \
-                   self._talon.pos[1] + self._talon.height / 2
+    exchange_pos = self._get_trump_exchange_pos()
     trump_jack_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
                                      duration=_EXCHANGE_DURATION / 2)
@@ -545,6 +545,11 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
                                       duration=_EXCHANGE_DURATION / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
+
+  def _get_trump_exchange_pos(self):
+    exchange_pos = self._talon.pos[0], \
+                   self._talon.pos[1] + self._talon.height / 2
+    return exchange_pos
 
   def _exchange_trump_card(self, player: PlayerId) -> None:
     card_children = [child for child in self.children if
@@ -576,6 +581,26 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         card.public = card_widget.visible
         cards_in_hand.append(card_widget.card)
       self._update_cards_in_hand_for_player(player, cards_in_hand)
+
+  def _animate_talon_closed(self):
+    trump_card_widget = self._talon.remove_trump_card()
+    self.add_widget(trump_card_widget, index=len(self.children))
+
+    exchange_pos = self._get_trump_exchange_pos()
+    trump_card_animation = Animation(center_x=exchange_pos[0],
+                                     center_y=exchange_pos[1],
+                                     rotation=40,
+                                     duration=_CLOSE_DURATION / 2)
+
+    def bring_trump_card_to_front(*_):
+      self.remove_widget(trump_card_widget)
+      self.add_widget(trump_card_widget)
+
+    trump_card_animation.bind(on_complete=bring_trump_card_to_front)
+    pos = self._talon.top_card().center
+    trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
+                                      rotation=10, duration=_CLOSE_DURATION / 2)
+    self._add_animation(trump_card_widget, trump_card_animation)
 
   def _get_card_pos_delta(self, player) -> Tuple[int, int]:
     """
@@ -679,7 +704,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if isinstance(action, ExchangeTrumpCardAction):
       self._animate_exchange_trump_card(action.player_id)
     elif isinstance(action, CloseTheTalonAction):
-      pass
+      self._animate_talon_closed()
     elif isinstance(action, PlayCardAction):
       self._animate_card_to_play_area(action.player_id, action.card)
     elif isinstance(action, AnnounceMarriageAction):
@@ -701,6 +726,12 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if isinstance(action, ExchangeTrumpCardAction):
       self._exchange_trump_card(action.player_id)
     elif isinstance(action, CloseTheTalonAction):
+      card_children = [child for child in self.children if
+                       isinstance(child, CardWidget)]
+      assert len(card_children) == 1, len(card_children)
+      trump_card_widget = card_children[0]
+      self.remove_widget(trump_card_widget)
+      self._talon.set_trump_card(trump_card_widget)
       self._talon.closed = True
     elif isinstance(action, PlayCardAction):
       self._move_player_card_to_play_area(action.player_id, action.card)
