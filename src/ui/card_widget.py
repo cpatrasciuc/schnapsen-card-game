@@ -206,6 +206,12 @@ class CardWidget(Scatter):
     :param center: The new center coordinates of this widget.
     """
 
+  def __repr__(self):
+    result = super().__repr__()
+    if hasattr(self, "_card"):
+      result += str(self._card)
+    return result
+
 
 if __name__ == "__main__":
   def toggle_visible(clicked_card_widget):
