@@ -8,6 +8,7 @@ import os.path
 from textwrap import dedent
 from typing import Dict, Tuple, Optional, List, Callable
 
+from kivy.animation import Animation
 from kivy.base import runTouchApp
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -78,6 +79,8 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
   # noinspection PyTypeChecker
   return list(sorted(public_cards)) + non_public_cards
 
+
+_MOVE_DURATION = 0.5
 
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
 
@@ -234,7 +237,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   # pylint: disable=too-many-instance-attributes
 
-  def __init__(self, **kwargs):
+  def __init__(self, enable_animations=False, **kwargs):
     """
     Instantiates a new GameWidget and all its children widgets. All the widgets
     are empty (i.e., no cards).
@@ -281,6 +284,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
     # AnimationController that coordinates all card animations.
     self._animation_controller = AnimationController()
+    self._enable_animations = enable_animations
 
     self._init_widgets()
 
@@ -479,8 +483,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     """
     # TODO(tests): Add a test for the scenario where the window is resized
     # during animations.
-    if self._animation_controller.is_running:
-      self._animation_controller.cancel()
+    # if self._animation_controller.is_running:
+    #  self._animation_controller.cancel()
     self.ids.computer_tricks_placeholder.height = 0.25 * self.height
     self.ids.human_tricks_placeholder.height = \
       self.ids.computer_tricks_placeholder.height
@@ -542,6 +546,23 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       delta = -delta[0], -delta[1]
     return 0.2 * delta[0], 0.2 * delta[1]
 
+  def _animate_card_to_play_area(self, player: PlayerId, card: Card,
+                                 center: Optional[
+                                   Tuple[int, int]] = None) -> None:
+    card_widget = self._cards[card]
+    if card_widget.parent is not self._play_area:
+      card_widget.visible = True
+      card_widget.grayed_out = False
+      card_slots_widget = self._player_card_widgets[player]
+      pos = card_slots_widget.remove_card(card_widget)
+      assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
+      self.add_widget(card_widget)
+      if center is None:
+        center = self._get_default_play_location(player)
+      animation = Animation(center_x=center[0], center_y=center[1],
+                            duration=_MOVE_DURATION)
+      self._add_animation(card_widget, animation)
+
   def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
                                      center: Optional[
                                        Tuple[int, int]] = None) -> None:
@@ -552,15 +573,11 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     :param center: The position of the center of the card after the move.
     """
     card_widget = self._cards[card]
-    card_widget.visible = True
-    card_widget.grayed_out = False
     if card_widget.parent != self._play_area:
       logging.info("GameWidget: Moving %s to play area.", card)
-      card_slots_widget = self._player_card_widgets[player]
       if center is None:
         center = self._get_default_play_location(player)
-      pos = card_slots_widget.remove_card(card_widget)
-      assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
+      self.remove_widget(card_widget)
       self._play_area.add_widget(card_widget)
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
@@ -609,6 +626,16 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     updating itself according to the player action.
     """
     logging.info("GameWidget: on_action: %s", action)
+    if isinstance(action, PlayCardAction):
+      self._animate_card_to_play_area(action.player_id, action.card)
+    elif isinstance(action, AnnounceMarriageAction):
+      center = self._get_default_play_location(action.player_id)
+      delta = self._get_card_pos_delta(action.player_id)
+      pair_center = center[0] + delta[0], center[1] + delta[1]
+      self._animate_card_to_play_area(action.player_id,
+                                      action.card.marriage_pair,
+                                      pair_center)
+      self._animate_card_to_play_area(action.player_id, action.card)
     assert not self._animation_controller.is_running
     self._animation_controller.start(
       lambda: self._on_action_after_animations(action, done_callback))
@@ -820,6 +847,12 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     pos = pos[0] + delta[0], pos[1] + delta[1]
     marriage_pair_widget = self._cards[card_widget.card.marriage_pair]
     marriage_pair_widget.pos = pos
+
+  def _add_animation(self, card_widget: CardWidget,
+                     animation: Animation) -> None:
+    if not self._enable_animations:
+      return
+    self._animation_controller.add_card_animation(card_widget, animation)
 
 
 if __name__ == "__main__":
