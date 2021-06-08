@@ -82,6 +82,7 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
 
 _MOVE_DURATION = 0.5
 _EXCHANGE_DURATION = 1.5
+_TRICK_DURATION = 0.5
 
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
 
@@ -734,6 +735,52 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     updating itself based on this trick-completed event.
     """
     assert not self._animation_controller.is_running
+
+    # Move the cards from the play area to self and keep the same z-order.
+    for child in reversed(self._play_area.children):
+      if not isinstance(child, CardWidget):
+        continue
+      if child.card not in [trick.one, trick.two]:
+        continue
+      self._play_area.remove_widget(child)
+      self.add_widget(child)
+
+    tricks_widget = self._tricks_widgets[winner]
+
+    # Animate the first card.
+    row, col = tricks_widget.first_free_slot
+    pos = tricks_widget.get_card_pos(row, col)
+    size = tricks_widget.card_size
+    card_widget = self._cards[trick.one]
+    card_widget.check_aspect_ratio(False)
+    self._add_animation(card_widget,
+                        Animation(x=pos[0], y=pos[1], width=size[0],
+                                  height=size[1], duration=_TRICK_DURATION))
+
+    # Animate the second card.
+    pos = tricks_widget.get_card_pos(row, col + 1)
+    card_widget = self._cards[trick.two]
+    card_widget.check_aspect_ratio(False)
+    self._add_animation(card_widget,
+                        Animation(x=pos[0], y=pos[1], width=size[0],
+                                  height=size[1], duration=_TRICK_DURATION))
+
+    # In case there was a marriage, move the card that was not played back to
+    # the player's hand.
+    if self._marriage_card is not None:
+      player, card_widget = self._marriage_card
+      self._play_area.remove_widget(card_widget)
+      self.add_widget(card_widget, index=2)
+      player_cards = copy.deepcopy(cards_in_hand[player])
+      player_cards.sort()
+      col = player_cards.index(card_widget.card)
+      pos = self._player_card_widgets[player].get_card_pos(0, col)
+      size = self.player_card_widgets[player].card_size
+      card_widget.check_aspect_ratio(False)
+      self._add_animation(card_widget,
+                          Animation(x=pos[0], y=pos[1], width=size[0],
+                                    height=size[1], duration=_TRICK_DURATION))
+
     self._animation_controller.start(
       lambda: self._on_trick_completed_after_animations(trick, winner,
                                                         cards_in_hand,
@@ -750,15 +797,17 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
     for card in [trick.one, trick.two]:
       card_widget = self._cards[card]
-      self._play_area.remove_widget(card_widget)
+      self.remove_widget(card_widget)
       tricks_widget.add_card(card_widget)
+      card_widget.check_aspect_ratio(True)
 
     # In case there was a marriage, move the card that was not played back to
     # the player's hand.
     if self._marriage_card is not None:
       player, card_widget = self._marriage_card
-      self._play_area.remove_widget(card_widget)
+      self.remove_widget(card_widget)
       self._player_card_widgets[player].add_card(card_widget)
+      card_widget.check_aspect_ratio(True)
       self._marriage_card = None
 
     if draw_new_cards:
