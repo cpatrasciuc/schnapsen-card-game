@@ -87,12 +87,14 @@ class CardWidget(Scatter):
     self.size_hint = None, None
     self.register_event_type("on_double_tap")
     self.register_event_type("on_card_moved")
+    self._check_aspect_ratio = True
     # noinspection PyUnreachableCode
     if __debug__:
       self.fbind("size", self._assert_aspect_ratio)
 
   def _assert_aspect_ratio(self, _, size):
-    assert abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)
+    assert not self._check_aspect_ratio or \
+           abs(size[0] - size[1] * self._ratio) <= 1, (size, self._ratio)
 
   @property
   def card(self) -> Card:
@@ -130,6 +132,9 @@ class CardWidget(Scatter):
   @shadow.setter
   def shadow(self, enabled: bool) -> None:
     self._shadow_enabled = _SHADOW_STRENGTH if enabled else 0
+
+  def check_aspect_ratio(self, enable: bool) -> None:
+    self._check_aspect_ratio = enable
 
   @staticmethod
   def create_widgets_for_all_cards() -> Dict[Card, "CardWidget"]:

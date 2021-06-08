@@ -38,6 +38,9 @@ class CardWidgetTest(UiTestCase):
       card_widget.size = 23, 50
     with self.assertRaisesRegex(AssertionError, r"\(\[27, 50\], 0.5\)"):
       card_widget.size = 27, 50
+    card_widget.check_aspect_ratio(False)
+    card_widget.size = 23, 50
+    card_widget.size = 27, 50
 
   def test_visibility(self):
     card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5)
