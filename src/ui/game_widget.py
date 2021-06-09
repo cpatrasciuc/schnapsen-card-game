@@ -660,7 +660,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                    Tuple[int, int]] = None) -> None:
     card_widget = self._cards[card]
     if card_widget.parent is not self._play_area:
-      card_widget.visible = True
       card_widget.grayed_out = False
       card_slots_widget = self._player_card_widgets[player]
       pos = card_slots_widget.remove_card(card_widget)
@@ -670,6 +669,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         center = self._get_default_play_location(player)
       animation = Animation(center_x=center[0], center_y=center[1],
                             duration=_MOVE_DURATION)
+      if not card_widget.visible:
+        card_widget.check_aspect_ratio(False)
+        animation &= card_widget.get_flip_animation(_MOVE_DURATION, False)
       self._add_animation(card_widget, animation)
 
   def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
@@ -688,6 +690,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         center = self._get_default_play_location(player)
       self.remove_widget(card_widget)
       self._play_area.add_widget(card_widget)
+      card_widget.visible = True
+      card_widget.check_aspect_ratio(True)
       card_widget.size = self.player_card_widgets.one.card_size
       card_widget.center = center[0], center[1]
 
