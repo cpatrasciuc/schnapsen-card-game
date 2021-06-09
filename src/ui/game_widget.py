@@ -83,6 +83,18 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
   return list(sorted(public_cards)) + non_public_cards
 
 
+def _get_card_list(card_slots_widget: CardSlotsLayout) -> List[Card]:
+  cards = []
+  for col in range(5):
+    card_widget = card_slots_widget.at(0, col)
+    if card_widget is None:
+      continue
+    card = card_widget.card
+    card.public = card_widget.visible
+    cards.append(card_widget.card)
+  return cards
+
+
 # Durations of various animations (in seconds).
 _SPEED_MULTIPLIER = 1
 _MOVE_DURATION = 0.5 * _SPEED_MULTIPLIER
@@ -549,17 +561,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                       duration=_EXCHANGE_DURATION / 4)
     self._add_animation(trump_jack_widget, trump_jack_animation)
 
-    # TODO(refactor): Extract this as CardSlotsLayout.get_cards().
     # TODO(refactor): Maybe refactor some duplicated parts between this and draw
     # new cards code.
-    cards_in_hand = []
-    for col in range(5):
-      card_widget = self._player_card_widgets[player].at(0, col)
-      if card_widget is None:
-        continue
-      card = card_widget.card
-      card.public = card_widget.visible
-      cards_in_hand.append(card_widget.card)
+    cards_in_hand = _get_card_list(card_slots_widget)
     cards_in_hand.append(trump_card_widget.card)
     cards_in_hand[-1].public = True
     assert len(cards_in_hand) == 5
@@ -567,14 +571,15 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_col = None
     # TODO(refactor): Maybe this reshuffle in-hand code is similar to the code
     # for updating the cards in-hand after a trick is completed.
-    for i, card in enumerate(_sort_cards_for_player(cards_in_hand, player)):
+    sorted_cards = _sort_cards_for_player(cards_in_hand, player)
+    for i, card in enumerate(sorted_cards):
       if card == trump_card_widget.card:
         trump_card_col = i
         continue
       card_widget = self._cards[card]
-      if self._player_card_widgets[player].at(0, i) == card_widget:
+      if card_slots_widget.at(0, i) == card_widget:
         continue
-      pos = self._player_card_widgets[player].get_card_pos(0, i)
+      pos = card_slots_widget.get_card_pos(0, i)
       animation = Animation(x=pos[0], y=pos[1], duration=_EXCHANGE_DURATION / 4)
       self._add_animation(card_widget, animation)
 
@@ -621,14 +626,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if player == PlayerId.ONE:
       trump_card_widget.grayed_out = True
 
-    cards_in_hand = []
-    for col in range(5):
-      card_widget = self._player_card_widgets[player].at(0, col)
-      assert card_widget is not None, \
-        "Cannot exchange trump with less then five cards in hand"
-      card = card_widget.card
-      card.public = card_widget.visible
-      cards_in_hand.append(card_widget.card)
+    cards_in_hand = _get_card_list(self._player_card_widgets[player])
+    assert len(cards_in_hand) == 5, \
+      "Cannot exchange trump with less then five cards in hand"
     cards_in_hand = _sort_cards_for_player(cards_in_hand, player)
     self._update_cards_in_hand_for_player_after_animation(player,
                                                           cards_in_hand)
