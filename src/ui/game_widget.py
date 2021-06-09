@@ -576,26 +576,13 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       "Cannot exchange trump with less then five cards in hand"
     self._sorted_cards[player] = _sort_cards_for_player(cards_in_hand, player)
 
-    trump_card_col = None
-    # TODO(refactor): Maybe this reshuffle in-hand code is similar to the code
-    # for updating the cards in-hand after a trick is completed.
-    for i, card in enumerate(self._sorted_cards[player]):
-      if card == trump_card_widget.card:
-        trump_card_col = i
-        continue
-      card_widget = self._cards[card]
-      if card_slots_widget.at(0, i) == card_widget:
-        continue
-      pos = card_slots_widget.get_card_pos(0, i)
-      animation = Animation(x=pos[0], y=pos[1], duration=_EXCHANGE_DURATION / 4)
-      self._add_animation(card_widget, animation)
-
     def bring_trump_card_to_front(*_):
       self.remove_widget(trump_card_widget)
       self.add_widget(trump_card_widget)
       self.remove_widget(trump_jack_widget)
       self.add_widget(trump_jack_widget, index=len(self.children))
 
+    trump_card_col = self._sorted_cards[player].index(trump_card_widget.card)
     pos = card_slots_widget.get_card_pos(0, trump_card_col)
     pos = pos[0] + trump_jack_widget.width / 2, \
           pos[1] + trump_jack_widget.height / 2
@@ -607,6 +594,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
                                       duration=_EXCHANGE_DURATION / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
+    self._animate_cards_for_player(player, duration=_EXCHANGE_DURATION / 4,
+                                   skip_cards=[trump_card_widget.card])
 
   def _get_trump_exchange_pos(self):
     exchange_pos = self._talon.pos[0], \
@@ -914,14 +903,17 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._update_cards_in_hand(done_callback)
 
   def _update_cards_in_hand(self, done_callback: Closure) -> None:
-    self._animate_cards_for_player(PlayerId.ONE)
-    self._animate_cards_for_player(PlayerId.TWO)
+    self._animate_cards_for_player(PlayerId.ONE, _DRAW_CARD_DURATION)
+    self._animate_cards_for_player(PlayerId.TWO, _DRAW_CARD_DURATION)
     self._animation_controller.start(
       lambda: self._update_cards_in_hand_after_animation(done_callback))
 
-  def _animate_cards_for_player(self, player: PlayerId) -> None:
+  def _animate_cards_for_player(self, player: PlayerId, duration: float,
+                                skip_cards: List[Card] = None) -> None:
     cards_slots_widget = self._player_card_widgets[player]
     for i, card in enumerate(self._sorted_cards[player]):
+      if skip_cards is not None and card in skip_cards:
+        continue
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
@@ -931,9 +923,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       size = cards_slots_widget.card_size
       card_widget.check_aspect_ratio(False)
       animation = Animation(x=pos[0], y=pos[1], width=size[0], height=size[1],
-                            rotation=0, duration=_DRAW_CARD_DURATION)
+                            rotation=0, duration=duration)
       if player == PlayerId.ONE and not card_widget.visible:
-        animation &= card_widget.get_flip_animation(_DRAW_CARD_DURATION, False)
+        animation &= card_widget.get_flip_animation(duration, False)
       self._add_animation(card_widget, animation)
 
   def _update_cards_in_hand_after_animation(self,
