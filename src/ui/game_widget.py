@@ -629,6 +629,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card = card_widget.card
       card.public = card_widget.visible
       cards_in_hand.append(card_widget.card)
+    cards_in_hand = _sort_cards_for_player(cards_in_hand, player)
     self._update_cards_in_hand_for_player_after_animation(player,
                                                           cards_in_hand)
 
@@ -895,6 +896,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(True)
       self._marriage_card = None
 
+    sorted_cards_in_hand = PlayerPair(
+      _sort_cards_for_player(cards_in_hand.one, PlayerId.ONE),
+      _sort_cards_for_player(cards_in_hand.two, PlayerId.TWO))
+
     if draw_new_cards:
       first_card = self._talon.pop_card()
       self.add_widget(first_card)
@@ -904,7 +909,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
         second_card = self._talon.remove_trump_card()
       self.add_widget(second_card)
-    self._update_cards_in_hand(cards_in_hand, done_callback)
+    self._update_cards_in_hand(sorted_cards_in_hand, done_callback)
 
   def _update_cards_in_hand(self,
                             cards_in_hand: PlayerPair[List[Card]],
@@ -917,9 +922,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   def _animate_cards_for_player(self, player: PlayerId,
                                 cards: List[Card]) -> None:
-    sorted_cards = _sort_cards_for_player(cards, player)
-
-    for i, card in enumerate(sorted_cards):
+    for i, card in enumerate(cards):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
@@ -956,10 +959,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     for child in cards_children:
       self.remove_widget(child)
 
-    # TODO(ui): Don't sort twice.
-    sorted_cards = _sort_cards_for_player(cards, player)
-
-    for i, card in enumerate(sorted_cards):
+    for i, card in enumerate(cards):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
