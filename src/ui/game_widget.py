@@ -2,13 +2,9 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-# TODO(refactor): Maybe move the Builder string in a separate module or kv file.
-# pylint: disable=too-many-lines
-
 import copy
 import logging
 import os.path
-from textwrap import dedent
 from typing import Dict, Tuple, Optional, List, Callable
 
 from kivy.animation import Animation
@@ -115,147 +111,8 @@ _DRAW_CARD_DURATION = 0.5 * _SPEED_MULTIPLIER
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
 
 # TODO(tests): Add tests for padding_pct.
-Builder.load_string(dedent("""
-  <GameWidget>:
-    # Adds some padding to the left/right side of the GameWidget layout, as a
-    # percentage of those components width/height.
-    padding_pct: 0.00
-    canvas.before:
-      Rectangle:
-        source: 'background.png'
-        pos: self.pos
-        size: self.size
-  
-    # The right side of the widget. It shows the tricks won by both players, the
-    # talon, the trump card and the menu buttons.
-    AnchorLayout:
-      anchor_x: "right"
-      anchor_y: "center"
-      
-      # BoxLayout used to stack vertically the widget on this side of the
-      # screen.
-      BoxLayout:
-        orientation: "vertical"
-        size_hint: 0.35, 1
-        padding: root.padding_pct * self.width, root.padding_pct * self.height
-        
-        # Placeholder for the widget that shows the tricks won by the computer
-        # player.
-        BoxLayout:
-          id: computer_tricks_placeholder
-          size_hint: 1, 0.25
-          
-        # Placeholder for the widget that shows the talon and trump card.
-        BoxLayout:
-          id: talon_placeholder
-          size_hint: 1, None
-        
-        # Placeholder for the menu buttons.
-        BoxLayout:
-          id: menu_placeholder
-          size_hint: 1, None
-          DebuggableWidget:
-            debug_text: "Menu buttons"
-  
-        # Placeholder for the widget that shows the tricks won by the human
-        # player.
-        BoxLayout:
-          id: human_tricks_placeholder
-          size_hint: 1, None
-  
-        # Empty area in the bottom-right corner of the widget.
-        BoxLayout:
-          id: fill_area
-          size_hint: 1, None
-          DebuggableWidget:
-            debug_text: "Fill area"
-
-    # The left-side of the widget: players cards, playing area, score info.
-    AnchorLayout:
-      anchor_x: "left"
-      anchor_y: "center"
-     
-      # BoxLayout used to stack vertically the widgets on this side of the
-      # screen.
-      BoxLayout:
-        orientation: 'vertical'
-        size_hint: 0.65, 1
-        padding: root.padding_pct * self.width, root.padding_pct * self.height
-  
-        # Placeholder to show the cards of the computer player. It uses only 10%
-        # of the height since it mostly contains non-visible cards, so not very
-        # useful information.
-        BoxLayout:
-          id: computer_cards_placeholder
-          size_hint_y: 0.1
-  
-        # Scores for the computer player.
-        BoxLayout:
-          size_hint_y: 0.1
-          orientation: "vertical"
-          Label:
-            id: computer_game_score_label
-            text: "Game points: 5"
-            font_size: self.height / 2
-            text_size: self.size
-            halign: "left"
-            valign: "bottom"
-            size_hint_y: 0.5
-            markup: True
-          Label:
-            id: computer_trick_score_label
-            text: "Trick points: 45"
-            font_size: self.height / 2
-            text_size: self.size
-            halign: "left"
-            valign: "top"
-            size_hint_y: 0.5
-            markup: True
-          
-        # The area where the player can drag and drop cards in order to play
-        # them.
-        AnchorLayout:
-          anchor_x: "center"
-          anchor_y: "center"
-          size_hint: 1.0, 1 - 0.1 - 0.35 - 0.1 - 0.1
-          FloatLayout:
-            id: play_area
-            size_hint: 0.8, 1
-            DebuggableWidget:
-              debug_text: "Play area"
-              color_rgba: 1, 0, 0, 1
-              background_rgba: 1, 1, 1, 0.1
-              size_hint: 1, 1
-              pos: play_area.pos
-  
-        # Scores for the human player.
-        BoxLayout:
-          size_hint_y: 0.1
-          orientation: "vertical"
-          Label:
-            id: human_trick_score_label
-            text: "Trick points: 27"
-            font_size: self.height / 2
-            text_size: self.size
-            halign: "left"
-            valign: "bottom"
-            size_hint_y: 0.5
-            markup: True
-          Label:
-            id: human_game_score_label
-            text: "Game points: 3"
-            font_size: self.height / 2
-            text_size: self.size
-            halign: "left"
-            valign: "top"
-            size_hint_y: 0.5
-            markup: True
-  
-        # Placeholder for the widget that displays the human player's cards.
-        BoxLayout:
-          id: human_cards_placeholder
-          size_hint_y: 0.35
-  """))
+Builder.load_file(os.path.join(os.path.dirname(__file__), "game_widget.kv"),
+                  rulesonly=True)
 
 
 class GameWidgetMeta(FloatLayout.__metaclass__, Player.__metaclass__):
