@@ -83,11 +83,13 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
   return list(sorted(public_cards)) + non_public_cards
 
 
-_MOVE_DURATION = 0.5
-_EXCHANGE_DURATION = 1.5
-_CLOSE_DURATION = 0.5
-_TRICK_DURATION = 0.5
-_DRAW_CARD_DURATION = 0.5
+# Durations of various animations (in seconds).
+_SPEED_MULTIPLIER = 1
+_MOVE_DURATION = 0.5 * _SPEED_MULTIPLIER
+_EXCHANGE_DURATION = 1.5 * _SPEED_MULTIPLIER
+_CLOSE_DURATION = 0.5 * _SPEED_MULTIPLIER
+_TRICK_DURATION = 0.5 * _SPEED_MULTIPLIER
+_DRAW_CARD_DURATION = 0.5 * _SPEED_MULTIPLIER
 
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
 
@@ -916,6 +918,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(False)
       animation = Animation(x=pos[0], y=pos[1], width=size[0], height=size[1],
                             rotation=0, duration=_DRAW_CARD_DURATION)
+      if player == PlayerId.ONE and not card_widget.visible:
+        animation &= card_widget.get_flip_animation(_DRAW_CARD_DURATION, False)
       self._add_animation(card_widget, animation)
 
   def _update_cards_in_hand_after_animation(self,
@@ -948,6 +952,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.do_translation = False
       card_widget.shadow = True
       if player == PlayerId.ONE:
+        card_widget.check_aspect_ratio(True)
         card_widget.visible = True
         card_widget.grayed_out = True
       else:
