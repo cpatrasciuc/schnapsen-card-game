@@ -542,8 +542,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_jack_widget = self._cards[trump_jack]
     return trump_jack_widget
 
-  # TODO(refactor): See if this can be split/simplified.
-  # pylint: disable=too-many-locals
   def _animate_exchange_trump_card(self, player: PlayerId) -> None:
     trump_jack_widget = self._get_trump_jack_widget()
     trump_jack_widget.grayed_out = False
@@ -569,8 +567,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                       duration=_EXCHANGE_DURATION / 4)
     self._add_animation(trump_jack_widget, trump_jack_animation)
 
-    # TODO(refactor): Maybe refactor some duplicated parts between this and draw
-    # new cards code.
     cards_in_hand = _get_card_list(card_slots_widget)
     cards_in_hand.append(trump_card_widget.card)
     cards_in_hand[-1].public = True
