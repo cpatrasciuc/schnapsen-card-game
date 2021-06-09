@@ -304,3 +304,40 @@ class CardWidgetGraphicTest(GraphicUnitTest):
     self._run_test_on_double_tap_with_init_args(
       Card(Suit.SPADES, CardValue.ACE), aspect_ratio=0.5, do_translation=False,
       do_rotation=False, do_scale=False)
+
+  def _run_flip_animation_test(self, fix_center: bool):
+    card_widget = CardWidget(Card(Suit.SPADES, CardValue.ACE))
+    self.render(card_widget)
+    animation = card_widget.get_flip_animation(duration=1,
+                                               fixed_center=fix_center)
+    on_complete_callback = Mock()
+    animation.bind(on_complete=on_complete_callback)
+    self.assertTrue(card_widget.visible)
+    on_complete_callback.assert_not_called()
+    initial_size = card_widget.size
+    initial_pos = card_widget.pos
+    card_widget.check_aspect_ratio(False)
+    animation.start(card_widget)
+    self.advance_frames(5)
+    on_complete_callback.assert_not_called()
+    card_widget.center = 100, 100
+    self.wait_for_mock_callback(on_complete_callback)
+    self.assertEqual(initial_size, card_widget.size)
+    self.assertEqual(fix_center, initial_pos == card_widget.pos)
+    self.assertFalse(card_widget.visible)
+    animation = card_widget.get_flip_animation(duration=0.5,
+                                               fixed_center=fix_center)
+    on_complete_callback.reset_mock()
+    animation.bind(on_complete=on_complete_callback)
+    on_complete_callback.assert_not_called()
+    animation.start(card_widget)
+    self.wait_for_mock_callback(on_complete_callback)
+    self.assertEqual(initial_size, card_widget.size)
+    self.assertEqual(fix_center, initial_pos == card_widget.pos)
+    self.assertTrue(card_widget.visible)
+
+  def test_flip_animation_with_fixed_center(self):
+    self._run_flip_animation_test(True)
+
+  def test_flip_animation_without_fixed_center(self):
+    self._run_flip_animation_test(False)

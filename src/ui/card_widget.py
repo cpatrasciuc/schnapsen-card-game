@@ -7,6 +7,7 @@ import random
 from textwrap import dedent
 from typing import Dict, Tuple, Optional
 
+from kivy.animation import Animation
 from kivy.base import runTouchApp
 from kivy.input import MotionEvent
 from kivy.lang import Builder
@@ -206,6 +207,30 @@ class CardWidget(Scatter):
     :param center: The new center coordinates of this widget.
     """
 
+  def get_flip_animation(self, duration: float,
+                         fixed_center: bool) -> Animation:
+    """
+    Returns an Animation object that, when played, will flip this card.
+    :param duration: How long should the animation last, in seconds.
+    :param fixed_center: If True, the returned animation will make sure the
+    center of the CardWidget remains fixed. If False, the position of the card
+    during the animation must be handled externally.
+    """
+    if fixed_center:
+      part_1 = Animation(width=0, center_x=self.center_x,
+                         center_y=self.center_y, duration=duration / 2)
+    else:
+      part_1 = Animation(width=0, duration=duration / 2)
+    part_1.bind(
+      on_complete=lambda *_: self.__setattr__("visible", not self.visible))
+    if fixed_center:
+      part_2 = Animation(width=self.width, center_x=self.center_x,
+                         center_y=self.center_y, duration=duration / 2)
+    else:
+      part_2 = Animation(width=self.width, duration=duration / 2)
+    animation = part_1 + part_2
+    return animation
+
   def __repr__(self):
     result = super().__repr__()
     if hasattr(self, "_card"):
@@ -214,8 +239,9 @@ class CardWidget(Scatter):
 
 
 if __name__ == "__main__":
-  def toggle_visible(clicked_card_widget):
-    clicked_card_widget.visible = not clicked_card_widget.visible
+  def toggle_visible(clicked_card_widget: CardWidget):
+    animation = clicked_card_widget.get_flip_animation(0.5, True)
+    animation.start(clicked_card_widget)
 
 
   float_layout = FloatLayout()
