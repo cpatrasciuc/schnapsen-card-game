@@ -61,6 +61,15 @@ def _get_game_points_color(points: int) -> str:
   return "ff3333"  # red
 
 
+def _remove_card_children(widget: Widget) -> List[CardWidget]:
+  """Removes all CardWidget children of widget and returns them as a list."""
+  cards_children = [child for child in widget.children if
+                    isinstance(child, CardWidget)]
+  for child in cards_children:
+    widget.remove_widget(child)
+  return cards_children
+
+
 def _delete_widget(widget: Widget) -> None:
   if widget.parent is not None:
     widget.parent.remove_widget(widget)
@@ -277,11 +286,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._prev_play_area_pos = self._play_area.pos[0], self._play_area.pos[1]
     self._play_area.bind(size=lambda *_: self._update_play_area_cards())
 
-    # When a marriage is announced, this stores the details of the card that is
-    # only shown and not played, in order to return it to the player's hand when
-    # the trick is completed.
-    self._marriage_card: Optional[Tuple[PlayerId, CardWidget]] = None
-
     # The cards in the players' hands, sorted in display order.
     self._sorted_cards: Optional[PlayerPair[List[Card]]] = None
 
@@ -367,7 +371,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     for card_widget in self._cards.values():
       _delete_widget(card_widget)
     self._cards = {}
-    self._marriage_card = None
     self._sorted_cards = None
     self._init_widgets()
 
@@ -490,8 +493,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(False)
       self._player_card_widgets.one.remove_card(card_widget)
       self.add_widget(card_widget)
-      animation = card_widget.get_flip_animation(_DRAW_CARD_DURATION,
-                                                 True)
+      animation = card_widget.get_flip_animation(_DRAW_CARD_DURATION, True)
       self._add_animation(card_widget, animation)
     self._animation_controller.start(
       lambda: self._update_cards_in_hand_after_animation(done_callback))
@@ -603,21 +605,18 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     return exchange_pos
 
   def _exchange_trump_card(self, player: PlayerId) -> None:
-    card_children = [child for child in self.children if
-                     isinstance(child, CardWidget)]
+    card_children = _remove_card_children(self)
     assert len(card_children) == 2
     jack_card_children = [child for child in card_children if
                           child.card.card_value == CardValue.JACK]
     assert len(jack_card_children) == 1
     trump_jack_widget = jack_card_children[0]
     trump_jack_widget.check_aspect_ratio(True)
-    self.remove_widget(trump_jack_widget)
     self._talon.set_trump_card(trump_jack_widget)
 
     card_children.remove(trump_jack_widget)
     trump_card_widget = card_children[0]
     trump_card_widget.rotation = 0
-    self.remove_widget(trump_card_widget)
     self._player_card_widgets[player].add_card(trump_card_widget)
     if player == PlayerId.ONE:
       trump_card_widget.grayed_out = True
@@ -627,7 +626,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
   def _animate_talon_closed(self):
     trump_card_widget = self._talon.remove_trump_card()
     self.add_widget(trump_card_widget, index=len(self.children))
-
     exchange_pos = self._get_trump_exchange_pos()
     trump_card_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
@@ -772,11 +770,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if isinstance(action, ExchangeTrumpCardAction):
       self._exchange_trump_card(action.player_id)
     elif isinstance(action, CloseTheTalonAction):
-      card_children = [child for child in self.children if
-                       isinstance(child, CardWidget)]
-      assert len(card_children) == 1, len(card_children)
+      card_children = _remove_card_children(self)
+      assert len(card_children) == 1, card_children
       trump_card_widget = card_children[0]
-      self.remove_widget(trump_card_widget)
       self._talon.set_trump_card(trump_card_widget)
       self._talon.closed = True
     elif isinstance(action, PlayCardAction):
@@ -785,8 +781,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       center = self._get_default_play_location(action.player_id)
       delta = self._get_card_pos_delta(action.player_id)
       pair_center = center[0] + delta[0], center[1] + delta[1]
-      self._marriage_card = (action.player_id,
-                             self._cards[action.card.marriage_pair])
       self._move_player_card_to_play_area(action.player_id,
                                           action.card.marriage_pair,
                                           pair_center)
@@ -842,32 +836,18 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                         Animation(x=pos[0], y=pos[1], width=size[0],
                                   height=size[1], duration=_TRICK_DURATION))
 
-    # In case there was a marriage, move the card that was not played back to
-    # the player's hand.
-    if self._marriage_card is not None:
-      player, card_widget = self._marriage_card
-      self._play_area.remove_widget(card_widget)
-      self.add_widget(card_widget, index=2)
-      player_cards = copy.deepcopy(cards_in_hand[player])
-      player_cards.sort()
-      col = player_cards.index(card_widget.card)
-      pos = self._player_card_widgets[player].get_card_pos(0, col)
-      size = self.player_card_widgets[player].card_size
-      card_widget.check_aspect_ratio(False)
-      self._add_animation(card_widget,
-                          Animation(x=pos[0], y=pos[1], width=size[0],
-                                    height=size[1], duration=_TRICK_DURATION))
+    # Update the list of sorted cards for each player.
+    self._sorted_cards = PlayerPair(
+      _sort_cards_for_player(cards_in_hand.one, PlayerId.ONE),
+      _sort_cards_for_player(cards_in_hand.two, PlayerId.TWO))
 
     self._animation_controller.start(
       lambda: self._on_trick_completed_after_animations(trick, winner,
-                                                        cards_in_hand,
                                                         draw_new_cards,
                                                         done_callback))
 
-  # pylint: disable=too-many-arguments
+  # pydgdgdlint: disable=too-many-arguments
   def _on_trick_completed_after_animations(self, trick: Trick, winner: PlayerId,
-                                           cards_in_hand: PlayerPair[
-                                             List[Card]],
                                            draw_new_cards: bool,
                                            done_callback: Closure) -> None:
     tricks_widget = self._tricks_widgets[winner]
@@ -877,19 +857,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       self.remove_widget(card_widget)
       tricks_widget.add_card(card_widget)
       card_widget.check_aspect_ratio(True)
-
-    # In case there was a marriage, move the card that was not played back to
-    # the player's hand.
-    if self._marriage_card is not None:
-      player, card_widget = self._marriage_card
-      self.remove_widget(card_widget)
-      self._player_card_widgets[player].add_card(card_widget)
-      card_widget.check_aspect_ratio(True)
-      self._marriage_card = None
-
-    self._sorted_cards = PlayerPair(
-      _sort_cards_for_player(cards_in_hand.one, PlayerId.ONE),
-      _sort_cards_for_player(cards_in_hand.two, PlayerId.TWO))
 
     if draw_new_cards:
       first_card = self._talon.pop_card()
@@ -922,8 +889,13 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       pos = cards_slots_widget.get_card_pos(0, i)
       size = cards_slots_widget.card_size
       card_widget.check_aspect_ratio(False)
-      animation = Animation(x=pos[0], y=pos[1], width=size[0], height=size[1],
-                            rotation=0, duration=duration)
+      animation_params = {
+        'x': pos[0], 'y': pos[1], 'width': size[0], 'height': size[1],
+        'duration': duration
+      }
+      if card_widget.rotation != 0:
+        animation_params['rotation'] = 0
+      animation = Animation(**animation_params)
       if player == PlayerId.ONE and not card_widget.visible:
         animation &= card_widget.get_flip_animation(duration, False)
       self._add_animation(card_widget, animation)
@@ -939,17 +911,14 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
   def _update_cards_in_hand_for_player_after_animation(self, player: PlayerId):
     for col in range(5):
       self._player_card_widgets[player].remove_card_at(0, col)
-    cards_children = [child for child in self.children if
-                      isinstance(child, CardWidget)]
-    for child in cards_children:
-      self.remove_widget(child)
+    _remove_card_children(self)
+    _remove_card_children(self._play_area)
 
     for i, card in enumerate(self._sorted_cards[player]):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
       if player == PlayerId.ONE:
-        card_widget.check_aspect_ratio(True)
         card_widget.visible = True
         card_widget.grayed_out = True
       else:
