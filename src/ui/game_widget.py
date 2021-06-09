@@ -329,7 +329,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.bind(on_card_moved=self._on_card_moved)
 
   def _init_talon_widget(self):
-    self._talon = TalonWidget()
+    self._talon = TalonWidget(delta_pct=0.005)
     self.ids.talon_placeholder.add_widget(self._talon)
 
   def _init_cards_in_hand_widgets(self):
