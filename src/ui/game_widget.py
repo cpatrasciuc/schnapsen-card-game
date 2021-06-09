@@ -440,13 +440,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.on_score_modified(game_state.trick_points)
     self._update_game_score(game_score)
 
-    # Wait one frame so that do_layout() is called to update the widget after
-    # all the changes above, then call done_callback()
-    def call_done_callback_after_one_frame():
-      Clock.schedule_once(lambda _: done_callback(), 0)
-
-    callback_is_forwarded = False
-
     # If a card is already played check if it was a simple card play or a
     # marriage announcement and execute the corresponding action.
     for player in PlayerId:
@@ -459,12 +452,31 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         action = AnnounceMarriageAction(player, card)
       else:
         action = PlayCardAction(player, card)
-      callback_is_forwarded = True
-      self.on_action(action, call_done_callback_after_one_frame)
+      # pylint: disable=cell-var-from-loop
+      Clock.schedule_once(lambda *_: self.on_action(action, done_callback), -1)
+      # pylint: enable=cell-var-from-loop
+      return
 
     # If we didn't call on_action() above, we are done with the initialization.
-    if not callback_is_forwarded:
-      call_done_callback_after_one_frame()
+    # If animations are enabled, we just flip the cards in the human player's
+    # hand.
+    Clock.schedule_once(
+      lambda *_: self._flip_human_player_cards(game_state, done_callback), -1)
+
+  def _flip_human_player_cards(self, game_state: GameState,
+                               done_callback: Closure) -> None:
+    for card in game_state.cards_in_hand.one:
+      card_widget = self._cards[card]
+      card_widget.visible = False
+      card_widget.check_aspect_ratio(False)
+      self._player_card_widgets.one.remove_card(card_widget)
+      self.add_widget(card_widget)
+      animation = card_widget.get_flip_animation(_DRAW_CARD_DURATION,
+                                                 True)
+      self._add_animation(card_widget, animation)
+    self._animation_controller.start(
+      lambda: self._update_cards_in_hand_after_animation(
+        game_state.cards_in_hand, done_callback))
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """

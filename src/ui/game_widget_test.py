@@ -288,6 +288,46 @@ class GameWidgetInitTestWithAnimations(GameWidgetInitTest):
   def create_game_widget():
     return GameWidget(enable_animations=True)
 
+  def test_init_from_game_state_with_current_trick_animation_is_played(self):
+    """
+    This tests checks that we wait on frame before animating the cards. After
+    calling GameWidget.init_from_game_state(), we need to wait one frame for
+    do_layout() to be called and the card widget sizes to be updated. If we
+    start the animation without waiting one frame, it will not play correctly.
+    The animation here is playing a card corresponding to the non-empty current
+    trick.
+    """
+    game_state = get_game_state_for_tests()
+    played_card = Card(Suit.DIAMONDS, CardValue.QUEEN)
+    with GameStateValidator(game_state):
+      game_state.current_trick.two = played_card
+    game_widget = GameWidget(enable_animations=True)
+    self.render(game_widget)
+    done_callback = Mock()
+    game_widget.init_from_game_state(game_state, done_callback)
+    self.advance_frames(1)
+    self.assertEqual(list(game_widget.player_card_widgets.two.card_size),
+                     game_widget.cards[played_card].size)
+    self.wait_for_mock_callback(done_callback)
+
+  def test_init_from_game_state_without_current_trick_animation_is_played(self):
+    """
+    This tests checks that we wait on frame before animating the cards. After
+    calling GameWidget.init_from_game_state(), we need to wait one frame for
+    do_layout() to be called and the card widget sizes to be updated. If we
+    start the animations without waiting one frame, it will not play correctly.
+    The animation here is flipping the cards in the player's hand.
+    """
+    game_state = get_game_state_for_tests()
+    game_widget = GameWidget(enable_animations=True)
+    self.render(game_widget)
+    done_callback = Mock()
+    game_widget.init_from_game_state(game_state, done_callback)
+    self.advance_frames(1)
+    self.assertEqual(list(game_widget.player_card_widgets.two.card_size),
+                     game_widget.cards[game_state.cards_in_hand.one[0]].size)
+    self.wait_for_mock_callback(done_callback)
+
 
 class GameWidgetGraphicTest(_GameWidgetBaseTest):
   def test_on_action_exchange_trump_card_player_two(self):
