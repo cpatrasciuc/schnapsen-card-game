@@ -24,14 +24,20 @@ class TalonWidget(Layout, DebuggableWidget):
 
   # pylint: disable=too-many-instance-attributes
 
-  def __init__(self, aspect_ratio: float = 24 / 37, **kwargs):
+  def __init__(self, aspect_ratio: float = 24 / 37, delta_pct: float = 0,
+               **kwargs):
     """
     Instantiates a new TalonWidget.
     :param aspect_ratio: The aspect ratio to be enforced on the cards.
+    :param delta_pct: When multiple cards are added to the talon, the position
+    of each card is shifted horizontally and vertically by delta_pct percent of
+    its width and height, respectively. A value of 0 means that all cards are
+    drawn exactly on top of each other.
     :param kwargs: Parameters to be forwarded to the base class' constructor.
     """
     super().__init__(**kwargs)
     self._ratio = aspect_ratio
+    self._delta_pct = delta_pct
     self._trump_card: Optional[CardWidget] = None
     self._talon: List[Optional[CardWidget]] = []
     self._talon_size: Tuple[int, int] = 0, 0
@@ -121,8 +127,6 @@ class TalonWidget(Layout, DebuggableWidget):
     This function is called when a layout is called by a trigger. That means
     whenever the position, the size or the children of this layout change.
     """
-    # TODO(ui): Add space for the deltas of each card.
-
     # TODO(cleanup): Check if this code can be simplified.
     # Compute the size and position for the talon.
     width_if_using_height = max(self.width / 2, self.height / 2) + \
@@ -142,9 +146,10 @@ class TalonWidget(Layout, DebuggableWidget):
     self._talon_pos = self.to_parent(*local_talon_pos, True)
 
     # Update the size and position for the cards in the talon.
-    for card in self._talon:
+    for i, card in enumerate(self._talon):
       card.size = self._talon_size
-      card.pos = self._talon_pos
+      card.pos = self._talon_pos[0] + i * self._delta_pct * card.size[0], \
+                 self._talon_pos[1] + i * self._delta_pct * card.size[1]
 
     # Update the size and position for the trump card.
     if self._trump_card is not None:

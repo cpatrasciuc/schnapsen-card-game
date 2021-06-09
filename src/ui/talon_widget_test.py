@@ -25,7 +25,7 @@ def _get_test_card(ratio=0.5):
 
 class TalonWidgetGraphicTest(GraphicUnitTest):
   def test_set_and_remove_trump_card(self):
-    talon_widget = TalonWidget()
+    talon_widget = TalonWidget(aspect_ratio=0.5)
     self.render(talon_widget)
 
     self.assertIsNone(talon_widget.trump_card)
@@ -48,7 +48,7 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
       talon_widget.remove_trump_card()
 
   def test_add_and_remove_cards(self):
-    talon_widget = TalonWidget()
+    talon_widget = TalonWidget(aspect_ratio=0.5)
     self.render(talon_widget)
 
     self.assertIsNone(talon_widget.top_card())
@@ -76,7 +76,7 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     self.assertIsNone(talon_widget.pop_card())
 
   def test_trump_card_z_index_relative_to_other_talon_cards(self):
-    talon_widget = TalonWidget()
+    talon_widget = TalonWidget(aspect_ratio=0.5)
     self.render(talon_widget)
 
     card_1 = _get_test_card()
@@ -432,3 +432,31 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
                        talon_widget.to_window(*trump_card.pos, False, True))
       self.assertEqual([50, 100], trump_card.size)
       self.assertEqual(90, trump_card.rotation)
+
+  def test_no_delta_pct(self):
+    talon_widget = TalonWidget(aspect_ratio=0.5)
+    self.render(talon_widget)
+    card_1 = _get_test_card()
+    card_2 = _get_test_card()
+    card_3 = _get_test_card()
+    talon_widget.push_card(card_1)
+    talon_widget.push_card(card_2)
+    talon_widget.push_card(card_3)
+    self.advance_frames(1)
+    self.assertEqual((160, 0), card_1.pos)
+    self.assertEqual((160, 0), card_2.pos)
+    self.assertEqual((160, 0), card_3.pos)
+
+  def test_delta_pct(self):
+    talon_widget = TalonWidget(aspect_ratio=0.5, delta_pct=0.1)
+    self.render(talon_widget)
+    card_1 = _get_test_card()
+    card_2 = _get_test_card()
+    card_3 = _get_test_card()
+    talon_widget.push_card(card_1)
+    talon_widget.push_card(card_2)
+    talon_widget.push_card(card_3)
+    self.advance_frames(1)
+    self.assertEqual((160, 0), card_1.pos)
+    self.assertEqual((172, 24), card_2.pos)
+    self.assertEqual((184, 48), card_3.pos)
