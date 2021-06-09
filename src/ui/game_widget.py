@@ -918,6 +918,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
+      card_widget.rotation = 0
       if player == PlayerId.ONE:
         card_widget.visible = True
         card_widget.grayed_out = True
