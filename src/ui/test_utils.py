@@ -2,13 +2,13 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import gc
 import time
 import unittest
 from typing import Optional, Sequence
 from unittest.mock import Mock
 
 from kivy.base import EventLoop
+from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.metrics import dp
 from kivy.tests.common import GraphicUnitTest as BaseGraphicUnitTest
@@ -76,9 +76,15 @@ class GraphicUnitTest(BaseGraphicUnitTest, UiTestCase):
     super().render(*args, **kwargs)
 
   def tearDown(self, fake=False):
+    # The code in some tests might schedule function calls to be run after one
+    # (or more) frames. If the test stops before getting to this frame, these
+    # function calls can leak into other tests. We wait one more frame and then
+    # we cancel all scheduled events that did not run to avoid that.
+    self.advance_frames(1)
+    for event in Clock.get_events():
+      event.cancel()
     for child in self.window.children:
       self.window.remove_widget(child)
-    gc.collect()
     self.assertTrue(self._render_was_called,
                     "self.render() was not called during the test case")
     return super().tearDown(fake)
