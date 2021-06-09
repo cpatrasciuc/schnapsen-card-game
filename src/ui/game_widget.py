@@ -282,6 +282,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     # the trick is completed.
     self._marriage_card: Optional[Tuple[PlayerId, CardWidget]] = None
 
+    # The cards in the players' hands, sorted in display order.
+    self._sorted_cards: Optional[PlayerPair[List[Card]]] = None
+
     # Widgets that store the cards.
     self._player_card_widgets: Optional[PlayerPair[CardSlotsLayout]] = None
     self._tricks_widgets: Optional[PlayerPair[CardSlotsLayout]] = None
@@ -365,6 +368,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       _delete_widget(card_widget)
     self._cards = {}
     self._marriage_card = None
+    self._sorted_cards = None
     self._init_widgets()
 
   @property
@@ -425,7 +429,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     :param game_score The Bummerl game score.
     """
     # Init the cards for each player.
-    self._update_cards_in_hand_after_animation(game_state.cards_in_hand)
+    self._sorted_cards = PlayerPair(
+      _sort_cards_for_player(game_state.cards_in_hand.one, PlayerId.ONE),
+      _sort_cards_for_player(game_state.cards_in_hand.two, PlayerId.TWO))
+    self._update_cards_in_hand_after_animation()
 
     # Init the won tricks for each player.
     for player in PlayerId:
@@ -487,8 +494,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                                  True)
       self._add_animation(card_widget, animation)
     self._animation_controller.start(
-      lambda: self._update_cards_in_hand_after_animation(
-        game_state.cards_in_hand, done_callback))
+      lambda: self._update_cards_in_hand_after_animation(done_callback))
 
   def on_score_modified(self, score: PlayerPair[int]) -> None:
     """
@@ -566,13 +572,14 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     cards_in_hand = _get_card_list(card_slots_widget)
     cards_in_hand.append(trump_card_widget.card)
     cards_in_hand[-1].public = True
-    assert len(cards_in_hand) == 5
+    assert len(cards_in_hand) == 5, \
+      "Cannot exchange trump with less then five cards in hand"
+    self._sorted_cards[player] = _sort_cards_for_player(cards_in_hand, player)
 
     trump_card_col = None
     # TODO(refactor): Maybe this reshuffle in-hand code is similar to the code
     # for updating the cards in-hand after a trick is completed.
-    sorted_cards = _sort_cards_for_player(cards_in_hand, player)
-    for i, card in enumerate(sorted_cards):
+    for i, card in enumerate(self._sorted_cards[player]):
       if card == trump_card_widget.card:
         trump_card_col = i
         continue
@@ -626,12 +633,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     if player == PlayerId.ONE:
       trump_card_widget.grayed_out = True
 
-    cards_in_hand = _get_card_list(self._player_card_widgets[player])
-    assert len(cards_in_hand) == 5, \
-      "Cannot exchange trump with less then five cards in hand"
-    cards_in_hand = _sort_cards_for_player(cards_in_hand, player)
-    self._update_cards_in_hand_for_player_after_animation(player,
-                                                          cards_in_hand)
+    self._update_cards_in_hand_for_player_after_animation(player)
 
   def _animate_talon_closed(self):
     trump_card_widget = self._talon.remove_trump_card()
@@ -896,7 +898,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(True)
       self._marriage_card = None
 
-    sorted_cards_in_hand = PlayerPair(
+    self._sorted_cards = PlayerPair(
       _sort_cards_for_player(cards_in_hand.one, PlayerId.ONE),
       _sort_cards_for_player(cards_in_hand.two, PlayerId.TWO))
 
@@ -909,27 +911,24 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
         second_card = self._talon.remove_trump_card()
       self.add_widget(second_card)
-    self._update_cards_in_hand(sorted_cards_in_hand, done_callback)
+    self._update_cards_in_hand(done_callback)
 
-  def _update_cards_in_hand(self,
-                            cards_in_hand: PlayerPair[List[Card]],
-                            done_callback: Closure) -> None:
-    self._animate_cards_for_player(PlayerId.ONE, cards_in_hand.one)
-    self._animate_cards_for_player(PlayerId.TWO, cards_in_hand.two)
+  def _update_cards_in_hand(self, done_callback: Closure) -> None:
+    self._animate_cards_for_player(PlayerId.ONE)
+    self._animate_cards_for_player(PlayerId.TWO)
     self._animation_controller.start(
-      lambda: self._update_cards_in_hand_after_animation(cards_in_hand,
-                                                         done_callback))
+      lambda: self._update_cards_in_hand_after_animation(done_callback))
 
-  def _animate_cards_for_player(self, player: PlayerId,
-                                cards: List[Card]) -> None:
-    for i, card in enumerate(cards):
+  def _animate_cards_for_player(self, player: PlayerId) -> None:
+    cards_slots_widget = self._player_card_widgets[player]
+    for i, card in enumerate(self._sorted_cards[player]):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
-      if self._player_card_widgets[player].at(0, i) == card_widget:
+      if cards_slots_widget.at(0, i) == card_widget:
         continue
-      pos = self._player_card_widgets[player].get_card_pos(0, i)
-      size = self._player_card_widgets[player].card_size
+      pos = cards_slots_widget.get_card_pos(0, i)
+      size = cards_slots_widget.card_size
       card_widget.check_aspect_ratio(False)
       animation = Animation(x=pos[0], y=pos[1], width=size[0], height=size[1],
                             rotation=0, duration=_DRAW_CARD_DURATION)
@@ -938,20 +937,14 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       self._add_animation(card_widget, animation)
 
   def _update_cards_in_hand_after_animation(self,
-                                            cards_in_hand: PlayerPair[
-                                              List[Card]],
                                             done_callback: Optional[
                                               Closure] = None) -> None:
-    self._update_cards_in_hand_for_player_after_animation(PlayerId.ONE,
-                                                          cards_in_hand.one)
-    self._update_cards_in_hand_for_player_after_animation(PlayerId.TWO,
-                                                          cards_in_hand.two)
+    self._update_cards_in_hand_for_player_after_animation(PlayerId.ONE)
+    self._update_cards_in_hand_for_player_after_animation(PlayerId.TWO)
     if done_callback is not None:
       done_callback()
 
-  def _update_cards_in_hand_for_player_after_animation(self, player: PlayerId,
-                                                       cards: List[
-                                                         Card]) -> None:
+  def _update_cards_in_hand_for_player_after_animation(self, player: PlayerId):
     for col in range(5):
       self._player_card_widgets[player].remove_card_at(0, col)
     cards_children = [child for child in self.children if
@@ -959,7 +952,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     for child in cards_children:
       self.remove_widget(child)
 
-    for i, card in enumerate(cards):
+    for i, card in enumerate(self._sorted_cards[player]):
       card_widget = self._cards[card]
       card_widget.do_translation = False
       card_widget.shadow = True
