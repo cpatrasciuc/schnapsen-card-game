@@ -512,7 +512,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
   # pylint: disable=too-many-locals
   def _animate_exchange_trump_card(self, player: PlayerId) -> None:
     trump_jack_widget = self._get_trump_jack_widget()
-    trump_jack_widget.visible = True
     trump_jack_widget.grayed_out = False
     card_slots_widget = self._player_card_widgets[player]
     row, col = card_slots_widget.remove_card(trump_jack_widget)
@@ -526,9 +525,12 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_jack_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
                                      duration=_EXCHANGE_DURATION / 2)
+    if not trump_jack_widget.visible:
+      trump_jack_widget.check_aspect_ratio(False)
+      trump_jack_animation &= trump_jack_widget.get_flip_animation(
+        _EXCHANGE_DURATION / 2, False)
     trump_jack_animation += Animation(rotation=90,
-                                      duration=_EXCHANGE_DURATION / 4) & \
-                            Animation(center_x=trump_card_widget.center_x,
+                                      center_x=trump_card_widget.center_x,
                                       center_y=trump_card_widget.center_y,
                                       duration=_EXCHANGE_DURATION / 4)
     self._add_animation(trump_jack_widget, trump_jack_animation)
@@ -573,10 +575,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
           pos[1] + trump_jack_widget.height / 2
     trump_card_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
+                                     rotation=0,
                                      duration=_EXCHANGE_DURATION / 4)
     trump_card_animation.bind(on_complete=bring_trump_card_to_front)
-    trump_card_animation &= Animation(rotation=0,
-                                      duration=_EXCHANGE_DURATION / 4)
     trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
                                       duration=_EXCHANGE_DURATION / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
@@ -594,6 +595,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                           child.card.card_value == CardValue.JACK]
     assert len(jack_card_children) == 1
     trump_jack_widget = jack_card_children[0]
+    trump_jack_widget.check_aspect_ratio(True)
     self.remove_widget(trump_jack_widget)
     self._talon.set_trump_card(trump_jack_widget)
 
