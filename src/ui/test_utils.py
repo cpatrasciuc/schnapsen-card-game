@@ -32,7 +32,7 @@ def get_children_index(parent: Widget, child: Widget) -> Optional[int]:
 class UiTestCase(unittest.TestCase):
   def assert_list_almost_equal(self, first: Sequence, second: Sequence,
                                **kwargs):
-    msg = kwargs.get("msg", "")
+    msg = str(kwargs.get("msg", ""))
     kwargs.pop("msg", None)
     self.assertEqual(len(first), len(second), msg=msg + "\nDifferent lengths.")
     for i, item in enumerate(first):

@@ -52,6 +52,12 @@ class TestUtilsTest(UiTestCase):
     with self.assertRaisesRegex(AssertionError, "Different lengths"):
       self.assert_list_almost_equal([10, 20, 30], [10, 20])
 
+  def test_assert_list_almost_equals_msg(self):
+    with self.assertRaisesRegex(AssertionError, "123456"):
+      self.assert_list_almost_equal([0], [1], msg="123456")
+    with self.assertRaisesRegex(AssertionError, "123456"):
+      self.assert_list_almost_equal([0], [1], msg=123456)
+
   def test_graphic_test_must_call_render(self):
     class DoesNotCallRender(GraphicUnitTest):
       def test_does_not_call_render(self):
