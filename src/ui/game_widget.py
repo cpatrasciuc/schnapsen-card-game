@@ -169,6 +169,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
     # AnimationController that coordinates all card animations.
     self._animation_controller = AnimationController()
+    self.fbind('size', self._cancel_animations)
     self._enable_animations = enable_animations
 
     self._init_widgets()
@@ -211,13 +212,17 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.ids.human_tricks_placeholder.add_widget(human_tricks)
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
+  def _cancel_animations(self, *_):
+    if self._animation_controller.is_running:
+      self._animation_controller.cancel()
+
   def reset(self) -> None:
     """
     Resets the GameWidget and leaves it ready to be initialized from a new game
     state.
     """
-    if self._animation_controller.is_running:
-      self._animation_controller.cancel()
+    self._trigger_layout.cancel()
+    self._cancel_animations()
     _delete_widget(self._player_card_widgets.one)
     _delete_widget(self._player_card_widgets.two)
     self._player_card_widgets = None
@@ -379,10 +384,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     This function is called when a layout is called by a trigger. That means
     whenever the position, the size or the children of this layout change.
     """
-    # TODO(tests): Add a test for the scenario where the window is resized
-    # during animations.
-    # if self._animation_controller.is_running:
-    #  self._animation_controller.cancel()
     self.ids.computer_tricks_placeholder.height = 0.25 * self.height
     self.ids.human_tricks_placeholder.height = \
       self.ids.computer_tricks_placeholder.height
