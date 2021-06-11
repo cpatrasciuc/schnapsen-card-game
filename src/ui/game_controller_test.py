@@ -10,6 +10,7 @@ from model.game_state_test_utils import get_actions_for_one_complete_game
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.game_controller import GameController
+from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
 from ui.player import RandomPlayer
 from ui.test_utils import GraphicUnitTest
@@ -210,7 +211,7 @@ class GameControllerTest(GraphicUnitTest):
         else:
           self._done_callback()
 
-    game_widget = GameWidget()
+    game_widget = GameWidget(GameOptions(enable_animations=False))
     players = PlayerPair(RandomPlayer(), RandomPlayer())
     two_bummerls_played = Mock()
     score_view = TestScoreViewWithBummerlCount(two_bummerls_played)

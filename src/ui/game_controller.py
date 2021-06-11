@@ -173,7 +173,7 @@ class GameController:
 if __name__ == "__main__":
   EventLoop.ensure_window()
   EventLoop.window.maximize()
-  _game_widget = GameWidget(True)
+  _game_widget = GameWidget()
   _game_widget.padding_pct = 0.01
   _game_widget.size_hint = 1, 1
   _human_player: Player = _game_widget

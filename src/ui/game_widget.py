@@ -11,7 +11,6 @@ from kivy.animation import Animation
 from kivy.base import runTouchApp
 from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.resources import resource_add_path
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
@@ -30,6 +29,7 @@ from model.suit import Suit
 from ui.animation_controller import AnimationController
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
+from ui.game_options import GameOptions
 from ui.player import Player
 from ui.talon_widget import TalonWidget
 
@@ -102,18 +102,6 @@ def _get_card_list(card_slots_widget: CardSlotsLayout) -> List[Card]:
   return cards
 
 
-# Durations of various animations (in seconds).
-_SPEED_MULTIPLIER = 1
-_MOVE_DURATION = 0.5 * _SPEED_MULTIPLIER
-_EXCHANGE_DURATION = 1.5 * _SPEED_MULTIPLIER
-_CLOSE_DURATION = 0.5 * _SPEED_MULTIPLIER
-_TRICK_DURATION = 0.5 * _SPEED_MULTIPLIER
-_DRAW_CARD_DURATION = 0.5 * _SPEED_MULTIPLIER
-
-# TODO(ui): Add these paths to GameOptions.
-resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
-resource_add_path(os.path.join(os.path.dirname(__file__), "resources", "cards"))
-
 # TODO(tests): Add tests for padding_pct.
 Builder.load_file(os.path.join(os.path.dirname(__file__), "game_widget.kv"),
                   rulesonly=True)
@@ -128,11 +116,16 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   # pylint: disable=too-many-instance-attributes
 
-  def __init__(self, enable_animations=False, **kwargs):
+  def __init__(self, game_options: Optional[GameOptions] = None, **kwargs):
     """
     Instantiates a new GameWidget and all its children widgets. All the widgets
     are empty (i.e., no cards).
     """
+    # Store or initialize the game options. This has to be done before the call
+    # to Widget.__init__() so the options are available when the game_widget.kv
+    # file is parsed.
+    self._game_options = game_options or GameOptions()
+
     super().__init__(**kwargs)
 
     # Dictionary used to store all the cards widgets.
@@ -177,7 +170,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     # AnimationController that coordinates all card animations.
     self._animation_controller = AnimationController()
     self.fbind('size', self._cancel_animations)
-    self._enable_animations = enable_animations
 
     self._init_widgets()
 
@@ -222,7 +214,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
   def _init_trump_suit_image(self, suit: Suit):
-    self._trump_suit_image = Image(source=str(suit.name)[0] + ".png")
+    image_filename = str(suit.name)[0] + ".png"
+    image_full_path = os.path.join(self._game_options.cards_path,
+                                   image_filename)
+    self._trump_suit_image = Image(source=image_full_path)
     self._trump_suit_image.size_hint = None, None
     self._trump_suit_image.opacity = 0
     self.ids.talon_placeholder.add_widget(self._trump_suit_image)
@@ -393,7 +388,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(False)
       self._player_card_widgets.one.remove_card(card_widget)
       self.add_widget(card_widget)
-      animation = card_widget.get_flip_animation(_DRAW_CARD_DURATION, True)
+      animation = card_widget.get_flip_animation(
+        self._game_options.draw_cards_duration, True)
       self._add_animation(card_widget, animation)
     self._animation_controller.start(
       lambda: self._update_cards_in_hand_after_animation(done_callback))
@@ -450,17 +446,18 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.add_widget(trump_jack_widget)
 
     exchange_pos = self._get_trump_exchange_pos()
+    duration = self._game_options.exchange_trump_duration
     trump_jack_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
-                                     duration=_EXCHANGE_DURATION / 2)
+                                     duration=duration / 2)
     if not trump_jack_widget.visible:
       trump_jack_widget.check_aspect_ratio(False)
       trump_jack_animation &= trump_jack_widget.get_flip_animation(
-        _EXCHANGE_DURATION / 2, False)
+        duration / 2, False)
     trump_jack_animation += Animation(rotation=90,
                                       center_x=trump_card_widget.center_x,
                                       center_y=trump_card_widget.center_y,
-                                      duration=_EXCHANGE_DURATION / 4)
+                                      duration=duration / 4)
     self._add_animation(trump_jack_widget, trump_jack_animation)
 
     cards_in_hand = _get_card_list(card_slots_widget)
@@ -483,12 +480,12 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
                                      rotation=0,
-                                     duration=_EXCHANGE_DURATION / 4)
+                                     duration=duration / 4)
     trump_card_animation.bind(on_complete=bring_trump_card_to_front)
     trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
-                                      duration=_EXCHANGE_DURATION / 2)
+                                      duration=duration / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
-    self._animate_cards_for_player(player, duration=_EXCHANGE_DURATION / 4,
+    self._animate_cards_for_player(player, duration=duration / 4,
                                    skip_cards=[trump_card_widget.card])
 
   def _get_trump_exchange_pos(self):
@@ -519,10 +516,11 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_widget = self._talon.remove_trump_card()
     self.add_widget(trump_card_widget, index=len(self.children))
     exchange_pos = self._get_trump_exchange_pos()
+    duration = self._game_options.close_talon_duration
     trump_card_animation = Animation(center_x=exchange_pos[0],
                                      center_y=exchange_pos[1],
                                      rotation=40,
-                                     duration=_CLOSE_DURATION / 2)
+                                     duration=duration / 2)
 
     def bring_trump_card_to_front(*_):
       self.remove_widget(trump_card_widget)
@@ -531,7 +529,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     trump_card_animation.bind(on_complete=bring_trump_card_to_front)
     pos = self._talon.top_card().center
     trump_card_animation += Animation(center_x=pos[0], center_y=pos[1],
-                                      rotation=10, duration=_CLOSE_DURATION / 2)
+                                      rotation=10, duration=duration / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
 
   def _get_card_pos_delta(self, player) -> Tuple[int, int]:
@@ -557,6 +555,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                  center: Optional[
                                    Tuple[int, int]] = None) -> None:
     card_widget = self._cards[card]
+    duration = self._game_options.play_card_duration
     if card_widget.parent is not self._play_area:
       card_widget.grayed_out = False
       card_slots_widget = self._player_card_widgets[player]
@@ -566,10 +565,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       if center is None:
         center = self._get_default_play_location(player)
       animation = Animation(center_x=center[0], center_y=center[1],
-                            duration=_MOVE_DURATION)
+                            duration=duration)
       if not card_widget.visible:
         card_widget.check_aspect_ratio(False)
-        animation &= card_widget.get_flip_animation(_MOVE_DURATION, False)
+        animation &= card_widget.get_flip_animation(duration, False)
       self._add_animation(card_widget, animation)
 
   def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
@@ -709,6 +708,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       self.add_widget(child)
 
     tricks_widget = self._tricks_widgets[winner]
+    duration = self._game_options.trick_completed_duration
 
     # Animate the first card.
     row, col = tricks_widget.first_free_slot
@@ -718,7 +718,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     card_widget.check_aspect_ratio(False)
     self._add_animation(card_widget,
                         Animation(x=pos[0], y=pos[1], width=size[0],
-                                  height=size[1], duration=_TRICK_DURATION))
+                                  height=size[1], duration=duration))
 
     # Animate the second card.
     pos = tricks_widget.get_card_pos(row, col + 1)
@@ -726,7 +726,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     card_widget.check_aspect_ratio(False)
     self._add_animation(card_widget,
                         Animation(x=pos[0], y=pos[1], width=size[0],
-                                  height=size[1], duration=_TRICK_DURATION))
+                                  height=size[1], duration=duration))
 
     # Update the list of sorted cards for each player.
     self._sorted_cards = PlayerPair(
@@ -761,8 +761,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._update_cards_in_hand(done_callback)
 
   def _update_cards_in_hand(self, done_callback: Closure) -> None:
-    self._animate_cards_for_player(PlayerId.ONE, _DRAW_CARD_DURATION)
-    self._animate_cards_for_player(PlayerId.TWO, _DRAW_CARD_DURATION)
+    duration = self._game_options.draw_cards_duration
+    self._animate_cards_for_player(PlayerId.ONE, duration)
+    self._animate_cards_for_player(PlayerId.TWO, duration)
     self._animation_controller.start(
       lambda: self._update_cards_in_hand_after_animation(done_callback))
 
@@ -930,7 +931,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   def _add_animation(self, card_widget: CardWidget,
                      animation: Animation) -> None:
-    if not self._enable_animations:
+    if not self._game_options.enable_animations:
       return
     self._animation_controller.add_card_animation(card_widget, animation)
 

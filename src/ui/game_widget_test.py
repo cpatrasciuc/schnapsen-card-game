@@ -29,6 +29,7 @@ from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.card_widget import CardWidget
+from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
 from ui.test_utils import GraphicUnitTest
 
@@ -43,7 +44,7 @@ def _drag_card_to_pos(card_widget: CardWidget, position: Tuple[int, int]):
 class _GameWidgetBaseTest(GraphicUnitTest):
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=False)
+    return GameWidget(GameOptions(enable_animations=False))
 
   def _init_from_game_state(self, game_widget: GameWidget,
                             game_state: GameState,
@@ -81,7 +82,7 @@ class _GameWidgetWithCancelledAnimations(GraphicUnitTest):
 
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=True)
+    return GameWidget()
 
   def _resize_window(self):
     original_size = new_size = self.window.size
@@ -360,7 +361,7 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
 class GameWidgetInitTestWithAnimations(GameWidgetInitTest):
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=True)
+    return GameWidget()
 
 
 class InitFromGameStateWaitsOneFrame(_GameWidgetBaseTest):
@@ -373,7 +374,7 @@ class InitFromGameStateWaitsOneFrame(_GameWidgetBaseTest):
 
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=True)
+    return GameWidget()
 
   def test_init_from_game_state_with_current_trick_animation_is_played(self):
     """
@@ -384,7 +385,7 @@ class InitFromGameStateWaitsOneFrame(_GameWidgetBaseTest):
     played_card = Card(Suit.DIAMONDS, CardValue.QUEEN)
     with GameStateValidator(game_state):
       game_state.current_trick.two = played_card
-    game_widget = GameWidget(enable_animations=True)
+    game_widget = self.create_game_widget()
     self.render(game_widget)
     done_callback = Mock()
     game_widget.init_from_game_state(game_state, done_callback)
@@ -396,7 +397,7 @@ class InitFromGameStateWaitsOneFrame(_GameWidgetBaseTest):
   def test_init_from_game_state_without_current_trick_animation_is_played(self):
     """The animation here is flipping the cards in the player's hand."""
     game_state = get_game_state_for_tests()
-    game_widget = GameWidget(enable_animations=True)
+    game_widget = self.create_game_widget()
     self.render(game_widget)
     done_callback = Mock()
     game_widget.init_from_game_state(game_state, done_callback)
@@ -1335,7 +1336,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 class GameWidgetGraphicTestWithAnimations(GameWidgetGraphicTest):
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=True)
+    return GameWidget()
 
 
 class GameWidgetGraphicTestWithCancelledAnimations(
@@ -2129,7 +2130,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
 class GameWidgetPlayerGraphicTestWithAnimations(GameWidgetPlayerGraphicTest):
   @staticmethod
   def create_game_widget():
-    return GameWidget(enable_animations=True)
+    return GameWidget()
 
 
 class GameWidgetPlayerGraphicTestWithCancelledAnimations(
