@@ -22,7 +22,7 @@ class GameOptions:
 
       # Animation parameters.
       "enable_animations": True,
-      "animation_speed_multiplier": 1,
+      "animation_duration_multiplier": 1,
       "play_card_duration": 0.5,
       "exchange_trump_duration": 1.5,
       "close_talon_duration": 0.5,
@@ -39,24 +39,25 @@ class GameOptions:
 
   @property
   def play_card_duration(self) -> float:
-    return self.__dict__["play_card_duration"] * self.animation_speed_multiplier
+    return self.__dict__["play_card_duration"] * \
+           self.animation_duration_multiplier
 
   @property
   def exchange_trump_duration(self) -> float:
     return self.__dict__["exchange_trump_duration"] * \
-           self.animation_speed_multiplier
+           self.animation_duration_multiplier
 
   @property
   def close_talon_duration(self) -> float:
     return self.__dict__["close_talon_duration"] * \
-           self.animation_speed_multiplier
+           self.animation_duration_multiplier
 
   @property
   def trick_completed_duration(self) -> float:
     return self.__dict__["trick_completed_duration"] * \
-           self.animation_speed_multiplier
+           self.animation_duration_multiplier
 
   @property
   def draw_cards_duration(self) -> float:
     return self.__dict__["draw_cards_duration"] * \
-           self.animation_speed_multiplier
+           self.animation_duration_multiplier

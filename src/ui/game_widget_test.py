@@ -72,8 +72,6 @@ class _GameWidgetBaseTest(GraphicUnitTest):
     self.wait_for_mock_callback(done_callback)
 
 
-# TODO(tests): Refactor the animation durations in a GameOptions class and
-# increase the duration here to make sure the animations get cancelled.
 class _GameWidgetWithCancelledAnimations(GraphicUnitTest):
   """
   In these tests the window will be resized during any animation, causing it to
@@ -82,7 +80,9 @@ class _GameWidgetWithCancelledAnimations(GraphicUnitTest):
 
   @staticmethod
   def create_game_widget():
-    return GameWidget()
+    # Make the animations very slow so they will timeout unless they get
+    # cancelled.
+    return GameWidget(GameOptions(animation_duration_multiplier=100))
 
   def _resize_window(self):
     original_size = new_size = self.window.size
