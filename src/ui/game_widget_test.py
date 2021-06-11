@@ -165,6 +165,9 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
     self.assertIsNone(game_widget.talon_widget.pop_card())
     self.assertIsNone(game_widget.talon_widget.trump_card)
 
+    # The trump suit image is not initialized.
+    self.assertIsNone(game_widget.trump_suit_image)
+
     counts = Counter(
       [widget.__class__.__name__ for widget in game_widget.walk()])
     self.assertEqual(4, counts["CardSlotsLayout"])
@@ -225,6 +228,10 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
       self.assert_do_translation(False, card_widgets[game_state.trump_card])
     else:
       self.assertIsNone(game_widget.talon_widget.trump_card)
+
+    # The trump suit image is only shown if there are no cards in the talon.
+    self.assertEqual(len(game_state.talon) == 0,
+                     game_widget.trump_suit_image.opacity > 0)
 
     # Remaining cards are in the talon.
     for card in game_state.talon:
@@ -606,12 +613,15 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertFalse(second_talon_card.grayed_out)
     self.assertFalse(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
   def test_on_trick_completed_talon_is_empty(self):
     game_state = get_game_state_with_empty_talon_for_tests()
     game_widget = self.create_game_widget()
     self.render(game_widget)
     self._init_from_game_state(game_widget, game_state)
+
+    self.assertEqual(1, game_widget.trump_suit_image.opacity)
 
     ace_clubs = Card(Suit.CLUBS, CardValue.ACE)
     ace_clubs_widget = game_widget.cards[ace_clubs]
@@ -632,6 +642,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
                              game_state.cards_in_hand, False)
     self.assertIs(game_widget.tricks_widgets.one, ace_clubs_widget.parent)
     self.assertIs(game_widget.tricks_widgets.one, jack_clubs_widget.parent)
+    self.assertEqual(1, game_widget.trump_suit_image.opacity)
 
   def test_on_new_cards_drawn_last_talon_card_player_one_wins(self):
     game_widget = self.create_game_widget()
@@ -658,6 +669,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertIsNotNone(last_talon_card)
     trump_card = game_widget.talon_widget.trump_card
     self.assertIsNotNone(trump_card)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
     self._on_trick_completed(game_widget, trick, PlayerId.TWO,
                              game_state.cards_in_hand, True)
     self.assertIs(game_widget.tricks_widgets.two, ace_spades_widget.parent)
@@ -674,6 +686,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertFalse(trump_card.grayed_out)
     self.assertTrue(trump_card.shadow)
     self.assert_do_translation(False, trump_card)
+    self.assertEqual(1, game_widget.trump_suit_image.opacity)
 
   def test_on_new_cards_drawn_last_talon_card_player_two_wins(self):
     game_widget = self.create_game_widget()
@@ -701,6 +714,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertIsNotNone(last_talon_card)
     trump_card = game_widget.talon_widget.trump_card
     self.assertIsNotNone(trump_card)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
     trick = PlayerPair(ace_spades, queen_diamonds)
     self._on_trick_completed(game_widget, trick, PlayerId.ONE,
@@ -720,6 +734,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertTrue(trump_card.grayed_out)
     self.assertTrue(trump_card.shadow)
     self.assert_do_translation(False, trump_card)
+    self.assertEqual(1, game_widget.trump_suit_image.opacity)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_one_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -741,6 +756,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
     trick = PlayerPair(queen_hearts, queen_diamonds)
     self._on_trick_completed(game_widget, trick, PlayerId.ONE,
@@ -757,6 +773,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertFalse(second_talon_card.grayed_out)
     self.assertTrue(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
   def test_on_new_cards_drawn_talon_has_more_cards_player_two_wins(self):
     game_state = get_game_state_with_multiple_cards_in_the_talon_for_tests()
@@ -780,6 +797,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
     self.assertIs(game_widget.talon_widget, second_talon_card.parent)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
     trick = PlayerPair(queen_hearts, queen_diamonds)
     self._on_trick_completed(game_widget, trick, PlayerId.TWO,
@@ -796,11 +814,13 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertTrue(second_talon_card.grayed_out)
     self.assertTrue(second_talon_card.shadow)
     self.assert_do_translation(False, second_talon_card)
+    self.assertEqual(0, game_widget.trump_suit_image.opacity)
 
   # pylint: disable=too-many-statements
   def test_do_layout(self):
     game_widget = self.create_game_widget()
     self.render(game_widget)
+    self._init_from_game_state(game_widget, get_game_state_for_tests())
 
     # The initial window size is 320 x 240.
     self.assert_pixels_almost_equal([dp(320), dp(240)], game_widget.size)
@@ -828,6 +848,10 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
                                     game_widget.play_area.size)
     self.assert_pixels_almost_equal([dp(21), dp(108)],
                                     game_widget.play_area.pos)
+    self.assert_pixels_almost_equal(game_widget.talon_widget.center,
+                                    game_widget.trump_suit_image.center)
+    self.assert_pixels_almost_equal([dp(36), dp(36)],
+                                    game_widget.trump_suit_image.size)
 
     # Stretch window horizontally to 640 x 240.
     EventLoop.window.size = 640, 240
@@ -857,6 +881,10 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
                                     game_widget.play_area.size)
     self.assert_pixels_almost_equal([dp(41), dp(108)],
                                     game_widget.play_area.pos)
+    self.assert_pixels_almost_equal(game_widget.talon_widget.center,
+                                    game_widget.trump_suit_image.center)
+    self.assert_pixels_almost_equal([dp(36), dp(36)],
+                                    game_widget.trump_suit_image.size)
 
     # Stretch window vertically to 320 x 480.
     EventLoop.window.size = 320, 480
@@ -886,6 +914,10 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
                                     game_widget.play_area.size)
     self.assert_pixels_almost_equal([dp(21), dp(216)],
                                     game_widget.play_area.pos)
+    self.assert_pixels_almost_equal(game_widget.talon_widget.center,
+                                    game_widget.trump_suit_image.center)
+    self.assert_pixels_almost_equal([dp(56), dp(56)],
+                                    game_widget.trump_suit_image.size)
 
     # Stretch window vertically and horizontally to 640 x 480.
     EventLoop.window.size = 640, 480
@@ -915,6 +947,10 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
                                     game_widget.play_area.size)
     self.assert_pixels_almost_equal([dp(41), dp(216)],
                                     game_widget.play_area.pos)
+    self.assert_pixels_almost_equal(game_widget.talon_widget.center,
+                                    game_widget.trump_suit_image.center)
+    self.assert_pixels_almost_equal([dp(72), dp(72)],
+                                    game_widget.trump_suit_image.size)
 
   def test_on_action_play_card(self):
     game_widget = self.create_game_widget()

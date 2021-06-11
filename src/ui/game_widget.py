@@ -13,6 +13,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
@@ -25,6 +26,7 @@ from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
   get_available_actions
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from model.suit import Suit
 from ui.animation_controller import AnimationController
 from ui.card_slots_layout import CardSlotsLayout
 from ui.card_widget import CardWidget
@@ -108,7 +110,9 @@ _CLOSE_DURATION = 0.5 * _SPEED_MULTIPLIER
 _TRICK_DURATION = 0.5 * _SPEED_MULTIPLIER
 _DRAW_CARD_DURATION = 0.5 * _SPEED_MULTIPLIER
 
+# TODO(ui): Add these paths to GameOptions.
 resource_add_path(os.path.join(os.path.dirname(__file__), "resources"))
+resource_add_path(os.path.join(os.path.dirname(__file__), "resources", "cards"))
 
 # TODO(tests): Add tests for padding_pct.
 Builder.load_file(os.path.join(os.path.dirname(__file__), "game_widget.kv"),
@@ -151,6 +155,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._tricks_widgets: Optional[PlayerPair[CardSlotsLayout]] = None
     self._talon: Optional[TalonWidget] = None
 
+    # Image that displays the trump suit, if the talon is empty.
+    self._trump_suit_image: Optional[Image] = None
+
     # Labels used to display the trick points and game points.
     self._trick_score_labels: PlayerPair[Label] = PlayerPair(
       one=self.ids.human_trick_score_label.__self__,
@@ -188,6 +195,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   def _init_talon_widget(self):
     self._talon = TalonWidget(delta_pct=0.005)
+    self._talon.size_hint = 1, 1
+    self._talon.pos_hint = {'x': 0, 'y': 0}
     self.ids.talon_placeholder.add_widget(self._talon)
 
   def _init_cards_in_hand_widgets(self):
@@ -212,6 +221,21 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.ids.human_tricks_placeholder.add_widget(human_tricks)
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
+  def _init_trump_suit_image(self, suit: Suit):
+    self._trump_suit_image = Image(source=str(suit.name)[0] + ".png")
+    self._trump_suit_image.size_hint = None, None
+    self._trump_suit_image.opacity = 0
+    self.ids.talon_placeholder.add_widget(self._trump_suit_image)
+
+    def center_trump_image_inside_talon_widget(*_):
+      size = min(self._talon.size) / 2
+      self._trump_suit_image.size = size, size
+      self._trump_suit_image.center = self._talon.center
+
+    center_trump_image_inside_talon_widget()
+    self._talon.bind(center=center_trump_image_inside_talon_widget)
+    self._talon.bind(size=center_trump_image_inside_talon_widget)
+
   def _cancel_animations(self, *_):
     if self._animation_controller.is_running:
       self._animation_controller.cancel()
@@ -227,6 +251,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     _delete_widget(self._player_card_widgets.two)
     self._player_card_widgets = None
     _delete_widget(self._talon)
+    if self._trump_suit_image is not None:
+      _delete_widget(self._trump_suit_image)
+      self._trump_suit_image = None
     _delete_widget(self._tricks_widgets.one)
     _delete_widget(self._tricks_widgets.two)
     self._tricks_widgets = None
@@ -280,6 +307,13 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     """
     return self._game_score_labels
 
+  @property
+  def trump_suit_image(self) -> Optional[Image]:
+    """
+    Returns the image used to display the trump suit when the talon is empty.
+    """
+    return self._trump_suit_image
+
   def init_from_game_state(self, game_state: GameState, done_callback: Closure,
                            game_score: PlayerPair[int] = PlayerPair(0,
                                                                     0)) -> None:
@@ -323,6 +357,10 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     # Init the scores.
     self.on_score_modified(game_state.trick_points)
     self._update_game_score(game_score)
+
+    # Set the trump image source here since we know what the trump suit is, but
+    # only make it visible when the talon is empty.
+    self._init_trump_suit_image(game_state.trump)
 
     # If a card is already played check if it was a simple card play or a
     # marriage announcement and execute the corresponding action.
@@ -717,7 +755,6 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       self.add_widget(first_card)
       second_card = self._talon.pop_card()
       if second_card is None:
-        # TODO(ui): Leave an image with the trump suit.
         # TODO(ui): If talon is empty maybe show opponent cards in hand as well.
         second_card = self._talon.remove_trump_card()
       self.add_widget(second_card)
@@ -759,6 +796,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                               Closure] = None) -> None:
     self._update_cards_in_hand_for_player_after_animation(PlayerId.ONE)
     self._update_cards_in_hand_for_player_after_animation(PlayerId.TWO)
+    if self._talon.top_card() is None and self._trump_suit_image is not None:
+      self._trump_suit_image.opacity = 1
     if done_callback is not None:
       done_callback()
 
