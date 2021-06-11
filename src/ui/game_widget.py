@@ -181,7 +181,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self.do_layout()
 
   def _init_cards(self):
-    self._cards = CardWidget.create_widgets_for_all_cards()
+    self._cards = CardWidget.create_widgets_for_all_cards(
+      path=self._game_options.cards_path)
     for card_widget in self._cards.values():
       card_widget.bind(on_card_moved=self._on_card_moved)
 

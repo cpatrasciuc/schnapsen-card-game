@@ -16,27 +16,26 @@ from kivy.uix.image import Image
 from kivy.uix.scatter import Scatter
 
 from model.card import Card
+from ui.game_options import GameOptions
 
 _SHADOW_STRENGTH = 0.5
 
 
-def _get_image_full_path(filename: str) -> str:
-  module_dir = os.path.join(os.path.dirname(__file__))
-  image_folder = os.path.join(module_dir, "resources", "cards")
+def _get_image_full_path(image_folder: str, filename: str) -> str:
   return os.path.join(image_folder, filename + ".png")
 
 
-def _get_card_filename(card: Card) -> str:
+def _get_card_filename(card: Card, image_folder: str) -> str:
   filename = card.card_value.name.lower()[0] + card.suit.name.lower()[0]
-  return _get_image_full_path(filename)
+  return _get_image_full_path(image_folder, filename)
 
 
-def _get_card_back_filename() -> str:
-  return _get_image_full_path("card_back")
+def _get_card_back_filename(image_folder: str) -> str:
+  return _get_image_full_path(image_folder, "card_back")
 
 
-def _get_drop_shadow_filename() -> str:
-  return _get_image_full_path("drop_shadow")
+def _get_drop_shadow_filename(image_folder: str) -> str:
+  return _get_image_full_path(image_folder, "drop_shadow")
 
 
 Builder.load_string(dedent("""
@@ -63,22 +62,25 @@ class CardWidget(Scatter):
 
   # pylint: disable=too-many-instance-attributes
 
-  def __init__(self, card: Card, aspect_ratio: float = 24 / 37, **kwargs):
+  def __init__(self, card: Card, aspect_ratio: float = 24 / 37,
+               path: Optional[str] = None, **kwargs):
     """
     Instantiates a new CardWidget.
     :param card: The card value to associate to this widget.
     :param aspect_ratio: The aspect ratio that will be enforced.
+    :param path: The path to the folder containing the card images.
     :param kwargs: Parameters to be forwarded to the base class' constructor.
     """
     super().__init__(**kwargs)
     self._card = card
+    self._path = path or GameOptions().cards_path
     self._visible = True
     self._grayed_out = False
     self._touch_down_pos: Optional[Tuple[int, int]] = None
-    self._shadow_image = _get_drop_shadow_filename()
+    self._shadow_image = _get_drop_shadow_filename(self._path)
     self._shadow_enabled = _SHADOW_STRENGTH
     self.auto_bring_to_front = True
-    image = Image(source=_get_card_filename(card))
+    image = Image(source=_get_card_filename(card, self._path))
     image.keep_ratio = False
     image.allow_stretch = True
     self.fbind("size", image.setter("size"))
@@ -113,9 +115,9 @@ class CardWidget(Scatter):
   def visible(self, visible):
     self._visible = visible
     if self._visible:
-      self.children[0].source = _get_card_filename(self._card)
+      self.children[0].source = _get_card_filename(self._card, self._path)
     else:
-      self.children[0].source = _get_card_back_filename()
+      self.children[0].source = _get_card_back_filename(self._path)
 
   @property
   def grayed_out(self) -> bool:
@@ -138,10 +140,15 @@ class CardWidget(Scatter):
     self._check_aspect_ratio = enable
 
   @staticmethod
-  def create_widgets_for_all_cards() -> Dict[Card, "CardWidget"]:
-    """Creates a CardWidget for each of the 20 possible cards."""
+  def create_widgets_for_all_cards(path: Optional[str] = None) -> Dict[
+    Card, "CardWidget"]:
+    """
+    Creates a CardWidget for each of the 20 possible cards.
+    :param path: The path to the folder containing the card images.
+    """
     kwargs = {'do_rotation': False, 'do_scale': False, 'do_translation': False}
-    return {card: CardWidget(card, **kwargs) for card in Card.get_all_cards()}
+    return {card: CardWidget(card, path=path, **kwargs) for card in
+            Card.get_all_cards()}
 
   def on_touch_down(self, touch: MotionEvent) -> bool:
     """
