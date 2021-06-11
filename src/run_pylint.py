@@ -31,6 +31,7 @@ def run_pylint():
     r"ui\..*(Widget|Layout)\.fbind",
     r"ui\..*(Widget|Layout)\.register_event_type",
     r"ui\..*(Widget|Layout)\.setter",
+    r"ui\.game_options\.GameOptions\..*",
   ]
   pylint_opts = [
     "--indent-string='  '",
