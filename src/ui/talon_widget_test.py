@@ -4,6 +4,7 @@
 
 from unittest.mock import Mock
 
+from kivy.metrics import dp
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
 
@@ -443,9 +444,9 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     talon_widget.push_card(card_2)
     talon_widget.push_card(card_3)
     self.advance_frames(1)
-    self.assertEqual((160, 0), card_1.pos)
-    self.assertEqual((160, 0), card_2.pos)
-    self.assertEqual((160, 0), card_3.pos)
+    self.assertEqual((dp(160), dp(0)), card_1.pos)
+    self.assertEqual((dp(160), dp(0)), card_2.pos)
+    self.assertEqual((dp(160), dp(0)), card_3.pos)
 
   def test_delta_pct(self):
     talon_widget = TalonWidget(aspect_ratio=0.5, delta_pct=0.1)
@@ -457,6 +458,6 @@ class TalonWidgetGraphicTest(GraphicUnitTest):
     talon_widget.push_card(card_2)
     talon_widget.push_card(card_3)
     self.advance_frames(1)
-    self.assertEqual((160, 0), card_1.pos)
-    self.assertEqual((172, 24), card_2.pos)
-    self.assertEqual((184, 48), card_3.pos)
+    self.assertEqual((dp(160), dp(0)), card_1.pos)
+    self.assertEqual((dp(172), dp(24)), card_2.pos)
+    self.assertEqual((dp(184), dp(48)), card_3.pos)
