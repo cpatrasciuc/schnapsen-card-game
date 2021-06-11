@@ -60,8 +60,8 @@ class AnimationController:
     """
     assert self._state == _State.IDLE, \
       f"Can only call start() in IDLE state: {self._state.name}"
-    logging.info("AnimationCtrl: Starting %s animation(s)",
-                 len(self._animations))
+    logging.info("AnimationCtrl: Starting animations for: %s",
+                 [str(card_widget.card) for card_widget in self._animations])
     self._state = _State.RUNNING
     self._on_complete_callback = on_complete_callback
     if len(self._animations) == 0:
