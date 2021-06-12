@@ -4,7 +4,6 @@
 
 from typing import Optional
 
-import kivy
 from kivy.app import App
 
 from model.player_pair import PlayerPair
@@ -13,7 +12,6 @@ from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
 from ui.player import Player, RandomPlayer
 
-kivy.require('2.0.0')
 __version__ = '0.1'
 
 
