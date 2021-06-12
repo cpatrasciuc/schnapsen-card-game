@@ -23,7 +23,6 @@ jobs:
         with:
           workdir: src/
           buildozer_version: stable
-          command: buildozer android release
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
