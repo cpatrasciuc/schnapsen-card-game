@@ -6,6 +6,7 @@
 # pylint: disable=too-many-public-methods,too-many-ancestors
 
 import logging
+import os
 import platform
 import random
 import unittest
@@ -238,6 +239,10 @@ class GameWidgetInitTest(_GameWidgetBaseTest):
     # The trump suit image is only shown if there are no cards in the talon.
     self.assertEqual(len(game_state.talon) == 0,
                      game_widget.trump_suit_image.opacity > 0)
+    # On Android, the filenames are case sensitive.
+    card_images = os.listdir(GameOptions().cards_path)
+    self.assertIn(os.path.basename(game_widget.trump_suit_image.source),
+                  card_images)
 
     # Remaining cards are in the talon.
     for card in game_state.talon:

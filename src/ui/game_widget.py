@@ -215,7 +215,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
     self._tricks_widgets = PlayerPair(one=human_tricks, two=computer_tricks)
 
   def _init_trump_suit_image(self, suit: Suit):
-    image_filename = str(suit.name)[0] + ".png"
+    image_filename = str(suit.name.lower())[0] + ".png"
     image_full_path = os.path.join(self._game_options.cards_path,
                                    image_filename)
     self._trump_suit_image = Image(source=image_full_path)
