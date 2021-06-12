@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import random
+import time
 from typing import List, Optional
 
 from model.game import Game
@@ -57,7 +58,7 @@ class Bummerl:
     """
     assert self._game is None, "Game in progress"
     assert not self.is_over, f"Bummerl is over: {self.game_points}"
-    self._game = Game(dealer=self._next_dealer, seed=seed)
+    self._game = Game(dealer=self._next_dealer, seed=seed or int(time.time()))
     self._next_dealer = self._next_dealer.opponent()
     return self._game
 

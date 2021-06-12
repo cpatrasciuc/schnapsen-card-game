@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
 import unittest
 from pickle import dumps, loads
 
@@ -9,6 +10,7 @@ from model.bummerl import Bummerl
 from model.game import Game
 from model.game_state import GameState
 from model.game_state_test_utils import get_actions_for_one_complete_game
+from model.player_action import get_available_actions, PlayCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 
@@ -123,3 +125,24 @@ class BummerlTest(unittest.TestCase):
     self.assertEqual(PlayerPair(3, 3), unpickled_bummerl.game_points)
     self.assertEqual(2, len(unpickled_bummerl.completed_games))
     self.assertFalse(unpickled_bummerl.is_over)
+
+  def test_seed_is_initialized_randomly_when_not_specified(self):
+    """
+    Tests that the Bummerl object picks a seed if it is not specified as an
+    argument to start(). This seed needs to be saved in case the Game object is
+    pickled and unpickled. Otherwise, during unpickling we will start with a
+    different game state.
+    """
+    bummerl = Bummerl(next_dealer=PlayerId.ONE)
+    bummerl.start_game()
+    game = bummerl.game
+    actions = get_available_actions(game.game_state)
+    selected_action = \
+      [action for action in actions if isinstance(action, PlayCardAction)][0]
+    game.play_action(selected_action)
+    expected_game_state = copy.deepcopy(game.game_state)
+
+    unpickled_bummerl = loads(dumps(bummerl))
+
+    self.assertIsNot(expected_game_state, unpickled_bummerl.game.game_state)
+    self.assertEqual(expected_game_state, unpickled_bummerl.game.game_state)
