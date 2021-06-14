@@ -3,12 +3,13 @@
 #  found in the LICENSE file.
 
 import abc
-import random
-from typing import Callable
+from typing import Callable, Optional
 
+from ai.player import Player as AIPlayer
+from ai.random_player import RandomPlayer
 from model.game_state import GameState
-from model.player_action import PlayerAction, get_available_actions, \
-  ExchangeTrumpCardAction, AnnounceMarriageAction
+from model.player_action import PlayerAction
+from model.player_id import PlayerId
 
 
 class Player(abc.ABC):
@@ -34,31 +35,18 @@ class Player(abc.ABC):
     """
 
 
-# TODO(refactor): Replace or move this to the AI package when available.
-class RandomPlayer(Player):
+class ComputerPlayer(Player):
   """
-  Simple implementation of the Player interface that mostly plays a random
-  action from the valid actions in a given game state.
+  The Player implementation that runs an AI algorithm to pick the next action to
+  be played. It's a wrapper over an ai.player.Player instance.
   """
 
   # pylint: disable=too-few-public-methods
 
+  def __init__(self, player: Optional[AIPlayer] = None):
+    self._player = player or RandomPlayer(PlayerId.TWO)
+
   def request_next_action(self, game_state: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:
-    available_actions = get_available_actions(game_state)
-
-    # Exchange trump if available.
-    for action in available_actions:
-      if isinstance(action, ExchangeTrumpCardAction):
-        callback(action)
-        return
-
-    # Announce a marriage if available.
-    marriages = []
-    for action in available_actions:
-      if isinstance(action, AnnounceMarriageAction):
-        marriages.append(action)
-
-    action = random.choice(
-      marriages if len(marriages) > 0 else available_actions)
-    callback(action)
+    # TODO(ui): Run the AI in a different thread/process.
+    callback(self._player.request_next_action(game_state))

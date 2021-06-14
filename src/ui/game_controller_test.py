@@ -4,6 +4,7 @@
 
 from unittest.mock import Mock
 
+from ai.random_player import RandomPlayer
 from model.bummerl import Bummerl
 from model.game_state import GameState
 from model.game_state_test_utils import get_actions_for_one_complete_game
@@ -12,7 +13,7 @@ from model.player_pair import PlayerPair
 from ui.game_controller import GameController
 from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
-from ui.player import RandomPlayer
+from ui.player import ComputerPlayer
 from ui.test_utils import GraphicUnitTest
 
 
@@ -212,7 +213,8 @@ class GameControllerTest(GraphicUnitTest):
           self._done_callback()
 
     game_widget = GameWidget(GameOptions(enable_animations=False))
-    players = PlayerPair(RandomPlayer(), RandomPlayer())
+    players = PlayerPair(ComputerPlayer(RandomPlayer(PlayerId.ONE)),
+                         ComputerPlayer(RandomPlayer(PlayerId.TWO)))
     two_bummerls_played = Mock()
     score_view = TestScoreViewWithBummerlCount(two_bummerls_played)
 

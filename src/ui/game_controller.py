@@ -14,7 +14,7 @@ from model.player_action import PlayerAction, \
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.game_widget import GameWidget
-from ui.player import Player, RandomPlayer
+from ui.player import Player, ComputerPlayer
 from ui.score_view import ScoreView, ScoreHistory
 
 ScoreViewCallback = Callable[[ScoreHistory, Callable[[], None]], ScoreView]
@@ -177,7 +177,7 @@ if __name__ == "__main__":
   _game_widget.padding_pct = 0.01
   _game_widget.size_hint = 1, 1
   _human_player: Player = _game_widget
-  _computer_player: Player = RandomPlayer()
+  _computer_player: Player = ComputerPlayer()
   _players: PlayerPair[Player] = PlayerPair(_human_player, _computer_player)
   _game_controller = GameController(_game_widget, _players)
   Clock.schedule_once(lambda _: _game_controller.start(), 0)
