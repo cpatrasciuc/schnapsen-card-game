@@ -93,7 +93,7 @@ class _GameWidgetWithCancelledAnimations(GraphicUnitTest):
     original_size = self.window.size
     new_size = original_size[0] + random.randint(50, 100), \
                original_size[1] + random.randint(50, 100)
-    logging.info(": window size: %s", new_size)
+    logging.info("GameWidgetTest: window size: %s", new_size)
     # This should cancel the animations.
     self.window.size = new_size[0] / dp(1), new_size[1] / dp(1)
     # Set the size back to the initial values, so the tests that use dimensions
