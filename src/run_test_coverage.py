@@ -3,19 +3,24 @@
 #  found in the LICENSE file.
 
 import os
+import sys
 import unittest
+from typing import List
 
 import coverage
 
 
-def run_all_tests_with_coverage() -> float:
+def run_all_tests_with_coverage(folders: List[str] = None) -> float:
   """
-  Runs all tests with code coverage generates an HTML and a text report.
+  Runs all tests with code coverage; generates an HTML and a text report.
   Based on this: https://coverage.readthedocs.io/en/coverage-5.5/api.html#api
+  :param folders: The list of folders for which to run the tests and compute
+  code coverage.
   :return The coverage percentage.
   """
   tests_file_pattern = "*_test.py"
-  cov = coverage.Coverage(branch=True, source=["./ai", "./model", "./ui"],
+  folders = folders or ["./ai", "./model", "./ui"]
+  cov = coverage.Coverage(branch=True, source=folders,
                           omit=[tests_file_pattern,
                                 "model/game_state_validation_test_module.py",
                                 "ui/debuggable_widget_test_module.py"])
@@ -25,15 +30,16 @@ def run_all_tests_with_coverage() -> float:
   cov.start()
 
   # Discover and run all tests.
-  loader = unittest.TestLoader()
-  tests = loader.discover(os.getcwd(), pattern=tests_file_pattern)
-  test_runner = unittest.runner.TextTestRunner()
-  result = test_runner.run(tests)
-  if not result.wasSuccessful():
-    print(result.errors)
-    print(result.failures)
-    print("\nTests failed. Coverage report will not be generated.")
-    return -1
+  for folder in folders:
+    loader = unittest.TestLoader()
+    tests = loader.discover(folder, pattern=tests_file_pattern)
+    test_runner = unittest.runner.TextTestRunner()
+    result = test_runner.run(tests)
+    if not result.wasSuccessful():
+      print(result.errors)
+      print(result.failures)
+      print("\nTests failed. Coverage report will not be generated.")
+      return -1
 
   cov.stop()
   cov.save()
@@ -54,4 +60,4 @@ def run_all_tests_with_coverage() -> float:
 
 
 if __name__ == "__main__":
-  run_all_tests_with_coverage()
+  run_all_tests_with_coverage(sys.argv[1:])
