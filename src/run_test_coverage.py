@@ -15,7 +15,7 @@ def run_all_tests_with_coverage() -> float:
   :return The coverage percentage.
   """
   tests_file_pattern = "*_test.py"
-  cov = coverage.Coverage(branch=True, source=["./model", "./ui"],
+  cov = coverage.Coverage(branch=True, source=["./ai", "./model", "./ui"],
                           omit=[tests_file_pattern,
                                 "model/game_state_validation_test_module.py",
                                 "ui/debuggable_widget_test_module.py"])
