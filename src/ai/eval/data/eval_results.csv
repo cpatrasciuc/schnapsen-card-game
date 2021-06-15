@@ -1,37 +1,37 @@
-player_one              ,player_two              ,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
-Random                  ,Random                  ,1267        ,1233        ,6037     ,5919     ,14010          ,13842          ,537925          ,527459
-RandomTalon             ,Random                  ,1900        ,600         ,7668     ,4738     ,17328          ,9549           ,597848          ,551251
-RandomTalon             ,RandomTalon             ,1263        ,1237        ,7704     ,7731     ,14019          ,13867          ,764860          ,761892
-RandomTrump             ,Random                  ,1327        ,1173        ,6037     ,5625     ,14562          ,13581          ,520874          ,503201
-RandomTrump             ,RandomTalon             ,538         ,1962        ,4807     ,7777     ,9218           ,17459          ,577060          ,604691
-RandomTrump             ,RandomTrump             ,1231        ,1269        ,5843     ,5930     ,14372          ,14667          ,501191          ,506345
-RandomMarriage          ,Random                  ,1301        ,1199        ,6020     ,5771     ,14153          ,13467          ,532441          ,525321
-RandomMarriage          ,RandomTalon             ,656         ,1844        ,5414     ,7855     ,9991           ,16720          ,631498          ,634920
-RandomMarriage          ,RandomTrump             ,1307        ,1193        ,5971     ,5733     ,14434          ,13758          ,518524          ,513761
-RandomMarriage          ,RandomMarriage          ,1272        ,1228        ,5952     ,5840     ,14268          ,13972          ,523529          ,513764
-RandomTalonTrump        ,Random                  ,1956        ,544         ,7676     ,4707     ,17541          ,9594           ,595758          ,538962
-RandomTalonTrump        ,RandomTalon             ,1352        ,1148        ,7775     ,7398     ,14474          ,13390          ,756120          ,729736
-RandomTalonTrump        ,RandomTrump             ,1875        ,625         ,7536     ,4901     ,17173          ,9902           ,595137          ,560986
-RandomTalonTrump        ,RandomMarriage          ,1793        ,707         ,7495     ,5175     ,16769          ,10326          ,595213          ,579548
-RandomTalonTrump        ,RandomTalonTrump        ,1273        ,1227        ,7665     ,7585     ,14245          ,13997          ,748252          ,742524
-RandomTalonMarriage     ,Random                  ,2014        ,486         ,7803     ,4434     ,17683          ,8628           ,595320          ,533163
-RandomTalonMarriage     ,RandomTalon             ,1443        ,1057        ,8152     ,7254     ,15461          ,13353          ,779084          ,725095
-RandomTalonMarriage     ,RandomTrump             ,1930        ,570         ,7667     ,4817     ,17417          ,9857           ,609573          ,554236
-RandomTalonMarriage     ,RandomMarriage          ,1950        ,550         ,8008     ,5057     ,17198          ,9142           ,647286          ,605026
-RandomTalonMarriage     ,RandomTalonTrump        ,1246        ,1254        ,7295     ,7278     ,14430          ,14437          ,690327          ,693011
-RandomTalonMarriage     ,RandomTalonMarriage     ,1260        ,1240        ,7496     ,7602     ,14424          ,14476          ,729480          ,731024
-RandomTrumpMarriage     ,Random                  ,1455        ,1045        ,6215     ,5308     ,15320          ,12874          ,519257          ,475624
-RandomTrumpMarriage     ,RandomTalon             ,906         ,1594        ,5737     ,7174     ,11710          ,15732          ,618116          ,587866
-RandomTrumpMarriage     ,RandomTrump             ,1380        ,1120        ,6172     ,5601     ,14948          ,13380          ,540831          ,508888
-RandomTrumpMarriage     ,RandomMarriage          ,1251        ,1249        ,5949     ,5903     ,14359          ,14211          ,533492          ,520098
-RandomTrumpMarriage     ,RandomTalonTrump        ,941         ,1559        ,5787     ,7036     ,12071          ,15642          ,603266          ,590739
-RandomTrumpMarriage     ,RandomTalonMarriage     ,736         ,1764        ,5499     ,7564     ,10561          ,16427          ,619205          ,622505
-RandomTrumpMarriage     ,RandomTrumpMarriage     ,1242        ,1258        ,5919     ,5952     ,14209          ,14304          ,528315          ,529187
-RandomTalonTrumpMarriage,Random                  ,2148        ,352         ,8208     ,4254     ,18123          ,7813           ,620114          ,541541
-RandomTalonTrumpMarriage,RandomTalon             ,1423        ,1077        ,7714     ,6982     ,15453          ,13659          ,721187          ,674704
-RandomTalonTrumpMarriage,RandomTrump             ,2066        ,434         ,7856     ,4177     ,17898          ,8320           ,599617          ,508802
-RandomTalonTrumpMarriage,RandomMarriage          ,2039        ,461         ,7958     ,4516     ,17766          ,8656           ,612537          ,545777
-RandomTalonTrumpMarriage,RandomTalonTrump        ,1436        ,1064        ,8127     ,7187     ,14876          ,13063          ,779084          ,730942
-RandomTalonTrumpMarriage,RandomTalonMarriage     ,1407        ,1093        ,7693     ,7047     ,15086          ,13615          ,732152          ,691127
-RandomTalonTrumpMarriage,RandomTrumpMarriage     ,1748        ,752         ,7632     ,5478     ,16969          ,11273          ,626051          ,603331
-RandomTalonTrumpMarriage,RandomTalonTrumpMarriage,1282        ,1218        ,7574     ,7539     ,14296          ,14152          ,737900          ,734121
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+Random,Random,1267,1233,6037,5919,14010,13842,537925,527459
+RandomTalon,Random,1900,600,7668,4738,17328,9549,597848,551251
+RandomTalon,RandomTalon,1263,1237,7704,7731,14019,13867,764860,761892
+RandomTrump,Random,1327,1173,6037,5625,14562,13581,520874,503201
+RandomTrump,RandomTalon,538,1962,4807,7777,9218,17459,577060,604691
+RandomTrump,RandomTrump,1231,1269,5843,5930,14372,14667,501191,506345
+RandomMarriage,Random,1301,1199,6020,5771,14153,13467,532441,525321
+RandomMarriage,RandomTalon,656,1844,5414,7855,9991,16720,631498,634920
+RandomMarriage,RandomTrump,1307,1193,5971,5733,14434,13758,518524,513761
+RandomMarriage,RandomMarriage,1272,1228,5952,5840,14268,13972,523529,513764
+RandomTalonTrump,Random,1956,544,7676,4707,17541,9594,595758,538962
+RandomTalonTrump,RandomTalon,1352,1148,7775,7398,14474,13390,756120,729736
+RandomTalonTrump,RandomTrump,1875,625,7536,4901,17173,9902,595137,560986
+RandomTalonTrump,RandomMarriage,1793,707,7495,5175,16769,10326,595213,579548
+RandomTalonTrump,RandomTalonTrump,1273,1227,7665,7585,14245,13997,748252,742524
+RandomTalonMarriage,Random,2014,486,7803,4434,17683,8628,595320,533163
+RandomTalonMarriage,RandomTalon,1443,1057,8152,7254,15461,13353,779084,725095
+RandomTalonMarriage,RandomTrump,1930,570,7667,4817,17417,9857,609573,554236
+RandomTalonMarriage,RandomMarriage,1950,550,8008,5057,17198,9142,647286,605026
+RandomTalonMarriage,RandomTalonTrump,1246,1254,7295,7278,14430,14437,690327,693011
+RandomTalonMarriage,RandomTalonMarriage,1260,1240,7496,7602,14424,14476,729480,731024
+RandomTrumpMarriage,Random,1455,1045,6215,5308,15320,12874,519257,475624
+RandomTrumpMarriage,RandomTalon,906,1594,5737,7174,11710,15732,618116,587866
+RandomTrumpMarriage,RandomTrump,1380,1120,6172,5601,14948,13380,540831,508888
+RandomTrumpMarriage,RandomMarriage,1251,1249,5949,5903,14359,14211,533492,520098
+RandomTrumpMarriage,RandomTalonTrump,941,1559,5787,7036,12071,15642,603266,590739
+RandomTrumpMarriage,RandomTalonMarriage,736,1764,5499,7564,10561,16427,619205,622505
+RandomTrumpMarriage,RandomTrumpMarriage,1242,1258,5919,5952,14209,14304,528315,529187
+RandomTalonTrumpMarriage,Random,2148,352,8208,4254,18123,7813,620114,541541
+RandomTalonTrumpMarriage,RandomTalon,1423,1077,7714,6982,15453,13659,721187,674704
+RandomTalonTrumpMarriage,RandomTrump,2066,434,7856,4177,17898,8320,599617,508802
+RandomTalonTrumpMarriage,RandomMarriage,2039,461,7958,4516,17766,8656,612537,545777
+RandomTalonTrumpMarriage,RandomTalonTrump,1436,1064,8127,7187,14876,13063,779084,730942
+RandomTalonTrumpMarriage,RandomTalonMarriage,1407,1093,7693,7047,15086,13615,732152,691127
+RandomTalonTrumpMarriage,RandomTrumpMarriage,1748,752,7632,5478,16969,11273,626051,603331
+RandomTalonTrumpMarriage,RandomTalonTrumpMarriage,1282,1218,7574,7539,14296,14152,737900,734121

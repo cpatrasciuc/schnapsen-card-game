@@ -7,6 +7,9 @@
       </value>
     </option>
     <option name="RIGHT_MARGIN" value="80" />
+    <CsvCodeStyleSettings>
+      <option name="TABULARIZE" value="false" />
+    </CsvCodeStyleSettings>
     <codeStyleSettings language="Python">
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
