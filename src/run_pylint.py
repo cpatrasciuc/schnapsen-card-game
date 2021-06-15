@@ -39,6 +39,7 @@ def run_pylint():
     "--generated-members=" + ",".join(generated_members),
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
+    "--good-names=i,j,k,ex,Run,_,ax",
   ]
   pylint.lint.Run(pylint_opts + get_all_python_files())
 
