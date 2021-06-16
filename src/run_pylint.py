@@ -3,8 +3,8 @@
 #  found in the LICENSE file.
 
 import os
-
-import pylint.lint
+import subprocess
+import sys
 
 
 def get_all_python_files():
@@ -41,7 +41,10 @@ def run_pylint():
     "--disable=" + ",".join(disabled_checks),
     "--good-names=i,j,k,ex,Run,_,ax",
   ]
-  pylint.lint.Run(pylint_opts + get_all_python_files())
+
+  # Call pylint in a subprocess since it's licensed under GPL. Do not import it.
+  cmd = [sys.executable, "-m", "pylint"] + pylint_opts + get_all_python_files()
+  subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":
