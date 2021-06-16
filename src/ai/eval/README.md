@@ -1,3 +1,13 @@
+# Eval Results
+
+### Results table
+
+![Results Table](data/eval_table.png)
+
+### Stack Ranking
+
+![Stack Ranking](data/player_rankings.svg)
+
 # References
 
 * *Magic Math: How Many Games Do You Need for Statistical Significance in
