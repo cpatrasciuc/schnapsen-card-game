@@ -3,11 +3,12 @@
 #  found in the LICENSE file.
 
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Set, List
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from graphviz import Digraph
 from matplotlib.colors import ListedColormap
 from pandas import DataFrame
 from statsmodels.stats.proportion import proportion_confint
@@ -75,12 +76,43 @@ def _render_colored_table(player_names, color, win_percentage):
   plt.savefig(os.path.join(os.path.dirname(__file__), "data", "eval_table.png"))
 
 
+def _render_graph(edges: Set[Tuple[str, str]]):
+  # Add Graphviz binaries to the PATH environment variable.
+  dirname = os.path.dirname
+  graphviz_bin_path = os.path.join(dirname(dirname(dirname(dirname(__file__)))),
+                                   "Graphviz",
+                                   "bin")
+  print(f"Using Graphviz bin path: {graphviz_bin_path}")
+  env_path = os.environ.get("PATH", "")
+  if env_path.find(graphviz_bin_path) < 0:
+    print("Adding Graphviz bin path to $PATH")
+    os.environ["PATH"] = env_path + os.pathsep + graphviz_bin_path
+
+  # Render the graph as an SVG file.
+  graph = Digraph()
+  graph.edges(edges)
+  graph.unflatten(stagger=3)
+  graph.render(filename="player_rankings",
+               directory=os.path.join(dirname(__file__)), format="svg",
+               cleanup=True)
+
+
 def plot_eval_results(dataframe: DataFrame):
   player_names = dataframe["player_one"].append(
     dataframe["player_two"]).drop_duplicates()
   num_players = len(player_names)
+
+  # A matrix storing the win ratios for each player pair.
   win_percentage = np.ndarray((num_players, num_players))
+
+  # A matrix storing the color to be used in the results table for each player
+  # pair: 0 - red, 0.5 - gray, 1 - green.
   color = np.ndarray((num_players, num_players))
+
+  # A list of player names pairs (A, B) where player A is significantly better
+  # than player B.
+  significantly_better: List[Tuple[str, str]] = []
+
   for i, player_one in enumerate(player_names):
     for j, player_two in enumerate(player_names):
       metric = _get_metric(player_one, player_two, dataframe, "bummerls")
@@ -93,9 +125,11 @@ def plot_eval_results(dataframe: DataFrame):
       color[i][j] = 0.5
       if ci_low > 0.5:
         color[i][j] = 1.0
+        significantly_better.append((player_one, player_two))
       if ci_upp < 0.5:
         color[i][j] = 0.0
   _render_colored_table(player_names, color, win_percentage)
+  _render_graph(set(significantly_better))
 
 
 if __name__ == "__main__":

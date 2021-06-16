@@ -130,3 +130,5 @@ dmypy.json
 
 # Project temp files
 /src/ai/eval/eval_results.csv
+/Graphviz/
+/src/ai/eval/player_rankings.svg
