@@ -33,6 +33,6 @@ jobs:
         pip install -r requirements.txt
     - name: Run all tests on ${{ matrix.os }}
       run: |
-        echo $DISPLAY $PYTHONIOENCODING $PYTHONLEGACYWINDOWSSTDIO && cd src && python run_test_coverage.py
+        cd src && python run_test_coverage.py ./ai ./model
       env:
         PYTHONIOENCODING: utf-8:backslashreplace
