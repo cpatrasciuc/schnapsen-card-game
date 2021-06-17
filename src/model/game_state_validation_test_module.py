@@ -7,6 +7,8 @@ Test module used by
 ValidateGameStatesDecoratorTest.test_decorator_has_no_effect_in_non_debug_mode.
 """
 
+# pylint: disable=wrong-import-position
+
 import os
 import sys
 

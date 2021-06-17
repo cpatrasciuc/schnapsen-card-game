@@ -6,6 +6,8 @@
 Test module used by DebuggableWidgetTest.
 """
 
+# pylint: disable=wrong-import-position
+
 import os
 import sys
 
