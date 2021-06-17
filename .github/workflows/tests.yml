@@ -30,17 +30,7 @@ jobs:
     # https://kivy.readthedocs.io/en/master/installation/installation-linux.html
     - name: Install Ubuntu pakcages
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install -y \
-        libmtdev1 \
-        libsdl2-dev \
-        libsdl2-image-dev \
-        libsdl2-mixer-dev \
-        libsdl2-ttf-dev \
-        libportmidi-dev \
-        libswscale-dev \
-        libavformat-dev \
-        libavcodec-dev \
-        zlib1g-dev
+      run: sudo apt-get install libmtdev1 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
