@@ -7,6 +7,11 @@ Test module used by
 ValidateGameStatesDecoratorTest.test_decorator_has_no_effect_in_non_debug_mode.
 """
 
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from model.game_state_test_utils import get_game_state_for_tests
 from model.game_state_validation import validate_game_states
 from model.player_pair import PlayerPair

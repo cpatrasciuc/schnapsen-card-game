@@ -6,8 +6,13 @@
 Test module used by DebuggableWidgetTest.
 """
 
+import os
+import sys
+
 from kivy.base import stopTouchApp, runTouchApp
 from kivy.clock import Clock
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from ui.debuggable_widget import DebuggableWidget
 
