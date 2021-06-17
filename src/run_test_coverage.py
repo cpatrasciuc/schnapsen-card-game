@@ -39,7 +39,7 @@ def run_all_tests_with_coverage(folders: List[str] = None) -> float:
       print(result.errors)
       print(result.failures)
       print("\nTests failed. Coverage report will not be generated.")
-      return -1
+      sys.exit(-1)
 
   cov.stop()
   cov.save()
