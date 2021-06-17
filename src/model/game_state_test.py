@@ -11,6 +11,7 @@ import unittest
 from typing import List, Tuple, Optional
 
 from model.card import Card
+from model.card_value import CardValue
 from model.game_state import GameState, Trick, get_game_points
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_empty_talon_for_tests, \
@@ -330,3 +331,47 @@ class GetGamePointsTest(unittest.TestCase):
       self.assertEqual(swapped_expected_result,
                        get_game_points(*swapped_inputs),
                        msg=f"{swapped_inputs}")
+
+
+class GameStateNextPlayerViewTest(unittest.TestCase):
+  """Test for GameState.next_player_view() method."""
+
+  def test_next_player_one_view(self):
+    game_state = get_game_state_for_tests()
+    view = game_state.next_player_view()
+    self.assertEqual(game_state.cards_in_hand.one, view.cards_in_hand.one)
+    self.assertEqual(
+      [Card(Suit.DIAMONDS, CardValue.QUEEN), None, None, None, None],
+      view.cards_in_hand.two)
+    self.assertEqual(game_state.trump, view.trump)
+    self.assertEqual(game_state.trump_card, view.trump_card)
+    self.assertEqual([None], view.talon)
+    self.assertEqual(game_state.next_player, view.next_player)
+    self.assertEqual(game_state.player_that_closed_the_talon,
+                     view.player_that_closed_the_talon)
+    self.assertEqual(game_state.opponent_points_when_talon_was_closed,
+                     view.opponent_points_when_talon_was_closed)
+    self.assertEqual(game_state.won_tricks, view.won_tricks)
+    self.assertEqual(game_state.marriage_suits, view.marriage_suits)
+    self.assertEqual(game_state.trick_points, view.trick_points)
+    self.assertEqual(game_state.current_trick, view.current_trick)
+
+  def test_next_player_two_view(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      game_state.next_player = PlayerId.TWO
+    view = game_state.next_player_view()
+    self.assertEqual([None, None, None, None, None], view.cards_in_hand.one)
+    self.assertEqual(game_state.cards_in_hand.two, view.cards_in_hand.two)
+    self.assertEqual(game_state.trump, view.trump)
+    self.assertEqual(game_state.trump_card, view.trump_card)
+    self.assertEqual([None], view.talon)
+    self.assertEqual(game_state.next_player, view.next_player)
+    self.assertEqual(game_state.player_that_closed_the_talon,
+                     view.player_that_closed_the_talon)
+    self.assertEqual(game_state.opponent_points_when_talon_was_closed,
+                     view.opponent_points_when_talon_was_closed)
+    self.assertEqual(game_state.won_tricks, view.won_tricks)
+    self.assertEqual(game_state.marriage_suits, view.marriage_suits)
+    self.assertEqual(game_state.trick_points, view.trick_points)
+    self.assertEqual(game_state.current_trick, view.current_trick)

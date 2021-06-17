@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
 import dataclasses
 import random
 from typing import List, Optional
@@ -74,13 +75,17 @@ players to play their card.
 
 @dataclasses.dataclass
 class GameState:
-  """Stores all the information about a game at a specific point in time."""
+  """
+  Stores all the information about a game at a specific point in time. If the
+  instance represents the view from one player's perspective, then the hidden
+  cards in the opponent's hand and in the talon are None.
+  """
 
   # pylint: disable=too-many-instance-attributes
 
   # The cards that each player holds in their hands. The lists are not sorted.
   # Each player can have at most 5 cards in their hand.
-  cards_in_hand: PlayerPair[List[Card]]
+  cards_in_hand: PlayerPair[List[Optional[Card]]]
 
   # The trump suit. If the trump_card is not None, this field must be equal with
   # the suit of the trump_card.
@@ -94,7 +99,7 @@ class GameState:
 
   # The remaining deck, placed face-down on the trump card.
   # TODO(optimization): Maybe change this to collections.deque.
-  talon: List[Card]
+  talon: List[Optional[Card]]
 
   # The player expected to make the next move. It cannot be None.
   next_player: PlayerId = PlayerId.ONE
@@ -228,3 +233,18 @@ class GameState:
     return get_game_points(self.trick_points, self.next_player,
                            self.player_that_closed_the_talon,
                            self.opponent_points_when_talon_was_closed)
+
+  def next_player_view(self) -> "GameState":
+    """
+    Returns the GameState that represents the game as seen from the
+    next_player's perspective. It replaces the opponent's unseen cards and talon
+    cards with None.
+    """
+    view = copy.deepcopy(self)
+    for i, card in enumerate(self.cards_in_hand[self.next_player.opponent()]):
+      if not card.public:
+        view.cards_in_hand[self.next_player.opponent()][i] = None
+    for i, card in enumerate(self.talon):
+      assert not card.public, "Talon cards should never be public"
+      view.talon[i] = None
+    return view
