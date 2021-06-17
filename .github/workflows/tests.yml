@@ -27,26 +27,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install X server
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install fluxbox xinit xterm
-    - name: Start X server
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo startx
-        echo $DISPLAY
-    # https://kivy.readthedocs.io/en/master/installation/installation-linux.html
-    - name: Install Ubuntu pakcages
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install libmtdev1 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Set environment variables
-      run: |
-        echo "DISPLAY=:0.0" >> $GITHUB_ENV
-        echo "PYTHONIOENCODING=utf-8:backslashreplace" >> $GITHUB_ENV
     - name: Run all tests on ${{ matrix.os }}
       run: |
         echo $DISPLAY $PYTHONIOENCODING $PYTHONLEGACYWINDOWSSTDIO && cd src && python run_test_coverage.py
+      env:
+        PYTHONIOENCODING: utf-8:backslashreplace
