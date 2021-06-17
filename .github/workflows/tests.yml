@@ -33,7 +33,6 @@ jobs:
     - name: Start X server
       if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo ls /etc/init.d/lightdm
         sudo startx
         echo $DISPLAY
     # https://kivy.readthedocs.io/en/master/installation/installation-linux.html
@@ -47,9 +46,7 @@ jobs:
     - name: Set environment variables
       run: |
         echo "DISPLAY=:0.0" >> $GITHUB_ENV
-        echo "PYTHONIOENCODING=utf-8" >> $GITHUB_ENV
-        echo "PYTHONLEGACYWINDOWSSTDIO=utf-8" >> $GITHUB_ENV
+        echo "PYTHONIOENCODING=utf-8:backslashreplace" >> $GITHUB_ENV
     - name: Run all tests on ${{ matrix.os }}
       run: |
-        echo $DISPLAY $PYTHONIOENCODING $PYTHONLEGACYWINDOWSSTDIO
-        cd src && python run_test_coverage.py
+        echo $DISPLAY $PYTHONIOENCODING $PYTHONLEGACYWINDOWSSTDIO && cd src && python run_test_coverage.py
