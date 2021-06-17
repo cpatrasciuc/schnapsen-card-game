@@ -41,9 +41,9 @@ class RandomPlayer(Player):
     self._never_close_talon = never_close_talon
     self._force_marriage_announcement = force_marriage_announcement
 
-  def request_next_action(self, game_state: GameState) -> PlayerAction:
-    assert game_state.next_player == self.id, "Not my turn"
-    available_actions = get_available_actions(game_state)
+  def request_next_action(self, game_view: GameState) -> PlayerAction:
+    assert game_view.next_player == self.id, "Not my turn"
+    available_actions = get_available_actions(game_view)
     if self._never_close_talon:
       available_actions = [action for action in available_actions if
                            not isinstance(action, CloseTheTalonAction)]
@@ -58,10 +58,10 @@ class RandomPlayer(Player):
       has_trump_marriage = False
       for action in available_actions:
         if isinstance(action, AnnounceMarriageAction):
-          if action.card.suit == game_state.trump and not has_trump_marriage:
+          if action.card.suit == game_view.trump and not has_trump_marriage:
             marriages = [action]
             has_trump_marriage = True
-          elif action.card.suit == game_state.trump or not has_trump_marriage:
+          elif action.card.suit == game_view.trump or not has_trump_marriage:
             marriages.append(action)
       if len(marriages) > 0:
         return random.choice(marriages)

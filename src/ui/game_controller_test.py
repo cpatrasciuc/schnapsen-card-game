@@ -57,7 +57,8 @@ class GameControllerTest(GraphicUnitTest):
       players[action.player_id].request_next_action.assert_called_once()
       actual_game_state, action_callback = \
         players[action.player_id].request_next_action.call_args.args
-      self.assertEqual(expected_game_state, actual_game_state)
+      self.assertEqual(expected_game_state.next_player_view(),
+                       actual_game_state)
       action.execute(expected_game_state)
       players[action.player_id].reset_mock()
 
@@ -144,7 +145,8 @@ class GameControllerTest(GraphicUnitTest):
     players[last_action.player_id].request_next_action.assert_called_once()
     actual_game_state, action_callback = \
       players[last_action.player_id].request_next_action.call_args.args
-    self.assertEqual(bummerl.game.game_state, actual_game_state)
+    self.assertEqual(bummerl.game.game_state.next_player_view(),
+                     actual_game_state)
     players[last_action.player_id].reset_mock()
 
     # Player responds with an action.

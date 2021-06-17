@@ -86,7 +86,7 @@ def evaluate_player_pair(players: PlayerPair[Player],
       game = bummerl.game
       while not game.game_state.is_game_over:
         player = players[game.game_state.next_player]
-        action = player.request_next_action(game.game_state)
+        action = player.request_next_action(game.game_state.next_player_view())
         game.play_action(action)
       _accumulate_player_pair(trick_points, game.game_state.trick_points)
       last_game_points = game.game_state.game_points

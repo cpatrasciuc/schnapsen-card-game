@@ -21,14 +21,13 @@ class Player(abc.ABC):
 
   __metaclass__ = abc.ABCMeta
 
-  # TODO(player): Add a GameView class and a GameView argument to this function.
   @abc.abstractmethod
-  def request_next_action(self, game_state: GameState,
+  def request_next_action(self, game_view: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:
     """
     This method is called by the GameController when a new action is needed from
     this player.
-    :param game_state: The current game_state.
+    :param game_view: The current game_state, from the player's perspective.
     :param callback: The function to be called by the player when then next
     action is available. The action should be passed as the only argument to
     this callback.
@@ -46,7 +45,7 @@ class ComputerPlayer(Player):
   def __init__(self, player: Optional[AIPlayer] = None):
     self._player = player or RandomPlayer(PlayerId.TWO)
 
-  def request_next_action(self, game_state: GameState,
+  def request_next_action(self, game_view: GameState,
                           callback: Callable[[PlayerAction], None]) -> None:
     # TODO(ui): Run the AI in a different thread/process.
-    callback(self._player.request_next_action(game_state))
+    callback(self._player.request_next_action(game_view))

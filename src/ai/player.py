@@ -27,10 +27,9 @@ class Player(abc.ABC):
   def id(self) -> PlayerId:
     return self._player_id
 
-  # TODO(player): Add a GameView class and a GameView argument to this function.
   @abc.abstractmethod
-  def request_next_action(self, game_state: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState) -> PlayerAction:
     """
-    This method receives the current state of the game and must return the
-    action that the player chose to play.
+    This method receives the current state of the game as seen from the player's
+    perspective and must return the action that the player chose to play.
     """
