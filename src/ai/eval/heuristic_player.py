@@ -11,7 +11,7 @@ from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.player_action import PlayerAction, PlayCardAction, \
-  ExchangeTrumpCardAction, AnnounceMarriageAction
+  ExchangeTrumpCardAction, AnnounceMarriageAction, CloseTheTalonAction
 from model.player_id import PlayerId
 from model.suit import Suit
 
@@ -48,6 +48,8 @@ def _key_by_value_and_suit(card: Card):
 # Remaining cards: ['K♠', 'A♥']
 def _get_winning_prob(cards_in_hand: List[Card], remaining_cards: List[Card],
                       trump: Suit, must_follow_suit: bool):
+  # TODO(heuristic): This doesn't check if there are any public cards in the
+  # opponents' hand.
   remaining_trumps = [card for card in remaining_cards if
                       card.suit == trump]
   winning_prob = {}
@@ -108,11 +110,12 @@ if __name__ == "__main__":
 class HeuristicPlayer(RandomPlayer):
   """http://psellos.com/schnapsen/strategy.html"""
 
-  def __init__(self, player_id: PlayerId,
+  def __init__(self, player_id: PlayerId, can_close_talon=False,
                smart_discard: bool = True):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._smart_discard = smart_discard
+    self._can_close_talon = can_close_talon
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
@@ -128,26 +131,39 @@ class HeuristicPlayer(RandomPlayer):
     assert game_view.next_player == self.id, "Not my turn"
     self._cache_card_lists(game_view)
     if game_view.is_to_lead(self.id):
-      return self._get_leading_action(game_view)
-    return self._get_answer_action(game_view)
+      return self._on_lead_action(game_view)
+    return self._not_on_lead_action(game_view)
 
-  def _get_leading_action(self, game_view: GameState) -> PlayerAction:
-    # TODO(ai): Maybe close the talon.
+  def _on_lead_action(self, game_view: GameState) -> PlayerAction:
     action = super().request_next_action(game_view)
+
+    # Maybe exchange trump.
     if isinstance(action, ExchangeTrumpCardAction):
       return action
+
+    # Check if we have a preferred marriage in hand, but don't play it yet
+    # because we might have higher cards that cannot be beaten by the opponent
+    # (e.g., Trump Ace) and can secure the necessary points such that showing
+    # the marriage will end the game.
     self._marriage_suit = None
     if isinstance(action, AnnounceMarriageAction):
       self._marriage_suit = action.card.suit
-    if not game_view.must_follow_suit():
-      return self._get_leading_action_dont_follow_suit(game_view)
-    else:
-      return self._get_leading_action_follow_suit(game_view)
 
-  def _get_leading_action_dont_follow_suit(self,
-                                           game_view: GameState) -> PlayerAction:
+    # Maybe close the talon.
+    close_talon_action = self._should_close_talon(game_view)
+    if close_talon_action is not None:
+      return close_talon_action
+
+    # Get the preferred action to be played depending on the game state.
+    if not game_view.must_follow_suit():
+      return self._on_lead_do_not_follow_suit(game_view)
+    else:
+      return self._on_lead_follow_suit(game_view)
+
+  def _on_lead_do_not_follow_suit(self,
+                                  game_view: GameState) -> PlayerAction:
     winning_cards = {k: v for k, v in
-                     self._get_winning_scores(game_view).items() if v == 1.0}
+                     self._get_winning_prob(game_view).items() if v == 1.0}
     remaining_cards = self._remaining_cards
     points = game_view.trick_points[self.id]
     king = None
@@ -183,9 +199,9 @@ class HeuristicPlayer(RandomPlayer):
     card = self._best_discard(game_view)
     return PlayCardAction(self.id, card)
 
-  def _get_leading_action_follow_suit(self,
-                                      game_view: GameState) -> PlayerAction:
-    winning_cards = self._get_winning_scores(game_view)
+  def _on_lead_follow_suit(self,
+                           game_view: GameState) -> PlayerAction:
+    winning_cards = self._get_winning_prob(game_view)
     max_chance = max(winning_cards.values())
     if max_chance > 0:  # TODO: Set a threshold here.
       if self._marriage_suit is not None:
@@ -206,7 +222,7 @@ class HeuristicPlayer(RandomPlayer):
     card = self._best_discard(game_view)
     return PlayCardAction(self.id, card)
 
-  def _get_winning_scores(self, game_view):
+  def _get_winning_prob(self, game_view):
     return _get_winning_prob(self._my_cards,
                              self._remaining_cards,
                              game_view.trump, game_view.must_follow_suit())
@@ -218,14 +234,14 @@ class HeuristicPlayer(RandomPlayer):
     remaining_cards -= {game_view.trump_card}
     return list(remaining_cards)
 
-  def _get_answer_action(self, game_view: GameState) -> PlayerAction:
+  def _not_on_lead_action(self, game_view: GameState) -> PlayerAction:
     if game_view.must_follow_suit():
-      played_card = self._get_answer_action_follow_suit(game_view)
+      played_card = self._not_on_lead_follow_suit(game_view)
     else:
-      played_card = self._get_answer_action_do_not_follow_suit(game_view)
+      played_card = self._not_on_lead_do_not_follow_suit(game_view)
     return PlayCardAction(self.id, played_card)
 
-  def _get_answer_action_follow_suit(self, game_view: GameState) -> Card:
+  def _not_on_lead_follow_suit(self, game_view: GameState) -> Card:
     played_card = game_view.current_trick[self.id.opponent()]
     assert played_card is not None
     best_same_suit_card = self._best_same_suit_card(played_card, game_view)
@@ -251,7 +267,7 @@ class HeuristicPlayer(RandomPlayer):
       return trump_suit_cards[max_self]
     return self._best_discard(game_view)
 
-  def _smallest_non_trump_card(self, game_view: GameState) -> Optional[Card]:
+  def _my_smallest_non_trump_card(self, game_view: GameState) -> Optional[Card]:
     non_trump_cards = [card for card in self._my_cards if
                        card.suit != game_view.trump]
     non_trump_cards.sort(key=_key_by_value_and_suit)
@@ -259,7 +275,7 @@ class HeuristicPlayer(RandomPlayer):
       return non_trump_cards[0]
     return None
 
-  def _get_answer_action_do_not_follow_suit(self, game_view: GameState) -> Card:
+  def _not_on_lead_do_not_follow_suit(self, game_view: GameState) -> Card:
     played_card = game_view.current_trick[self.id.opponent()]
     assert played_card is not None
     best_same_suit_card = self._best_same_suit_card(played_card, game_view)
@@ -340,6 +356,8 @@ class HeuristicPlayer(RandomPlayer):
           preferred_discards.append(card)
         elif card.card_value in [CardValue.QUEEN, CardValue.KING]:
           marriage_pair = card.marriage_pair
+          # TODO(heuristic): A marriage in hand and an unseen marriage pair
+          # should not count the same.
           if marriage_pair in self._my_cards:
             continue
           if marriage_pair not in self._played_cards:
@@ -349,14 +367,48 @@ class HeuristicPlayer(RandomPlayer):
           continue
       if len(preferred_discards) > 0:
         remaining_suits = set(card.suit for card in self._remaining_cards)
-        # TODO(ai): Maybe here picked the highest discard from an exhausted suit
-        # if must not follow suit.
+        # TODO(ai): Maybe pick the highest discard from an exhausted suit if
+        # suit must not be followed.
         preferred_discards.sort(key=_key_by_value_and_suit)
         for card in preferred_discards:
           if card.suit not in remaining_suits:
             return card
         return preferred_discards[0]
-    card = self._smallest_non_trump_card(game_view)
+    card = self._my_smallest_non_trump_card(game_view)
     if card is not None:
       return card
     return min(self._my_cards, key=_key_by_value_and_suit)
+
+  def _should_close_talon(self, game_view: GameState) -> Optional[
+    CloseTheTalonAction]:
+    if not self._can_close_talon:
+      return None
+    action = CloseTheTalonAction(self.id)
+    if not action.can_execute_on(game_view):
+      return None
+    # This is just an estimation. The two big flaws are:
+    #   * If multiple cards have a probability of 1.0, it means that playing
+    #     them as the next card will win the next trick. But it doesn't mean the
+    #     probabilities will stay the same after this trick. For example, if we
+    #     have the Ace and Ten from a non-trump suit, they might have both a
+    #     probability of 1.0 if it's guaranteed that the opponent has one card
+    #     from the same non-trump suit, but after we play the Ace, the Ten might
+    #     not have a probability of 1.0 anymore if there are no more cards from
+    #     this suit and the opponent can trump it.
+    #   * It computes a lower bound on the number of points we can gain by
+    #     assuming that the opponent plays the smallest remaining cards (without
+    #     following suit), but since suit must be followed we might gain more
+    #     than what we estimate here.
+    # Overall, despite these two big flaws, it seems the player behaves better
+    # with this heuristic enabled.
+    winning_prob = _get_winning_prob(self._my_cards, self._remaining_cards,
+                                     game_view.trump, True)
+    total = game_view.trick_points[self.id]
+    prob_and_cards = [(prob, card) for card, prob in winning_prob.items()]
+    prob_and_cards.sort(reverse=True)
+    for i, prod_and_card in enumerate(prob_and_cards):
+      prob, card = prod_and_card
+      total += prob * (card.card_value + self._remaining_cards[i].card_value)
+    if total > 65:
+      return action
+    return None
