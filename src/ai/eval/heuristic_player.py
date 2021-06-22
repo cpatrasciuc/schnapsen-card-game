@@ -44,8 +44,6 @@ def _key_by_value_and_suit(card: Card):
   return card.card_value, card.suit
 
 
-# Cards in hand: ['X♠', 'Q♠']
-# Remaining cards: ['K♠', 'A♥']
 def _get_winning_prob(cards_in_hand: List[Card], remaining_cards: List[Card],
                       trump: Suit, must_follow_suit: bool):
   # TODO(heuristic): This doesn't check if there are any public cards in the
@@ -103,26 +101,34 @@ if __name__ == "__main__":
     Suit.SPADES, False))
 
 
-# TODO(ai): Consider trump control from http://psellos.com/schnapsen/strategy.html.
-# Play aces or tens early if the trump situation favors your opponent.
-
 # TODO(ai): Replace RandomPLayer with Player when the implementation in ready.
 class HeuristicPlayer(RandomPlayer):
   """http://psellos.com/schnapsen/strategy.html"""
 
   def __init__(self, player_id: PlayerId, can_close_talon=False,
-               smart_discard: bool = True):
+               smart_discard: bool = True, save_marriages=False,
+               trump_for_marriage=False, avoid_direct_loss=False,
+               trump_control=False, trump_control_priorities=False):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._smart_discard = smart_discard
     self._can_close_talon = can_close_talon
+    self._save_marriages = save_marriages
+    self._trump_for_marriage = trump_for_marriage
+    self._avoid_direct_loss = avoid_direct_loss
+    self._trump_control = trump_control
+    self._trump_control_priorities = trump_control_priorities
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
+    self._my_trump_cards = None
     self._played_cards = None
 
   def _cache_card_lists(self, game_view: GameState) -> None:
     self._my_cards = game_view.cards_in_hand[self.id]
+    self._my_trump_cards = [card for card in self._my_cards if
+                            card.suit == game_view.trump]
+    self._my_trump_cards.sort(key=_key_by_value_and_suit)
     self._played_cards = _get_played_cards(game_view)
     self._remaining_cards = self._get_remaining_cards(game_view)
     self._remaining_cards.sort(key=_key_by_value_and_suit)
@@ -194,6 +200,10 @@ class HeuristicPlayer(RandomPlayer):
           (ace in self._my_cards or ace in self._played_cards):
         return AnnounceMarriageAction(self.id, king)
       return AnnounceMarriageAction(self.id, king.marriage_pair)
+
+    card = self._maybe_trump_control(game_view)
+    if card is not None:
+      return PlayCardAction(self.id, card)
 
     # Play a small card.
     card = self._best_discard(game_view)
@@ -281,25 +291,44 @@ class HeuristicPlayer(RandomPlayer):
     best_same_suit_card = self._best_same_suit_card(played_card, game_view)
     if best_same_suit_card is not None:
       if best_same_suit_card.wins(played_card, game_view.trump):
-        return best_same_suit_card
-    if played_card.card_value in [CardValue.TEN, CardValue.ACE]:
+        if best_same_suit_card.card_value == CardValue.KING and \
+            best_same_suit_card.marriage_pair in self._my_cards:
+          # Here we break a marriage to win a Jack from the same suit.
+          if not self._save_marriages:
+            return best_same_suit_card
+        else:
+          return best_same_suit_card
+
+    trump_for_marriage = False
+    if self._trump_for_marriage:
+      for suit in Suit:
+        king = Card(suit, CardValue.KING)
+        if king in self._my_cards and king.marriage_pair in self._my_cards:
+          if suit != game_view.trump or len(self._my_trump_cards) > 2:
+            trump_for_marriage = True
+            break
+
+    if played_card.card_value in [CardValue.TEN, CardValue.ACE] or \
+        trump_for_marriage:
       if played_card.suit != game_view.trump:
-        trump_cards = [card for card in self._my_cards if
-                       card.suit == game_view.trump]
-        trump_cards.sort(key=_key_by_value_and_suit)
-        if len(trump_cards) > 0:
-          trump_card = _highest_adjacent_card_in_hand(trump_cards[0],
-                                                      self._my_cards,
-                                                      self._played_cards)
-          # TODO(ai): Save trump marriage.
-          if trump_card.card_value == CardValue.KING and \
-              trump_card.marriage_pair in trump_cards and \
-              len(trump_cards) > 2:
-            trump_cards.remove(trump_card)
-            trump_cards.remove(trump_card.marriage_pair)
-            return trump_cards[-1]
+        trump_card = self._win_with_trump()
+        if trump_card is not None:
           return trump_card
+
     return self._best_discard(game_view)
+
+  def _win_with_trump(self) -> Card:
+    if len(self._my_trump_cards) > 0:
+      trump_card = _highest_adjacent_card_in_hand(self._my_trump_cards[0],
+                                                  self._my_cards,
+                                                  self._played_cards)
+      if trump_card.card_value == CardValue.KING and \
+          trump_card.marriage_pair in self._my_trump_cards and \
+          len(self._my_trump_cards) > 2:
+        self._my_trump_cards.remove(trump_card)
+        self._my_trump_cards.remove(trump_card.marriage_pair)
+        return self._my_trump_cards[-1]
+      return trump_card
 
   def _best_same_suit_card(self, played_card: Card,
                            game_view: GameState) -> Optional[Card]:
@@ -335,49 +364,76 @@ class HeuristicPlayer(RandomPlayer):
 
   def _best_discard(self, game_view: GameState) -> Card:
     if self._smart_discard:
-      preferred_discards = []
-      current_played_card = game_view.current_trick[self.id.opponent()]
-      if current_played_card is not None:
-        self._played_cards.append(current_played_card)
-      for card in self._my_cards:
-        if card.suit == game_view.trump:
-          continue
-        if card.card_value == CardValue.JACK:
-          ten = Card(card.suit, CardValue.TEN)
-          ace = Card(card.suit, CardValue.ACE)
-          king = Card(card.suit, CardValue.KING)
-          queen = Card(card.suit, CardValue.QUEEN)
-          if ten in self._my_cards and \
-              ace not in self._my_cards and \
-              ace not in self._played_cards and \
-              king not in self._my_cards and \
-              queen not in self._my_cards:
-            continue
-          preferred_discards.append(card)
-        elif card.card_value in [CardValue.QUEEN, CardValue.KING]:
-          marriage_pair = card.marriage_pair
-          # TODO(heuristic): A marriage in hand and an unseen marriage pair
-          # should not count the same.
-          if marriage_pair in self._my_cards:
-            continue
-          if marriage_pair not in self._played_cards:
-            continue
-          preferred_discards.append(card)
-        else:
-          continue
-      if len(preferred_discards) > 0:
-        remaining_suits = set(card.suit for card in self._remaining_cards)
-        # TODO(ai): Maybe pick the highest discard from an exhausted suit if
-        # suit must not be followed.
-        preferred_discards.sort(key=_key_by_value_and_suit)
-        for card in preferred_discards:
-          if card.suit not in remaining_suits:
-            return card
-        return preferred_discards[0]
+      return self._discard_with_priorities(game_view)
     card = self._my_smallest_non_trump_card(game_view)
     if card is not None:
       return card
     return min(self._my_cards, key=_key_by_value_and_suit)
+
+  def _discard_with_priorities(self, game_view: GameState) -> Card:
+    priorities = ["cards_from_exhausted_suits",
+                  "jack_with_ten_protection",
+                  "jack_with_no_ten_protection",
+                  "queen_or_king_with_no_marriage_chance",
+                  "queen_or_king_with_marriage_chance",
+                  "queen_or_king_with_marriage_in_hand",
+                  "other_non_trump_cards",
+                  "trump_cards"]
+    preferred_discards = {priority: [] for priority in priorities}
+    current_played_card = game_view.current_trick[self.id.opponent()]
+    remaining_suits = set(card.suit for card in self._remaining_cards)
+    played_cards = self._played_cards
+    if current_played_card is not None:
+      played_cards = self._played_cards + [current_played_card]
+    for card in self._my_cards:
+      if card.suit == game_view.trump:
+        preferred_discards["trump_cards"].append(card)
+        continue
+      if card.suit not in remaining_suits:
+        preferred_discards["cards_from_exhausted_suits"].append(card)
+      elif card.card_value == CardValue.JACK:
+        ten = Card(card.suit, CardValue.TEN)
+        ace = Card(card.suit, CardValue.ACE)
+        king = Card(card.suit, CardValue.KING)
+        queen = Card(card.suit, CardValue.QUEEN)
+        if ten in self._my_cards and \
+            ace not in self._my_cards and \
+            ace not in played_cards and \
+            king not in self._my_cards and \
+            queen not in self._my_cards:
+          preferred_discards["jack_with_no_ten_protection"].append(card)
+        else:
+          preferred_discards["jack_with_ten_protection"].append(card)
+      elif card.card_value in [CardValue.QUEEN, CardValue.KING]:
+        marriage_pair = card.marriage_pair
+        if marriage_pair in self._my_cards:
+          preferred_discards["queen_or_king_with_marriage_in_hand"].append(card)
+        elif marriage_pair not in played_cards:
+          preferred_discards["queen_or_king_with_marriage_chance"].append(card)
+        else:
+          preferred_discards["queen_or_king_with_no_marriage_chance"].append(
+            card)
+      else:
+        preferred_discards["other_non_trump_cards"].append(card)
+    best_card = None
+    for priority in priorities:
+      cards = preferred_discards[priority]
+      if len(cards) > 0:
+        cards.sort(key=_key_by_value_and_suit)
+        best_card = cards[0]
+        break
+    if self._avoid_direct_loss and current_played_card is not None:
+      points = current_played_card.card_value + game_view.trick_points[
+        self.id.opponent()]
+      if points + best_card.card_value > 65:
+        trump_card = self._win_with_trump()
+        if trump_card is not None:
+          return trump_card
+        smallest_card = self._my_smallest_non_trump_card(game_view)
+        if smallest_card is not None:
+          return smallest_card
+        return min(self._my_cards, key=_key_by_value_and_suit)
+    return best_card
 
   def _should_close_talon(self, game_view: GameState) -> Optional[
     CloseTheTalonAction]:
@@ -411,4 +467,68 @@ class HeuristicPlayer(RandomPlayer):
       total += prob * (card.card_value + self._remaining_cards[i].card_value)
     if total > 65:
       return action
+    return None
+
+  def _maybe_trump_control(self, game_view: GameState):
+    if not self._trump_control:
+      return None
+
+    # If the opponent can win the game by trumping out high card, don't play it.
+    remaining_trumps = [c for c in self._remaining_cards if
+                        c.suit == game_view.trump]
+    if len(remaining_trumps) > 0:
+      max_remaining_trump = max(remaining_trumps)
+      if max_remaining_trump.card_value + CardValue.ACE > 65:
+        return None
+
+    num_my_trumps = len(self._my_trump_cards)
+    opp_cards = game_view.cards_in_hand[self.id.opponent()]
+    num_opp_trumps = len([card for card in opp_cards if
+                          card is not None and card.suit == game_view.trump])
+    played_trumps = len(
+      [card for card in self._played_cards if card.suit == game_view.trump])
+    num_remaining_trumps = 5 - num_my_trumps - num_opp_trumps - played_trumps - \
+                           (1 if game_view.trump_card is not None else 0)
+    num_opp_unknown_cards = len([card for card in opp_cards if card is None])
+    if not game_view.is_talon_closed and len(game_view.talon) == 1:
+      num_opp_trumps += 1
+      num_opp_unknown_cards -= 1
+    num_remaining_cards = len(self._remaining_cards)
+    num_remaining_cards -= len([c for c in opp_cards if c is not None])
+    total_scenarios = comb(num_remaining_cards, num_opp_unknown_cards)
+    probabilities = []
+    for i in range(num_remaining_trumps + 1):
+      possible_opp_trumps = num_opp_trumps + i
+      if possible_opp_trumps <= num_my_trumps:
+        continue
+      if num_opp_unknown_cards < i:
+        break
+      possibilities = comb(num_remaining_trumps, i) * comb(
+        num_remaining_cards - num_remaining_trumps,
+        num_opp_unknown_cards - i)
+      probabilities.append(possibilities / total_scenarios)
+    if sum(probabilities) > 0.5:
+      high_cards = [card for card in self._my_cards if
+                    card.suit != game_view.trump
+                    and card.card_value in [CardValue.TEN, CardValue.ACE]]
+      if len(high_cards) > 0:
+        if not self._trump_control_priorities:
+          return random.choice(high_cards)
+        remaining_suits = set(c.suit for c in self._remaining_cards)
+        single_tens = [c for c in high_cards if
+                       c.card_value == CardValue.TEN and \
+                       c.suit not in remaining_suits]
+        other_tens = [c for c in high_cards if
+                      c.card_value == CardValue.TEN and \
+                      c.suit in remaining_suits]
+        single_aces = [c for c in high_cards if
+                       c.card_value == CardValue.ACE and \
+                       c.suit not in remaining_suits]
+        other_aces = [c for c in high_cards if
+                      c.card_value == CardValue.ACE and \
+                      c.suit in remaining_suits]
+        for card_list in reversed(
+            [other_aces, single_aces, other_tens, single_tens]):
+          if len(card_list) > 0:
+            return random.choice(card_list)
     return None
