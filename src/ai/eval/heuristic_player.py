@@ -44,46 +44,61 @@ def _key_by_value_and_suit(card: Card):
   return card.card_value, card.suit
 
 
-def _get_winning_prob(cards_in_hand: List[Card], remaining_cards: List[Card],
+def _get_winning_prob(cards_in_hand: List[Card],
+                      remaining_cards: List[Card], opp_cards: List[Card],
                       trump: Suit, must_follow_suit: bool):
-  # TODO(heuristic): This doesn't check if there are any public cards in the
-  # opponents' hand.
-  remaining_trumps = [card for card in remaining_cards if
-                      card.suit == trump]
+  opp_public_cards = set([c for c in opp_cards if c is not None])
+  opp_trumps = set([c for c in opp_public_cards if c.suit == trump])
+  num_opp_unknown_cards = len(opp_cards) - len(opp_public_cards)
+
+  unseen_cards = [c for c in remaining_cards if c not in opp_public_cards]
+  unplayed_trumps = [card for card in remaining_cards if card.suit == trump]
+
   winning_prob = {}
   for card in cards_in_hand:
-    # Probability that this card cannot pe won by the opponent.
-    remaining_cards_same_suit = [c for c in remaining_cards if
-                                 c.suit == card.suit]
-    better_cards = [c for c in remaining_cards_same_suit if
-                    c.card_value > card.card_value]
+    # Probability that this card cannot be won by the opponent.
+    unplayed_cards_same_suit = [c for c in remaining_cards if
+                                c.suit == card.suit]
+    unplayed_better_cards = [c for c in unplayed_cards_same_suit if
+                             c.card_value > card.card_value]
     if not must_follow_suit and card.suit != trump:
-      better_cards += remaining_trumps
+      unplayed_better_cards += unplayed_trumps
 
-    num_total_scenarios = comb(len(remaining_cards),
-                               len(cards_in_hand))
+    if len(opp_public_cards.intersection(unplayed_better_cards)) > 0:
+      winning_prob[card] = 0.0
+      continue
+
+    num_total_scenarios = comb(len(unseen_cards), num_opp_unknown_cards)
+
     if not must_follow_suit:
-      num_winning_scenarios = comb(len(remaining_cards) - len(better_cards),
-                                   len(cards_in_hand))
+      num_winning_scenarios = comb(
+        len(unseen_cards) - len(unplayed_better_cards), num_opp_unknown_cards)
     else:
-      smaller_cards_same_suit = [c for c in remaining_cards_same_suit if
-                                 c.card_value < card.card_value]
+      unseen_smaller_cards_same_suit = [c for c in unseen_cards if
+                                        c.card_value < card.card_value and \
+                                        c.suit == card.suit]
+      opp_smaller_cards_same_suit = [c for c in opp_public_cards if
+                                     c.card_value < card.card_value and \
+                                     c.suit == card.suit]
       num_winning_scenarios = 0
-      for i in range(len(smaller_cards_same_suit) + 1):
-        if i > len(cards_in_hand):
+      for i in range(len(unseen_smaller_cards_same_suit) + 1):
+        if i > num_opp_unknown_cards:
           break
+        smaller_cards_in_opp_hand = len(opp_smaller_cards_same_suit) + i
         # No smaller cards, so make sure the opponent doesn't have any trump.
-        if i == 0 and card.suit != trump:
-          num_better_cards = len(better_cards) + len(remaining_trumps)
-          num_unimportant_cards = len(remaining_cards) - num_better_cards - len(
-            smaller_cards_same_suit)
+        if smaller_cards_in_opp_hand == 0 and card.suit != trump:
+          if len(opp_trumps) > 0:
+            continue
+          num_better_cards = len(unplayed_better_cards) + len(unplayed_trumps)
+          num_unimportant_cards = len(unseen_cards) - num_better_cards - len(
+            unseen_smaller_cards_same_suit)
         else:
-          num_better_cards = len(better_cards)
-          num_unimportant_cards = len(remaining_cards) - num_better_cards - len(
-            smaller_cards_same_suit)
-        num_winning_scenarios += comb(len(smaller_cards_same_suit), i) * comb(
-          num_unimportant_cards,
-          len(cards_in_hand) - i)
+          num_better_cards = len(unplayed_better_cards)
+          num_unimportant_cards = len(unseen_cards) - num_better_cards - len(
+            unseen_smaller_cards_same_suit)
+        num_winning_scenarios += comb(len(unseen_smaller_cards_same_suit),
+                                      i) * comb(
+          num_unimportant_cards, num_opp_unknown_cards - i)
     winning_prob[card] = num_winning_scenarios / num_total_scenarios
   return winning_prob
 
@@ -101,6 +116,7 @@ if __name__ == "__main__":
     Suit.SPADES, False))
 
 
+# TODO(heuristic): Save 33 points.
 # TODO(ai): Replace RandomPLayer with Player when the implementation in ready.
 class HeuristicPlayer(RandomPlayer):
   """http://psellos.com/schnapsen/strategy.html"""
@@ -108,7 +124,7 @@ class HeuristicPlayer(RandomPlayer):
   def __init__(self, player_id: PlayerId, can_close_talon=False,
                smart_discard: bool = True, save_marriages=False,
                trump_for_marriage=False, avoid_direct_loss=False,
-               trump_control=False, trump_control_priorities=False):
+               trump_control=False):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._smart_discard = smart_discard
@@ -117,7 +133,6 @@ class HeuristicPlayer(RandomPlayer):
     self._trump_for_marriage = trump_for_marriage
     self._avoid_direct_loss = avoid_direct_loss
     self._trump_control = trump_control
-    self._trump_control_priorities = trump_control_priorities
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
@@ -235,6 +250,7 @@ class HeuristicPlayer(RandomPlayer):
   def _get_winning_prob(self, game_view):
     return _get_winning_prob(self._my_cards,
                              self._remaining_cards,
+                             game_view.cards_in_hand[self.id.opponent()],
                              game_view.trump, game_view.must_follow_suit())
 
   def _get_remaining_cards(self, game_view: GameState) -> List[Card]:
@@ -256,6 +272,7 @@ class HeuristicPlayer(RandomPlayer):
     assert played_card is not None
     best_same_suit_card = self._best_same_suit_card(played_card, game_view)
     if best_same_suit_card is not None:
+      # TODO(heuristic): Save trump marriage.
       return best_same_suit_card
 
     # Do we have to play trump?
@@ -308,6 +325,7 @@ class HeuristicPlayer(RandomPlayer):
             trump_for_marriage = True
             break
 
+    # TODO(heuristic): Maybe trump for win.
     if played_card.card_value in [CardValue.TEN, CardValue.ACE] or \
         trump_for_marriage:
       if played_card.suit != game_view.trump:
@@ -318,6 +336,8 @@ class HeuristicPlayer(RandomPlayer):
     return self._best_discard(game_view)
 
   def _win_with_trump(self) -> Card:
+    # TODO(heuristic): If we have jack and marriage pair, and the other marriage
+    # pair is the trump card, try to trump with something else.
     if len(self._my_trump_cards) > 0:
       trump_card = _highest_adjacent_card_in_hand(self._my_trump_cards[0],
                                                   self._my_cards,
@@ -457,8 +477,7 @@ class HeuristicPlayer(RandomPlayer):
     #     than what we estimate here.
     # Overall, despite these two big flaws, it seems the player behaves better
     # with this heuristic enabled.
-    winning_prob = _get_winning_prob(self._my_cards, self._remaining_cards,
-                                     game_view.trump, True)
+    winning_prob = self._get_winning_prob(game_view)
     total = game_view.trick_points[self.id]
     prob_and_cards = [(prob, card) for card, prob in winning_prob.items()]
     prob_and_cards.sort(reverse=True)
@@ -512,8 +531,6 @@ class HeuristicPlayer(RandomPlayer):
                     card.suit != game_view.trump
                     and card.card_value in [CardValue.TEN, CardValue.ACE]]
       if len(high_cards) > 0:
-        if not self._trump_control_priorities:
-          return random.choice(high_cards)
         remaining_suits = set(c.suit for c in self._remaining_cards)
         single_tens = [c for c in high_cards if
                        c.card_value == CardValue.TEN and \
@@ -527,8 +544,7 @@ class HeuristicPlayer(RandomPlayer):
         other_aces = [c for c in high_cards if
                       c.card_value == CardValue.ACE and \
                       c.suit in remaining_suits]
-        for card_list in reversed(
-            [other_aces, single_aces, other_tens, single_tens]):
+        for card_list in [single_tens, single_aces, other_tens, other_aces]:
           if len(card_list) > 0:
             return random.choice(card_list)
     return None
