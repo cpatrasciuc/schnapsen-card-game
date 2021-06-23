@@ -45,7 +45,8 @@ def _key_by_value_and_suit(card: Card):
 
 
 def _get_winning_prob(cards_in_hand: List[Card],
-                      remaining_cards: List[Card], opp_cards: List[Card],
+                      remaining_cards: List[Card],
+                      opp_cards: List[Optional[Card]],
                       trump: Suit, must_follow_suit: bool):
   opp_public_cards = set([c for c in opp_cards if c is not None])
   opp_trumps = set([c for c in opp_public_cards if c.suit == trump])
@@ -112,7 +113,7 @@ if __name__ == "__main__":
                       'A♦', 'K♣', 'X♣', 'K♥', 'Q♠']]
   pprint.pprint(_get_winning_prob(
     cards_in_hand,
-    remaining_cards,
+    remaining_cards, [None, None, None, None, None],
     Suit.SPADES, False))
 
 
@@ -124,7 +125,7 @@ class HeuristicPlayer(RandomPlayer):
   def __init__(self, player_id: PlayerId, can_close_talon=False,
                smart_discard: bool = True, save_marriages=False,
                trump_for_marriage=False, avoid_direct_loss=False,
-               trump_control=False):
+               trump_control=False, improve_trumping=False):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._smart_discard = smart_discard
@@ -133,6 +134,7 @@ class HeuristicPlayer(RandomPlayer):
     self._trump_for_marriage = trump_for_marriage
     self._avoid_direct_loss = avoid_direct_loss
     self._trump_control = trump_control
+    self._improve_trumping = improve_trumping
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
@@ -325,19 +327,21 @@ class HeuristicPlayer(RandomPlayer):
             trump_for_marriage = True
             break
 
+    if len(game_view.won_tricks.one) + len(game_view.won_tricks.two) == 3 and \
+        self._can_exchange_trump_jack_for_marriage(game_view):
+      trump_for_marriage = True
+
     # TODO(heuristic): Maybe trump for win.
     if played_card.card_value in [CardValue.TEN, CardValue.ACE] or \
         trump_for_marriage:
       if played_card.suit != game_view.trump:
-        trump_card = self._win_with_trump()
+        trump_card = self._win_with_trump(game_view)
         if trump_card is not None:
           return trump_card
 
     return self._best_discard(game_view)
 
-  def _win_with_trump(self) -> Card:
-    # TODO(heuristic): If we have jack and marriage pair, and the other marriage
-    # pair is the trump card, try to trump with something else.
+  def _win_with_trump(self, game_view: GameState) -> Card:
     if len(self._my_trump_cards) > 0:
       trump_card = _highest_adjacent_card_in_hand(self._my_trump_cards[0],
                                                   self._my_cards,
@@ -348,7 +352,25 @@ class HeuristicPlayer(RandomPlayer):
         self._my_trump_cards.remove(trump_card)
         self._my_trump_cards.remove(trump_card.marriage_pair)
         return self._my_trump_cards[-1]
+      if self._can_exchange_trump_jack_for_marriage(game_view):
+        self._my_trump_cards.remove(Card(game_view.trump, CardValue.JACK))
+        self._my_trump_cards.remove(game_view.trump_card.marriage_pair)
+        return self._my_trump_cards[-1]
       return trump_card
+
+  def _can_exchange_trump_jack_for_marriage(self, game_view):
+    if len(self._my_trump_cards) <= 2:
+      return False
+    jack = Card(game_view.trump, CardValue.JACK)
+    if jack not in self._my_trump_cards:
+      return False
+    king = Card(game_view.trump, CardValue.KING)
+    queen = Card(game_view.trump, CardValue.QUEEN)
+    if king in self._my_trump_cards and queen == game_view.trump_card:
+      return True
+    if queen in self._my_trump_cards and king == game_view.trump_card:
+      return True
+    return False
 
   def _best_same_suit_card(self, played_card: Card,
                            game_view: GameState) -> Optional[Card]:
@@ -446,7 +468,7 @@ class HeuristicPlayer(RandomPlayer):
       points = current_played_card.card_value + game_view.trick_points[
         self.id.opponent()]
       if points + best_card.card_value > 65:
-        trump_card = self._win_with_trump()
+        trump_card = self._win_with_trump(game_view)
         if trump_card is not None:
           return trump_card
         smallest_card = self._my_smallest_non_trump_card(game_view)
