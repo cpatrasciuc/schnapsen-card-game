@@ -124,7 +124,7 @@ class HeuristicPlayer(RandomPlayer):
   def __init__(self, player_id: PlayerId, can_close_talon=False,
                smart_discard: bool = True, save_marriages=False,
                trump_for_marriage=False, avoid_direct_loss=False,
-               trump_control=False, improve_trumping=False):
+               trump_control=False):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._smart_discard = smart_discard
@@ -133,7 +133,6 @@ class HeuristicPlayer(RandomPlayer):
     self._trump_for_marriage = trump_for_marriage
     self._avoid_direct_loss = avoid_direct_loss
     self._trump_control = trump_control
-    self._improve_trumping = improve_trumping
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
