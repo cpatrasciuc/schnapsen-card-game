@@ -274,7 +274,14 @@ class HeuristicPlayer(RandomPlayer):
     assert played_card is not None
     best_same_suit_card = self._best_same_suit_card(played_card, game_view)
     if best_same_suit_card is not None:
-      # TODO(heuristic): Save trump marriage.
+      my_same_suit_cards = [c for c in self._my_cards if
+                            c.suit == played_card.suit]
+      if best_same_suit_card.card_value == CardValue.KING and \
+          best_same_suit_card.marriage_pair in self._my_cards and \
+          len(my_same_suit_cards) > 2:
+        my_same_suit_cards.remove(best_same_suit_card)
+        my_same_suit_cards.remove(best_same_suit_card.marriage_pair)
+        best_same_suit_card = my_same_suit_cards[-1]
       return best_same_suit_card
 
     # Do we have to play trump?
@@ -290,10 +297,20 @@ class HeuristicPlayer(RandomPlayer):
       max_self = len(trump_suit_cards) - 1
       while max_opp >= 0 and max_self >= 1:
         if remaining_trump_cards[max_opp] > trump_suit_cards[max_self]:
-          return trump_suit_cards[max_self]
+          break
         max_opp -= 1
         max_self -= 1
-      return trump_suit_cards[max_self]
+      trump_card = _highest_adjacent_card_in_hand(
+        trump_suit_cards[max_self],
+        self._my_cards,
+        self._played_cards)
+      if trump_card.card_value in [CardValue.KING, CardValue.QUEEN] and \
+          trump_card.marriage_pair in self._my_trump_cards and \
+          len(self._my_trump_cards) > 2:
+        self._my_trump_cards.remove(trump_card)
+        self._my_trump_cards.remove(trump_card.marriage_pair)
+        trump_card = self._my_trump_cards[-1]
+      return trump_card
     return self._best_discard(game_view)
 
   def _my_smallest_non_trump_card(self, game_view: GameState) -> Optional[Card]:
@@ -393,6 +410,8 @@ class HeuristicPlayer(RandomPlayer):
         max_self = len(winning_cards) - 1
         while max_opp >= 0 and max_self >= 1:
           if remaining_cards_same_suit[max_opp] > winning_cards[max_self]:
+            # TODO(heuristic): Update similar to _not_on_lead_follow_suit to
+            # save marriage or return adjacent.
             return winning_cards[max_self]
           max_opp -= 1
           max_self -= 1
