@@ -117,8 +117,7 @@ if __name__ == "__main__":
     Suit.SPADES, False))
 
 
-# TODO(heuristic): Save 33 points.
-# TODO(ai): Replace RandomPLayer with Player when the implementation in ready.
+# TODO(ai): Replace RandomPlayer with Player when the implementation in ready.
 class HeuristicPlayer(RandomPlayer):
   """http://psellos.com/schnapsen/strategy.html"""
 
