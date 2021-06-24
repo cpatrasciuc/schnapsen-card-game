@@ -410,9 +410,7 @@ class HeuristicPlayer(RandomPlayer):
         max_self = len(winning_cards) - 1
         while max_opp >= 0 and max_self >= 1:
           if remaining_cards_same_suit[max_opp] > winning_cards[max_self]:
-            # TODO(heuristic): Update similar to _not_on_lead_follow_suit to
-            # save marriage or return adjacent.
-            return winning_cards[max_self]
+            break
           max_opp -= 1
           max_self -= 1
         return _highest_adjacent_card_in_hand(winning_cards[max_self],
