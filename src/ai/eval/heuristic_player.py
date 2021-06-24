@@ -348,7 +348,21 @@ class HeuristicPlayer(RandomPlayer):
         self._can_exchange_trump_jack_for_marriage(game_view):
       trump_for_marriage = True
 
-    # TODO(heuristic): Maybe trump for win.
+    if len(self._my_trump_cards) > 0:
+      winning_cards = {k: v for k, v in
+                       self._get_winning_prob(game_view).items() if v == 1.0}
+      remaining_cards = [c for c in self._remaining_cards if c != played_card]
+      min_trump_card = min(self._my_trump_cards)
+      points = game_view.trick_points[self.id]
+      points += played_card.card_value + min_trump_card.card_value
+      if min_trump_card in winning_cards:
+        del winning_cards[min_trump_card]
+      points += sum([card.card_value for card in winning_cards])
+      points += sum(
+        [card.card_value for card in remaining_cards[:len(winning_cards)]])
+      if points > 65:
+        return min_trump_card
+
     if played_card.card_value in [CardValue.TEN, CardValue.ACE] or \
         trump_for_marriage:
       if played_card.suit != game_view.trump:
