@@ -1,7 +1,6 @@
 #  Copyright (c) 2021 Cristian Patrasciuc. All rights reserved.
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
-import pprint
 import random
 from math import comb
 from typing import List, Optional
@@ -104,18 +103,9 @@ def _get_winning_prob(cards_in_hand: List[Card],
   return winning_prob
 
 
-if __name__ == "__main__":
-  cards = Card.get_all_cards()
-  d = {str(card): card for card in cards}
-  cards_in_hand = [d[card] for card in ['J♥', 'Q♦', 'X♥', 'A♣', 'J♣']]
-  remaining_cards = [d[card] for card in
-                     ['K♦', 'Q♣', 'X♦', 'J♠', 'Q♥', 'A♠', 'K♠', 'A♥', 'J♦',
-                      'A♦', 'K♣', 'X♣', 'K♥', 'Q♠']]
-  pprint.pprint(_get_winning_prob(
-    cards_in_hand,
-    remaining_cards, [None, None, None, None, None],
-    Suit.SPADES, False))
-
+# TODO(heuristic): When closing the talon/winning probs, count trumps from your
+#   hand to counter trump remaining. Then non-trump Ace or Ten could have
+#   prob == 1.0.
 
 # TODO(ai): Replace RandomPlayer with Player when the implementation in ready.
 class HeuristicPlayer(RandomPlayer):
