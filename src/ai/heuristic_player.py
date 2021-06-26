@@ -1,8 +1,11 @@
 #  Copyright (c) 2021 Cristian Patrasciuc. All rights reserved.
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
+
 import dataclasses
 import enum
+import logging
+import pprint
 import random
 from typing import List, Optional, Dict
 
@@ -72,13 +75,26 @@ class HeuristicPlayerOptions:
 
 # TODO(ai): Replace RandomPlayer with Player when the implementation in ready.
 class HeuristicPlayer(RandomPlayer):
-  """http://psellos.com/schnapsen/strategy.html"""
+  """
+  A player implementation based on the strategy outlined here:
+  http://psellos.com/schnapsen/strategy.html
+  """
 
   def __init__(self, player_id: PlayerId,
                options: Optional[HeuristicPlayerOptions] = None):
+    """
+    Creates a new HeuristicPlayer instance.
+    :param player_id: The Id of the player in a game of Schnapsen (Player ONE or
+    TWO).
+    :param options: A set of parameters controlling the player's behavior.
+    """
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
     self._options = options or HeuristicPlayerOptions()
+
+    # These variables cache the current state of the game across multiple
+    # private method calls. They are refreshed every time a new player action is
+    # requested, by calling _cache_game_state().
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
@@ -86,7 +102,7 @@ class HeuristicPlayer(RandomPlayer):
     self._played_cards = None
     self._opp_card = None
 
-  def _cache_card_lists(self, game_view: GameState) -> None:
+  def _cache_game_state(self, game_view: GameState) -> None:
     self._opp_card = game_view.current_trick[self.id.opponent()]
     self._my_cards = game_view.cards_in_hand[self.id]
     self._my_trump_cards = [card for card in self._my_cards if
@@ -97,8 +113,9 @@ class HeuristicPlayer(RandomPlayer):
     self._remaining_cards.sort(key=_key_by_value_and_suit)
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
+    """Returns the action that this player chose to play next."""
     assert game_view.next_player == self.id, "Not my turn"
-    self._cache_card_lists(game_view)
+    self._cache_game_state(game_view)
     if game_view.is_to_lead(self.id):
       return self._on_lead_action(game_view)
     return self._not_on_lead_action(game_view)
@@ -116,6 +133,8 @@ class HeuristicPlayer(RandomPlayer):
     # the marriage will end the game.
     self._marriage_suit = None
     if isinstance(action, AnnounceMarriageAction):
+      logging.debug("HeuristicPlayer: Storing marriage suit: %s",
+                    action.card.suit)
       self._marriage_suit = action.card.suit
 
     # Maybe close the talon.
@@ -139,6 +158,8 @@ class HeuristicPlayer(RandomPlayer):
     # If we cannot win yet, and we have a marriage, announce it. If the Ace and
     # Ten from that suit cannot be in the opponents hand, play the King.
     if self._marriage_suit is not None:
+      logging.debug("HeuristicPlayer: Announcing marriage for %s",
+                    self._marriage_suit)
       king = Card(self._marriage_suit, CardValue.KING)
       ten = Card(self._marriage_suit, CardValue.TEN)
       ace = Card(self._marriage_suit, CardValue.ACE)
@@ -156,13 +177,24 @@ class HeuristicPlayer(RandomPlayer):
 
     # Discard one of the small cards.
     card = self._best_discard(game_view)
+    logging.debug("HeuristicPlayer: Discarding %s", card)
     return PlayCardAction(self.id, card)
 
   def _play_winning_cards(self, game_view: GameState) -> Optional[PlayerAction]:
+    """
+    This method collects the list of cards that cannot be won by the opponent
+    and computes a lower bound for the points that we would win if we play them.
+    If this lower bound is enough to win the game, we play one of these cards;
+    otherwise the method returns None.
+    """
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
+    logging.debug("HeuristicPlayer: Card win probabilities:\n%s",
+                  pprint.pformat(winning_cards))
+
     if len(winning_cards) == 0:
       return None
+
     remaining_cards = self._remaining_cards
     points = game_view.trick_points[self.id]
     if self._marriage_suit is not None:
@@ -171,10 +203,17 @@ class HeuristicPlayer(RandomPlayer):
     points += sum(
       [card.card_value for card in remaining_cards[:len(winning_cards)]])
     points += sum([card.card_value for card in winning_cards])
+    logging.debug(
+      "HeuristicPlayer: Estimated points if winning cards are played: %s",
+      points)
+
     if points < 66:
+      logging.debug("HeuristicPlayer: Cannot get to 66 using winning cards.")
       return None
+
     # TODO(heuristic): Pick a random winning card.
-    card = list(winning_cards.keys())[0]
+    card = random.choice(list(winning_cards.keys()))
+    logging.debug("HeuristicPlayer: Play winning card: %s", card)
     return self._play_card_or_marriage(card)
 
   def _play_card_or_marriage(self, card: Card) -> PlayerAction:
@@ -401,8 +440,13 @@ class HeuristicPlayer(RandomPlayer):
       return self._discard_with_priorities(game_view)
     card = self._my_smallest_non_trump_card(game_view)
     if card is not None:
+      logging.debug(
+        "HeuristicPlayer: Discarding one of the smallest non-trump cards: %s",
+        card)
       return card
-    return min(self._my_cards, key=_key_by_value_and_suit)
+    card = min(self._my_cards, key=_key_by_value_and_suit)
+    logging.debug("HeuristicPlayer: Discard the smallest card: %s", card)
+    return card
 
   def _discard_with_priorities(self, game_view: GameState) -> Card:
     buckets = self._discard_buckets(game_view)
