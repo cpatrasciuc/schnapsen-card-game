@@ -12,7 +12,7 @@ from ai.test_utils import card_list_from_string
 from model.card import Card
 from model.game_state import GameState, Trick
 from model.player_action import ExchangeTrumpCardAction, PlayCardAction, \
-  PlayerAction, AnnounceMarriageAction
+  PlayerAction, AnnounceMarriageAction, CloseTheTalonAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from model.suit import Suit
@@ -81,21 +81,26 @@ def _is_valid_game_view(game_view: GameState) -> bool:
   return num_missing_cards == hidden_cards
 
 
+def _get_player(**kwargs):
+  params = {
+    "smart_discard": False,
+    "can_close_talon": False,
+    "save_marriages": False,
+    "trump_for_marriage": False,
+    "avoid_direct_loss": False,
+    "trump_control": False
+  }
+  params.update(**kwargs)
+  options = HeuristicPlayerOptions(**params)
+  player = HeuristicPlayer(PlayerId.ONE, options)
+  return player
+
+
 class HeuristicPlayerTest(unittest.TestCase):
   """Test for HeuristicPlayer with all options set to False."""
 
-  @staticmethod
-  def _get_player():
-    options = HeuristicPlayerOptions(smart_discard=False, can_close_talon=False,
-                                     save_marriages=False,
-                                     trump_for_marriage=False,
-                                     avoid_direct_loss=False,
-                                     trump_control=False)
-    player = HeuristicPlayer(PlayerId.ONE, options)
-    return player
-
   def _run_test_cases(self, test_cases: List[Dict[str, Any]]) -> None:
-    player = self._get_player()
+    player = _get_player()
     for i, test_case in enumerate(test_cases):
       expected_action = test_case["expected_action"]
       test_case.pop("expected_action")
@@ -110,6 +115,27 @@ class HeuristicPlayerTest(unittest.TestCase):
         self.assertIn(actual_action, expected_action,
                       msg=f"TestCase {i}: {test_case}")
 
+  def _run_test_cases_with_option(self, option_name: str,
+                                  option_values: List[Any],
+                                  test_cases: List[Dict[str, Any]]) -> None:
+    players = []
+    for option_value in option_values:
+      players.append(_get_player(**{option_name: option_value}))
+    for i, test_case in enumerate(test_cases):
+      expected_actions = test_case["expected_action"]
+      test_case.pop("expected_action")
+      game_view = _game_view_from_dict(test_case)
+      self.assertTrue(_is_valid_game_view(game_view),
+                      msg=f"TestCase {i}: {test_case}")
+      for player, expected_action in zip(players, expected_actions):
+        actual_action = player.request_next_action(game_view)
+        if isinstance(expected_action, PlayerAction):
+          self.assertEqual(expected_action, actual_action,
+                           msg=f"TestCase {i}: {test_case}")
+        else:
+          self.assertIn(actual_action, expected_action,
+                        msg=f"TestCase {i}: {test_case}")
+
   def test_generic_on_lead_do_not_follow_suit(self):
     self._run_test_cases([
       # Exchanges trump when possible.
@@ -121,7 +147,7 @@ class HeuristicPlayerTest(unittest.TestCase):
         "talon": [None, None, None, None, None, None, None, None, None],
         "expected_action": ExchangeTrumpCardAction(PlayerId.ONE)
       },
-      # Play a high trump card if it will secure the lead.
+      # Play a high trump card if it will secure the win.
       {
         "cards_in_hand": (["tc", "ks", "ac", "jh", "ad"],
                           [None, None, None, None, None]),
@@ -600,5 +626,50 @@ class HeuristicPlayerTest(unittest.TestCase):
         "player_that_closed_the_talon": PlayerId.ONE,
         "opponent_points_when_talon_was_closed": 0,
         "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("qc"))
+      },
+    ])
+
+  def test_can_close_talon(self):
+    self._run_test_cases_with_option("can_close_talon", [False, True], [
+      # The talon is already closed. Discard the smallest trump card.
+      {
+        "cards_in_hand": (["ts", "qs"], ["as", None]),
+        "trump": Suit.SPADES,
+        "trump_card": "ks",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qd")], [("tc", "ac"), ("jh", "jc")]),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+        ]
+      },
+      # There is a high chance the opponent has a Heart or a Club.
+      {
+        "cards_in_hand": (["qh", "ah", "ad", "kc", "kd"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "as",
+        "talon": [None],
+        "won_tricks": ([("qs", "ac"), ("ks", "jd")],
+                       [("tc", "js"), ("jh", "jc")]),
+        "marriage_suits": ([Suit.SPADES], []),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qh")),
+          CloseTheTalonAction(PlayerId.ONE),
+        ]
+      },
+      # There is a small chance to win if we close the talon.
+      {
+        "cards_in_hand": (["qh", "qd", "ac", "ks", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("qd")),
+        ]
       },
     ])

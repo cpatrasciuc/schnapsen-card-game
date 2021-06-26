@@ -586,16 +586,23 @@ class HeuristicPlayer(RandomPlayer):
 
   def _should_close_talon(self, game_view: GameState) -> Optional[
     CloseTheTalonAction]:
+    """
+    Decides whether the player should close the talon. If yes, it returns the
+    corresponding PlayerAction; otherwise it returns None.
+    """
     if not self._options.can_close_talon:
       return None
+
     action = CloseTheTalonAction(self.id)
     if not action.can_execute_on(game_view):
+      logging.debug("HeuristicPlayer: Cannot close the talon")
       return None
+
     # This is just an estimation. The two big flaws are:
     #   * If multiple cards have a probability of 1.0, it means that playing
     #     them as the next card will win the next trick. But it doesn't mean the
     #     probabilities will stay the same after this trick. For example, if we
-    #     have the Ace and Ten from a non-trump suit, they might have both a
+    #     have the Ace and Ten from a non-trump suit, they might both have a
     #     probability of 1.0 if it's guaranteed that the opponent has one card
     #     from the same non-trump suit, but after we play the Ace, the Ten might
     #     not have a probability of 1.0 anymore if there are no more cards from
@@ -606,14 +613,21 @@ class HeuristicPlayer(RandomPlayer):
     #     than what we estimate here.
     # Overall, despite these two big flaws, it seems the player behaves better
     # with this heuristic enabled.
+    # TODO(heuristic): This should call card_win_probabilities with
+    #  must_follow_suit = True.
     probabilities = self._get_winning_prob(game_view)
+    logging.debug("HeuristicPlayer: Card win probabilities: %s",
+                  pprint.pformat(probabilities))
     points = game_view.trick_points[self.id]
     prob_and_cards = [(prob, card) for card, prob in probabilities.items()]
     prob_and_cards.sort(reverse=True)
     for i, prod_and_card in enumerate(prob_and_cards):
       prob, card = prod_and_card
       points += prob * (card.card_value + self._remaining_cards[i].card_value)
+    logging.debug("HeuristicPlayer: Lower bound of points that can be won: %s",
+                  points)
     if points > 65:
+      logging.debug("HeuristicPlayer: Close the talon")
       return action
     return None
 
