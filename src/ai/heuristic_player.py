@@ -1,7 +1,7 @@
 #  Copyright (c) 2021 Cristian Patrasciuc. All rights reserved.
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
-
+import dataclasses
 import enum
 import random
 from typing import List, Optional, Dict
@@ -56,6 +56,16 @@ class _Priority(enum.Enum):
   TRUMP_CARDS = enum.auto()
 
 
+@dataclasses.dataclass(frozen=True)
+class HeuristicPlayerOptions:
+  smart_discard: bool = True
+  can_close_talon: bool = True
+  save_marriages: bool = True
+  trump_for_marriage: bool = True
+  avoid_direct_loss: bool = True
+  trump_control: bool = True
+
+
 # TODO(heuristic): When closing the talon/winning probs, count trumps from your
 #   hand to counter remaining trumps. Then non-trump Ace or Ten could have
 #   prob == 1.0.
@@ -64,18 +74,11 @@ class _Priority(enum.Enum):
 class HeuristicPlayer(RandomPlayer):
   """http://psellos.com/schnapsen/strategy.html"""
 
-  def __init__(self, player_id: PlayerId, can_close_talon=False,
-               smart_discard: bool = True, save_marriages=False,
-               trump_for_marriage=False, avoid_direct_loss=False,
-               trump_control=False):
+  def __init__(self, player_id: PlayerId,
+               options: Optional[HeuristicPlayerOptions] = None):
     super().__init__(player_id=player_id, force_trump_exchange=True,
                      never_close_talon=True, force_marriage_announcement=True)
-    self._smart_discard = smart_discard
-    self._can_close_talon = can_close_talon
-    self._save_marriages = save_marriages
-    self._trump_for_marriage = trump_for_marriage
-    self._avoid_direct_loss = avoid_direct_loss
-    self._trump_control = trump_control
+    self._options = options or HeuristicPlayerOptions()
     self._marriage_suit = None
     self._remaining_cards = None
     self._my_cards = None
@@ -278,7 +281,7 @@ class HeuristicPlayer(RandomPlayer):
         if best_same_suit_card.card_value == CardValue.KING and \
             best_same_suit_card.marriage_pair in self._my_cards:
           # Here we break a marriage to win a Jack from the same suit.
-          if not self._save_marriages:
+          if not self._options.save_marriages:
             return best_same_suit_card
         else:
           return best_same_suit_card
@@ -326,7 +329,7 @@ class HeuristicPlayer(RandomPlayer):
     return None
 
   def _should_trump_for_marriage(self, game_view):
-    if not self._trump_for_marriage:
+    if not self._options.trump_for_marriage:
       return False
     for suit in Suit:
       king = Card(suit, CardValue.KING)
@@ -394,7 +397,7 @@ class HeuristicPlayer(RandomPlayer):
                                           self._played_cards)
 
   def _best_discard(self, game_view: GameState) -> Card:
-    if self._smart_discard:
+    if self._options.smart_discard:
       return self._discard_with_priorities(game_view)
     card = self._my_smallest_non_trump_card(game_view)
     if card is not None:
@@ -415,9 +418,9 @@ class HeuristicPlayer(RandomPlayer):
         break
 
     # If the best card so far would lead to a direct loss, try to avoid it.
-    if self._avoid_direct_loss and self._my_cards is not None:
+    if self._options.avoid_direct_loss and self._opp_card is not None:
       points = game_view.trick_points[self.id.opponent()]
-      points += self._my_cards.card_value
+      points += self._opp_card.card_value
       if points + best_card.card_value > 65:
         if len(self._my_trump_cards) > 0:
           return self._win_with_trump(game_view)
@@ -467,7 +470,7 @@ class HeuristicPlayer(RandomPlayer):
 
   def _should_close_talon(self, game_view: GameState) -> Optional[
     CloseTheTalonAction]:
-    if not self._can_close_talon:
+    if not self._options.can_close_talon:
       return None
     action = CloseTheTalonAction(self.id)
     if not action.can_execute_on(game_view):
@@ -499,7 +502,7 @@ class HeuristicPlayer(RandomPlayer):
     return None
 
   def _maybe_trump_control(self, game_view: GameState) -> Optional[Card]:
-    if not self._trump_control:
+    if not self._options.trump_control:
       return None
 
     high_cards = [card for card in self._my_cards if
