@@ -291,15 +291,20 @@ class HeuristicPlayer(RandomPlayer):
     assert self._opp_card is not None
     best_same_suit_card = self._best_same_suit_card(self._opp_card)
     if best_same_suit_card is not None:
+      logging.debug("HeuristicPlayer: Best same suit card: %s",
+                    best_same_suit_card)
       return self._avoid_breaking_marriage(best_same_suit_card)
 
     # No trump? Discard a small card.
     if len(self._my_trump_cards) == 0:
+      logging.debug("HeuristicPlayer: No trumps. Discard a small card")
       return self._best_discard(game_view)
 
     # Find the best trump card to play.
     trump_card_to_play = self._best_winning_card(self._opp_card,
                                                  self._my_trump_cards)
+    logging.debug("HeuristicPlayer: Tentative trump card: %s",
+                  trump_card_to_play)
     return self._avoid_breaking_marriage(trump_card_to_play)
 
   def _avoid_breaking_marriage(self, card_to_play: Card) -> Card:
@@ -484,6 +489,8 @@ class HeuristicPlayer(RandomPlayer):
                                 card not in self._played_cards \
                                 and card != opp_card and \
                                 card not in self._my_cards]
+    logging.debug("HeuristicPlayer: Unplayed %s cards: %s", suit,
+                  unplayed_cards_same_suit)
     max_opp = len(unplayed_cards_same_suit) - 1
     max_self = len(winning_cards) - 1
     while max_opp >= 0 and max_self >= 1:
