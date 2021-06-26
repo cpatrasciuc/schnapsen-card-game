@@ -22,3 +22,11 @@ class CardValue(enum.IntEnum):
       CardValue.JACK: "J",
     }
     return card_value_to_str[self]
+
+  @staticmethod
+  def from_char(char: str) -> "CardValue":
+    assert len(char) == 1, char
+    char_to_card_value = {card_value.name.lower()[0]: card_value for card_value
+                          in CardValue}
+    assert len(char_to_card_value) == len(CardValue), char_to_card_value
+    return char_to_card_value[char]

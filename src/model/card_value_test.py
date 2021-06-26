@@ -28,3 +28,14 @@ class CardValueTest(unittest.TestCase):
       CardValue(5)
     with self.assertRaisesRegex(ValueError, "0 is not a valid CardValue"):
       CardValue(0)
+
+  def test_from_char(self):
+    self.assertEqual(CardValue.ACE, CardValue.from_char("a"))
+    self.assertEqual(CardValue.TEN, CardValue.from_char("t"))
+    self.assertEqual(CardValue.KING, CardValue.from_char("k"))
+    self.assertEqual(CardValue.QUEEN, CardValue.from_char("q"))
+    self.assertEqual(CardValue.JACK, CardValue.from_char("j"))
+    with self.assertRaisesRegex(KeyError, "m"):
+      CardValue.from_char("m")
+    with self.assertRaisesRegex(AssertionError, "k_multiple_chars"):
+      CardValue.from_char("k_multiple_chars")
