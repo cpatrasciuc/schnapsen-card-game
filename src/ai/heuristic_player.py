@@ -45,6 +45,17 @@ def _key_by_value_and_suit(card: Card):
   return card.card_value, card.suit
 
 
+class _Priority(enum.Enum):
+  EXHAUSTED_SUITS = enum.auto()
+  JACK_WITH_TEN_PROTECTION = enum.auto()
+  JACK_WITHOUT_TEN_PROTECTION = enum.auto()
+  QUEEN_OR_KING_WITHOUT_MARRIAGE_CHANCE = enum.auto()
+  QUEEN_OR_KING_WITH_MARRIAGE_CHANCE = enum.auto()
+  QUEEN_OR_KING_WITH_MARRIAGE_IN_HAND = enum.auto()
+  OTHER_NON_TRUMP_CARDS = enum.auto()
+  TRUMP_CARDS = enum.auto()
+
+
 # TODO(heuristic): When closing the talon/winning probs, count trumps from your
 #   hand to counter remaining trumps. Then non-trump Ace or Ten could have
 #   prob == 1.0.
@@ -70,8 +81,10 @@ class HeuristicPlayer(RandomPlayer):
     self._my_cards = None
     self._my_trump_cards = None
     self._played_cards = None
+    self._opp_card = None
 
   def _cache_card_lists(self, game_view: GameState) -> None:
+    self._opp_card = game_view.current_trick[self.id.opponent()]
     self._my_cards = game_view.cards_in_hand[self.id]
     self._my_trump_cards = [card for card in self._my_cards if
                             card.suit == game_view.trump]
@@ -221,9 +234,8 @@ class HeuristicPlayer(RandomPlayer):
     return PlayCardAction(self.id, card)
 
   def _not_on_lead_follow_suit(self, game_view: GameState) -> Card:
-    opp_card = game_view.current_trick[self.id.opponent()]
-    assert opp_card is not None
-    best_same_suit_card = self._best_same_suit_card(opp_card)
+    assert self._opp_card is not None
+    best_same_suit_card = self._best_same_suit_card(self._opp_card)
     if best_same_suit_card is not None:
       return self._avoid_breaking_marriage(best_same_suit_card)
 
@@ -232,7 +244,8 @@ class HeuristicPlayer(RandomPlayer):
       return self._best_discard(game_view)
 
     # Find the best trump card to play.
-    trump_card_to_play = self._best_winning_card(opp_card, self._my_trump_cards)
+    trump_card_to_play = self._best_winning_card(self._opp_card,
+                                                 self._my_trump_cards)
     return self._avoid_breaking_marriage(trump_card_to_play)
 
   def _avoid_breaking_marriage(self, card_to_play: Card) -> Card:
@@ -256,13 +269,12 @@ class HeuristicPlayer(RandomPlayer):
     return None
 
   def _not_on_lead_do_not_follow_suit(self, game_view: GameState) -> Card:
-    played_card = game_view.current_trick[self.id.opponent()]
-    assert played_card is not None
+    assert self._opp_card is not None
 
     # If we can win with a same suit card, do it.
-    best_same_suit_card = self._best_same_suit_card(played_card)
+    best_same_suit_card = self._best_same_suit_card(self._opp_card)
     if best_same_suit_card is not None:
-      if best_same_suit_card.wins(played_card, game_view.trump):
+      if best_same_suit_card.wins(self._opp_card, game_view.trump):
         if best_same_suit_card.card_value == CardValue.KING and \
             best_same_suit_card.marriage_pair in self._my_cards:
           # Here we break a marriage to win a Jack from the same suit.
@@ -271,10 +283,10 @@ class HeuristicPlayer(RandomPlayer):
         else:
           return best_same_suit_card
 
-    if played_card.suit == game_view.trump or len(self._my_trump_cards) == 0:
+    if self._opp_card.suit == game_view.trump or len(self._my_trump_cards) == 0:
       return self._best_discard(game_view)
 
-    use_trump = played_card.card_value in [CardValue.TEN, CardValue.ACE]
+    use_trump = self._opp_card.card_value in [CardValue.TEN, CardValue.ACE]
     if not use_trump:
       use_trump = self._should_trump_for_marriage(game_view)
     if not use_trump:
@@ -294,17 +306,16 @@ class HeuristicPlayer(RandomPlayer):
     return self._best_discard(game_view)
 
   def _maybe_trump_for_the_win(self, game_view: GameState) -> Optional[Card]:
+    assert self._opp_card is not None
     if len(self._my_trump_cards) == 0:
       return None
-    played_card = game_view.current_trick[self.id.opponent()]
-    assert played_card is not None
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
     unplayed_cards = [card for card in self._remaining_cards if
-                      card != played_card]
+                      card != self._opp_card]
     min_trump_card = min(self._my_trump_cards)
     points = game_view.trick_points[self.id]
-    points += played_card.card_value + min_trump_card.card_value
+    points += self._opp_card.card_value + min_trump_card.card_value
     if min_trump_card in winning_cards:
       del winning_cards[min_trump_card]
     points += sum([card.card_value for card in winning_cards])
@@ -391,29 +402,44 @@ class HeuristicPlayer(RandomPlayer):
     return min(self._my_cards, key=_key_by_value_and_suit)
 
   def _discard_with_priorities(self, game_view: GameState) -> Card:
-    class Priority(enum.Enum):
-      EXHAUSTED_SUITS = enum.auto()
-      JACK_WITH_TEN_PROTECTION = enum.auto()
-      JACK_WITHOUT_TEN_PROTECTION = enum.auto()
-      QUEEN_OR_KING_WITHOUT_MARRIAGE_CHANCE = enum.auto()
-      QUEEN_OR_KING_WITH_MARRIAGE_CHANCE = enum.auto()
-      QUEEN_OR_KING_WITH_MARRIAGE_IN_HAND = enum.auto()
-      OTHER_NON_TRUMP_CARDS = enum.auto()
-      TRUMP_CARDS = enum.auto()
+    buckets = self._discard_buckets(game_view)
 
-    buckets = {priority: [] for priority in Priority}
+    # Get the smallest card from the first non-empty bucket sorted by
+    # priority.
+    best_card = None
+    for priority in _Priority:
+      cards = buckets[priority]
+      if len(cards) > 0:
+        cards.sort(key=_key_by_value_and_suit)
+        best_card = cards[0]
+        break
+
+    # If the best card so far would lead to a direct loss, try to avoid it.
+    if self._avoid_direct_loss and self._my_cards is not None:
+      points = game_view.trick_points[self.id.opponent()]
+      points += self._my_cards.card_value
+      if points + best_card.card_value > 65:
+        if len(self._my_trump_cards) > 0:
+          return self._win_with_trump(game_view)
+        smallest_card = self._my_smallest_non_trump_card(game_view)
+        if smallest_card is not None:
+          return smallest_card
+        return min(self._my_cards, key=_key_by_value_and_suit)
+
+    return best_card
+
+  def _discard_buckets(self, game_view):
+    buckets = {priority: [] for priority in _Priority}
     remaining_suits = set(card.suit for card in self._remaining_cards)
     played_cards = self._played_cards
-    opp_card = game_view.current_trick[self.id.opponent()]
-    if opp_card is not None:
-      played_cards = self._played_cards + [opp_card]
-
+    if self._opp_card is not None:
+      played_cards = self._played_cards + [self._opp_card]
     # Place each card in its priority bucket.
     for card in self._my_cards:
       if card.suit == game_view.trump:
-        buckets[Priority.TRUMP_CARDS].append(card)
+        buckets[_Priority.TRUMP_CARDS].append(card)
       elif card.suit not in remaining_suits:
-        buckets[Priority.EXHAUSTED_SUITS].append(card)
+        buckets[_Priority.EXHAUSTED_SUITS].append(card)
       elif card.card_value == CardValue.JACK:
         ten = Card(card.suit, CardValue.TEN)
         ace = Card(card.suit, CardValue.ACE)
@@ -424,42 +450,20 @@ class HeuristicPlayer(RandomPlayer):
             ace not in played_cards and \
             king not in self._my_cards and \
             queen not in self._my_cards:
-          buckets[Priority.JACK_WITHOUT_TEN_PROTECTION].append(card)
+          buckets[_Priority.JACK_WITHOUT_TEN_PROTECTION].append(card)
         else:
-          buckets[Priority.JACK_WITH_TEN_PROTECTION].append(card)
+          buckets[_Priority.JACK_WITH_TEN_PROTECTION].append(card)
       elif card.card_value in [CardValue.QUEEN, CardValue.KING]:
         marriage_pair = card.marriage_pair
         if marriage_pair in self._my_cards:
-          buckets[Priority.QUEEN_OR_KING_WITH_MARRIAGE_IN_HAND].append(card)
+          buckets[_Priority.QUEEN_OR_KING_WITH_MARRIAGE_IN_HAND].append(card)
         elif marriage_pair not in played_cards:
-          buckets[Priority.QUEEN_OR_KING_WITH_MARRIAGE_CHANCE].append(card)
+          buckets[_Priority.QUEEN_OR_KING_WITH_MARRIAGE_CHANCE].append(card)
         else:
-          buckets[Priority.QUEEN_OR_KING_WITHOUT_MARRIAGE_CHANCE].append(card)
+          buckets[_Priority.QUEEN_OR_KING_WITHOUT_MARRIAGE_CHANCE].append(card)
       else:
-        buckets[Priority.OTHER_NON_TRUMP_CARDS].append(card)
-
-    # Get the smallest card from the first non-empty bucket sorted by
-    # priority.
-    best_card = None
-    for priority in Priority:
-      cards = buckets[priority]
-      if len(cards) > 0:
-        cards.sort(key=_key_by_value_and_suit)
-        best_card = cards[0]
-        break
-
-    # If the best card so far would lead to a direct loss, try to avoid it.
-    if self._avoid_direct_loss and opp_card is not None:
-      points = opp_card.card_value + game_view.trick_points[self.id.opponent()]
-      if points + best_card.card_value > 65:
-        if len(self._my_trump_cards) > 0:
-          return self._win_with_trump(game_view)
-        smallest_card = self._my_smallest_non_trump_card(game_view)
-        if smallest_card is not None:
-          return smallest_card
-        return min(self._my_cards, key=_key_by_value_and_suit)
-
-    return best_card
+        buckets[_Priority.OTHER_NON_TRUMP_CARDS].append(card)
+    return buckets
 
   def _should_close_talon(self, game_view: GameState) -> Optional[
     CloseTheTalonAction]:
