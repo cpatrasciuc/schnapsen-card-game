@@ -8,6 +8,7 @@ from math import comb
 from typing import List, Optional, Dict
 
 from ai.random_player import RandomPlayer
+from ai.utils import card_win_probabilities
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
@@ -43,69 +44,6 @@ def _highest_adjacent_card_in_hand(card: Card, cards_in_hand: List[Card],
 
 def _key_by_value_and_suit(card: Card):
   return card.card_value, card.suit
-
-
-def _get_winning_prob(cards_in_hand: List[Card],
-                      remaining_cards: List[Card],
-                      opp_cards: List[Optional[Card]],
-                      trump: Suit, must_follow_suit: bool):
-  opp_public_cards = {card for card in opp_cards if card is not None}
-  opp_trumps = {card for card in opp_public_cards if card.suit == trump}
-  num_opp_unknown_cards = len(opp_cards) - len(opp_public_cards)
-
-  unseen_cards = [card for card in remaining_cards if
-                  card not in opp_public_cards]
-  unplayed_trumps = [card for card in remaining_cards if card.suit == trump]
-
-  winning_prob = {}
-  for card_in_hand in cards_in_hand:
-    # Probability that this card cannot be won by the opponent.
-    unplayed_cards_same_suit = [card for card in remaining_cards if
-                                card.suit == card_in_hand.suit]
-    unplayed_better_cards = [card for card in unplayed_cards_same_suit if
-                             card.card_value > card_in_hand.card_value]
-    if not must_follow_suit and card_in_hand.suit != trump:
-      unplayed_better_cards += unplayed_trumps
-
-    if len(opp_public_cards.intersection(unplayed_better_cards)) > 0:
-      winning_prob[card_in_hand] = 0.0
-      continue
-
-    num_total_scenarios = comb(len(unseen_cards), num_opp_unknown_cards)
-
-    if not must_follow_suit:
-      num_winning_scenarios = comb(
-        len(unseen_cards) - len(unplayed_better_cards), num_opp_unknown_cards)
-    else:
-      unseen_smaller_cards_same_suit = \
-        [card for card in unseen_cards if
-         card.card_value < card_in_hand.card_value and \
-         card.suit == card_in_hand.suit]
-      opp_smaller_cards_same_suit = \
-        [card for card in opp_public_cards if
-         card.card_value < card_in_hand.card_value and \
-         card.suit == card_in_hand.suit]
-      num_winning_scenarios = 0
-      for i in range(len(unseen_smaller_cards_same_suit) + 1):
-        if i > num_opp_unknown_cards:
-          break
-        smaller_cards_in_opp_hand = len(opp_smaller_cards_same_suit) + i
-        # No smaller cards, so make sure the opponent doesn't have any trump.
-        if smaller_cards_in_opp_hand == 0 and card_in_hand.suit != trump:
-          if len(opp_trumps) > 0:
-            continue
-          num_better_cards = len(unplayed_better_cards) + len(unplayed_trumps)
-          num_unimportant_cards = len(unseen_cards) - num_better_cards - len(
-            unseen_smaller_cards_same_suit)
-        else:
-          num_better_cards = len(unplayed_better_cards)
-          num_unimportant_cards = len(unseen_cards) - num_better_cards - len(
-            unseen_smaller_cards_same_suit)
-        num_winning_scenarios += comb(len(unseen_smaller_cards_same_suit),
-                                      i) * comb(
-          num_unimportant_cards, num_opp_unknown_cards - i)
-    winning_prob[card_in_hand] = num_winning_scenarios / num_total_scenarios
-  return winning_prob
 
 
 # TODO(heuristic): When closing the talon/winning probs, count trumps from your
@@ -263,11 +201,11 @@ class HeuristicPlayer(RandomPlayer):
     return PlayCardAction(self.id, card_to_play)
 
   def _get_winning_prob(self, game_view: GameState) -> Dict[Card, float]:
-    return _get_winning_prob(self._my_cards,
-                             self._remaining_cards,
-                             game_view.cards_in_hand[self.id.opponent()],
-                             game_view.trump,
-                             game_view.must_follow_suit())
+    return card_win_probabilities(self._my_cards,
+                                  self._remaining_cards,
+                                  game_view.cards_in_hand[self.id.opponent()],
+                                  game_view.trump,
+                                  game_view.must_follow_suit())
 
   def _get_remaining_cards(self, game_view: GameState) -> List[Card]:
     remaining_cards = set(Card.get_all_cards())
