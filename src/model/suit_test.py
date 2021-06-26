@@ -28,3 +28,13 @@ class SuitTest(unittest.TestCase):
     Suit(4)
     with self.assertRaisesRegex(ValueError, "5 is not a valid Suit"):
       Suit(5)
+
+  def test_from_char(self):
+    self.assertEqual(Suit.HEARTS, Suit.from_char("h"))
+    self.assertEqual(Suit.SPADES, Suit.from_char("s"))
+    self.assertEqual(Suit.CLUBS, Suit.from_char("c"))
+    self.assertEqual(Suit.DIAMONDS, Suit.from_char("d"))
+    with self.assertRaisesRegex(KeyError, "z"):
+      Suit.from_char("z")
+    with self.assertRaisesRegex(AssertionError, "more_than_one_char"):
+      Suit.from_char("more_than_one_char")
