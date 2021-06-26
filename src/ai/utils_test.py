@@ -5,14 +5,9 @@
 import unittest
 from typing import List
 
+from ai.test_utils import card_list_from_string
 from ai.utils import card_win_probabilities, prob_opp_has_more_trumps
-from model.card import Card
 from model.suit import Suit
-
-
-def card_list_from_string(string_list: List[str]) -> List[Card]:
-  return [Card.from_string(token) if token is not None else None \
-          for token in string_list]
 
 
 class CardWinProbabilitiesTest(unittest.TestCase):
