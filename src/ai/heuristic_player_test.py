@@ -123,7 +123,7 @@ class HeuristicPlayerTest(unittest.TestCase):
       },
       # Play a high trump card if it will secure the lead.
       {
-        "cards_in_hand": (["tc", "kc", "ac", "jh", "ad"],
+        "cards_in_hand": (["tc", "ks", "ac", "jh", "ad"],
                           [None, None, None, None, None]),
         "trump": Suit.CLUBS,
         "trump_card": "jc",
@@ -194,14 +194,78 @@ class HeuristicPlayerTest(unittest.TestCase):
           PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
         }
       },
+    ])
+
+  def test_generic_on_lead_follow_suit(self):
+    self._run_test_cases([
+      # Play a non-trump card with the maximum win probability.
+      {
+        "cards_in_hand": (["qd", "qs", "kh", "ah"], [None, None, None, "th"]),
+        "trump": Suit.SPADES,
+        "trump_card": "ks",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qc")], []),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ah")),
+      },
+      # Play a trump card with the maximum win probability.
+      {
+        "cards_in_hand": (["qd", "qs", "ks", "th"], [None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "jh",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qc")], []),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("th")),
+      },
+      # If we have a marriage pair among the cards with the max winning
+      # probability, announce it with the king.
+      {
+        "cards_in_hand": (["qd", "qs", "ks", "ts"], [None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qc")], []),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": AnnounceMarriageAction(PlayerId.ONE,
+                                                  Card.from_string("ks")),
+      },
+      # If we don't have any chance to win the next trick and we have a
+      # marriage, announce it.
+      {
+        "cards_in_hand": (["qd", "qs", "ks", "ts"], ["as", "ad", None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qc")], []),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": AnnounceMarriageAction(PlayerId.ONE,
+                                                  Card.from_string("ks")),
+      },
+      # Discard the smallest non-trump card.
+      {
+        "cards_in_hand": (["ts", "qs", "th", "jd"], ["as", "ah", "ad", None]),
+        "trump": Suit.SPADES,
+        "trump_card": "ks",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "won_tricks": ([("qh", "qd")], []),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("jd")),
+      },
       # Discard the smallest trump card.
       {
-        "cards_in_hand": (["ts", "qs"],
-                          [None, None]),
+        "cards_in_hand": (["ts", "qs"], ["as", None]),
         "trump": Suit.SPADES,
         "trump_card": "ks",
         "talon": [None, None, None, None, None, None, None, None, None],
         "won_tricks": ([("qh", "qd")], [("tc", "ac"), ("jh", "jc")]),
+        "player_that_closed_the_talon": PlayerId.ONE,
+        "opponent_points_when_talon_was_closed": 0,
         "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
       },
     ])

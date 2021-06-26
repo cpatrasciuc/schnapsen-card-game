@@ -228,20 +228,31 @@ class HeuristicPlayer(RandomPlayer):
     # we have any card with 100% winning prob, play it. If the talon is closed,
     # play the card with the highest probability to win (can be smaller than 1).
     probabilities = self._get_winning_prob(game_view)
-    max_chance = max(probabilities.values())
-    if max_chance > 0:  # TODO: Set a threshold here.
+    logging.debug("HeuristicPlayer: Card win probabilities:\n%s",
+                  pprint.pformat(probabilities))
+    max_prob = max(probabilities.values())
+    logging.debug("HeuristicPlayer: The maximum winning probability is %.2f",
+                  max_prob)
+    if max_prob > 0:  # TODO: Set a threshold here.
       # If we have a marriage and the king has the same winning chance as the
       # maximum among all the other cards in hand, prefer to announce the
       # marriage.
       if self._marriage_suit is not None:
         king = Card(self._marriage_suit, CardValue.KING)
-        if probabilities.get(king, 0) == max_chance:
+        king_prob = probabilities.get(king, 0)
+        logging.debug(
+          "HeuristicPlayer: %s probability: %.2f", king, king_prob)
+        if king_prob == max_prob:
+          logging.debug("HeuristicPlayer: Announcing the marriage for %s", king)
           return AnnounceMarriageAction(self.id, king)
 
       # Play a random card among the ones with the highest chance to win the
       # next trick.
       card_to_play = random.choice(
-        [card for card, prob in probabilities.items() if prob == max_chance])
+        [card for card, prob in probabilities.items() if prob == max_prob])
+      logging.debug(
+        "HeuristicPlayer: Play a card with the maximum win probability %s",
+        card_to_play)
       return self._play_card_or_marriage(card_to_play)
 
     # If there is no chance we win the next trick and we have a marriage,
