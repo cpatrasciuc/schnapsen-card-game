@@ -74,3 +74,16 @@ class Card:
     else:
       pair_card_value = CardValue.KING
     return Card(suit=self.suit, card_value=pair_card_value)
+
+  @staticmethod
+  def from_string(card_string: str) -> "Card":
+    """
+    Converts a string representation of a card to a Card instance. The input
+    must be a two letter string: first letter of the card value, followed by the
+    first letter of the suit. Example: th --> ten hearts.
+    """
+    assert len(card_string) == 2, \
+      f"Input must be a two letter string: {card_string}"
+    card_string_lower = card_string.lower()
+    return Card(Suit.from_char(card_string_lower[1]),
+                CardValue.from_char(card_string_lower[0]))

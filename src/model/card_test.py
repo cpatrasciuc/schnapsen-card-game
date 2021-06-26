@@ -141,3 +141,12 @@ class CardTest(unittest.TestCase):
       self.assertEqual(queen, king.marriage_pair)
     with self.assertRaises(AssertionError):
       _ = Card(Suit.DIAMONDS, CardValue.TEN).marriage_pair
+
+  def test_from_string(self):
+    self.assertEqual(Card(Suit.HEARTS, CardValue.TEN), Card.from_string("th"))
+    with self.assertRaisesRegex(KeyError, "z"):
+      Card.from_string("tz")
+    with self.assertRaisesRegex(KeyError, "z"):
+      Card.from_string("zh")
+    with self.assertRaisesRegex(AssertionError, "must be a two letter string"):
+      Card.from_string("multiple_chars")
