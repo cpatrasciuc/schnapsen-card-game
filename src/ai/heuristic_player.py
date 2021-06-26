@@ -284,6 +284,7 @@ class HeuristicPlayer(RandomPlayer):
       card = self._not_on_lead_follow_suit(game_view)
     else:
       card = self._not_on_lead_do_not_follow_suit(game_view)
+    logging.debug("HeuristicPlayer: Playing %s", card)
     return PlayCardAction(self.id, card)
 
   def _not_on_lead_follow_suit(self, game_view: GameState) -> Card:
@@ -302,12 +303,19 @@ class HeuristicPlayer(RandomPlayer):
     return self._avoid_breaking_marriage(trump_card_to_play)
 
   def _avoid_breaking_marriage(self, card_to_play: Card) -> Card:
+    """
+    Returns card_to_play, if card_to_play is not part of a marriage. If it is
+    part of a marriage, it returns the highest same suit card (it can still be
+    card_to_play).
+    """
     same_suit_cards = [card for card in self._my_cards if
                        card.suit == card_to_play.suit]
     if len(same_suit_cards) < 3:
       return card_to_play
     if card_to_play.card_value in [CardValue.KING, CardValue.QUEEN] and \
         card_to_play.marriage_pair in same_suit_cards:
+      logging.debug("HeuristicPlayer: Trying to avoid breaking the %s marriage",
+                    card_to_play.suit)
       same_suit_cards.remove(card_to_play)
       same_suit_cards.remove(card_to_play.marriage_pair)
       return same_suit_cards[-1]
@@ -326,6 +334,8 @@ class HeuristicPlayer(RandomPlayer):
 
     # If we can win with a same suit card, do it.
     best_same_suit_card = self._best_same_suit_card(self._opp_card)
+    logging.debug("HeuristicPlayer: Best same suit card: %s",
+                  best_same_suit_card)
     if best_same_suit_card is not None:
       if best_same_suit_card.wins(self._opp_card, game_view.trump):
         if best_same_suit_card.card_value == CardValue.KING and \
@@ -333,13 +343,19 @@ class HeuristicPlayer(RandomPlayer):
           # Here we break a marriage to win a Jack from the same suit.
           if not self._options.save_marriages:
             return best_same_suit_card
+          logging.debug("HeuristicPlayer: Saving the %s marriage",
+                        best_same_suit_card.suit)
         else:
           return best_same_suit_card
 
     if self._opp_card.suit == game_view.trump or len(self._my_trump_cards) == 0:
+      logging.debug("HeuristicPlayer: Cannot trump, so discard a small card")
       return self._best_discard(game_view)
 
-    use_trump = self._opp_card.card_value in [CardValue.TEN, CardValue.ACE]
+    use_trump = False
+    if self._opp_card.card_value in [CardValue.TEN, CardValue.ACE]:
+      logging.debug("HeuristicPlayer: Should trump to win a Ten or an Ace")
+      use_trump = True
     if not use_trump:
       use_trump = self._should_trump_for_marriage(game_view)
     if not use_trump:
@@ -347,23 +363,39 @@ class HeuristicPlayer(RandomPlayer):
                           len(game_view.won_tricks.two)
       if num_played_tricks == 3 and \
           self._can_exchange_trump_jack_for_marriage(game_view):
+        logging.debug(
+          "HeuristicPlayer: Should trump since it's the last chance to "
+          "exchange the trump card for the trump marriage")
         use_trump = True
 
     trump_card = self._maybe_trump_for_the_win(game_view)
     if trump_card is not None:
+      logging.debug(
+        "HeuristicPlayer: Trump with %s since we can win from here",
+        trump_card)
       return trump_card
 
     if use_trump:
       return self._win_with_trump(game_view)
 
+    logging.debug("HeuristicPlayer: Discarding a small card")
     return self._best_discard(game_view)
 
   def _maybe_trump_for_the_win(self, game_view: GameState) -> Optional[Card]:
+    """
+    This method computes a lower bound of the points that can be surely won with
+    the current cards in hand. If that is enough to win the game, returns the
+    smallest trump card as the card to be played now, to win the current trick.
+    If that is not the case, it returns None.
+    """
     assert self._opp_card is not None
     if len(self._my_trump_cards) == 0:
+      logging.debug("HeuristicPlayer: Cannot trump for the win; no trump cards")
       return None
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
+    logging.debug("HeuristicPlayer: Card win probabilities: %s",
+                  pprint.pformat(winning_cards))
     unplayed_cards = [card for card in self._remaining_cards if
                       card != self._opp_card]
     min_trump_card = min(self._my_trump_cards)
@@ -374,6 +406,8 @@ class HeuristicPlayer(RandomPlayer):
     points += sum([card.card_value for card in winning_cards])
     points += sum(
       [card.card_value for card in unplayed_cards[:len(winning_cards)]])
+    logging.debug("HeuristicPlayer: Lower bound of points that can be won: %s",
+                  points)
     if points > 65:
       return min_trump_card
     return None
@@ -389,11 +423,16 @@ class HeuristicPlayer(RandomPlayer):
     return False
 
   def _win_with_trump(self, game_view: GameState) -> Card:
+    """
+    Returns the best trump card that should be used to win the current trick.
+    """
     assert len(self._my_trump_cards) > 0
     trump_card = _highest_adjacent_card_in_hand(self._my_trump_cards[0],
                                                 self._my_cards,
                                                 self._played_cards)
+    logging.debug("HeuristicPlayer: Tentative trump card: %s", trump_card)
     if self._can_exchange_trump_jack_for_marriage(game_view):
+      logging.debug("HeuristicPlayer: Can exchange trump card for marriage")
       self._my_trump_cards.remove(Card(game_view.trump, CardValue.JACK))
       self._my_trump_cards.remove(game_view.trump_card.marriage_pair)
       return self._my_trump_cards[-1]
@@ -414,6 +453,12 @@ class HeuristicPlayer(RandomPlayer):
     return False
 
   def _best_same_suit_card(self, opp_card: Card) -> Optional[Card]:
+    """
+    Returns the best same suit card that can be used to win a trick against
+    opp_card. If there is no such card, it returns the smallest card in hand
+    having the same suit as opp_card. If there are no such cards, it returns
+    None.
+    """
     same_suit_cards = [card for card in self._my_cards if
                        opp_card.suit == card.suit]
     same_suit_cards.sort(key=_key_by_value_and_suit)
@@ -428,6 +473,10 @@ class HeuristicPlayer(RandomPlayer):
 
   def _best_winning_card(self, opp_card: Card,
                          winning_cards: List[Card]) -> Card:
+    """
+    Returns the best entry in winning_cards that should be used to win a trick
+    against opp_card, by taking into account the cards that were already played.
+    """
     assert len({card.suit for card in winning_cards}) == 1, winning_cards
     suit = winning_cards[0].suit
     all_cards_same_suit = [Card(suit, card_value) for card_value in CardValue]
@@ -447,6 +496,11 @@ class HeuristicPlayer(RandomPlayer):
                                           self._played_cards)
 
   def _best_discard(self, game_view: GameState) -> Card:
+    """
+    Returns the best card in hand that should be discarded. This method is also
+    used to get the leading card in the early stages of the game when we don't
+    want to lead with high cards.
+    """
     if self._options.smart_discard:
       return self._discard_with_priorities(game_view)
     card = self._my_smallest_non_trump_card(game_view)

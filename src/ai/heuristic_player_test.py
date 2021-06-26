@@ -57,7 +57,7 @@ def _game_view_from_dict(fields: Dict[str, Any]) -> GameState:
   if trick is not None:
     fields["current_trick"] = PlayerPair(
       Card.from_string(trick[0]) if trick[0] is not None else None,
-      Card.from_string(trick[0]) if trick[1] is not None else None)
+      Card.from_string(trick[1]) if trick[1] is not None else None)
   game_view = GameState(**fields)
   logging.debug("HeuristicPlayerTest: Using game view: %s",
                 pprint.pformat(str(game_view)))
@@ -267,5 +267,197 @@ class HeuristicPlayerTest(unittest.TestCase):
         "player_that_closed_the_talon": PlayerId.ONE,
         "opponent_points_when_talon_was_closed": 0,
         "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+      },
+    ])
+
+  def test_generic_not_on_lead_do_not_follow_suit(self):
+    self._run_test_cases([
+      # Win with the queen, keep the ace for the not-yet-played ten.
+      {
+        "cards_in_hand": (["qd", "ad", "jc", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("qd"))
+      },
+      # If the Ten and King are already played, win with the Ace.
+      {
+        "cards_in_hand": (["qd", "ad", "jc", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None],
+        "won_tricks": ([], [("kd", "td")]),
+        "current_trick": (None, "jd"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ad"))
+      },
+      # Win with the Ten, even if the King is not yet played.
+      {
+        "cards_in_hand": (["qd", "td", "jc", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("td"))
+      },
+      # Don't give up the Ten even if it's the only same-suit card we have.
+      {
+        "cards_in_hand": (["qh", "td", "jh", "js", "qs"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "ad"),
+        "expected_action": {
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        }
+      },
+      # Break a marriage to win a jack (options.save_marriage is False).
+      {
+        "cards_in_hand": (["qd", "kd", "ad", "js", "qs"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("kd"))
+      },
+      # Opponent played a trump card that cannot be won; discard the smallest
+      # card.
+      {
+        "cards_in_hand": (["qd", "kd", "ad", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "tc"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("js"))
+      },
+      # Win a Ten with the same suit Ace.
+      {
+        "cards_in_hand": (["qd", "ks", "ah", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ah"))
+      },
+      # Win a Ten with a trump-card if we don't have the same-suit Ace, even if
+      # that means breaking the marriage.
+      {
+        "cards_in_hand": (["qd", "ks", "kc", "js", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("kc"))
+      },
+      # Win a Ten with the trump Queen. Save the trump Ace for the trump Ten.
+      {
+        "cards_in_hand": (["qd", "jc", "qc", "js", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "tc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("qc"))
+      },
+      # Win a Ten with the trump Ace if we don't have the same-suit Ace; don't
+      # save the trump Ace for the trump Ten, if that means breaking the trump
+      # marriage.
+      {
+        "cards_in_hand": (["qd", "ks", "kc", "ac", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "jc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
+      },
+      # Win a Ten with the trump Jack if we don't have the same-suit Ace; don't
+      # use the highest adjacent card if that means breaking the trump marriage.
+      {
+        "cards_in_hand": (["qd", "ks", "kc", "jc", "qc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("jc"))
+      },
+      # Win a Ten with the trump Ace. Don't save the trump Ace for the trump Ten
+      # if we can exchange the trump card to get the trump marriage.
+      {
+        "cards_in_hand": (["qd", "jc", "qc", "jd", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "kc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
+      },
+      # If this is the last chance to win a trick and be on-lead to exchange the
+      # trump card and announce the trump marriage, use a trump regardless of
+      # what the opponent played.
+      {
+        "cards_in_hand": (["qd", "jc", "qc", "ad", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "kc",
+        "talon": [None, None, None],
+        "won_tricks": ([("kd", "jd")], [("jh", "qh"), ("kh", "ah")]),
+        "current_trick": (None, "js"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
+      },
+      # If it's not the last chance to win a trick and be on-lead to exchange
+      # the trump card and announce the trump marriage, do not use a trump yet.
+      {
+        "cards_in_hand": (["qd", "jc", "qc", "jd", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "kc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "js"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("jd"))
+      },
+      # Trump if that gets us the win right now.
+      {
+        "cards_in_hand": (["qd", "jh", "qh", "jd", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "jc",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([("qc", "ad")], [("kc", "tc")]),
+        "marriage_suits": ([Suit.CLUBS], []),
+        "current_trick": (None, "js"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
+      },
+      # Trump if that gets us the win after one more trick.
+      {
+        "cards_in_hand": (["qd", "jh", "qh", "tc", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "jc",
+        "talon": [None, None, None, None, None, None, None],
+        "won_tricks": ([("qc", "jd")], []),
+        "marriage_suits": ([Suit.CLUBS], []),
+        "current_trick": (None, "js"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("tc"))
+      },
+      # Discard the smallest card.
+      {
+        "cards_in_hand": (["qd", "jh", "qh", "tc", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "jc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "js"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("jh"))
       },
     ])
