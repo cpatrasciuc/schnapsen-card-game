@@ -4,11 +4,10 @@
 
 import enum
 import random
-from math import comb
 from typing import List, Optional, Dict
 
 from ai.random_player import RandomPlayer
-from ai.utils import card_win_probabilities
+from ai.utils import card_win_probabilities, prob_opp_has_more_trumps
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
@@ -513,40 +512,15 @@ class HeuristicPlayer(RandomPlayer):
       if max_remaining_trump.card_value + CardValue.ACE > 65:
         return None
 
-    num_my_trumps = len(self._my_trump_cards)
-    opp_cards = game_view.cards_in_hand[self.id.opponent()]
-    num_opp_trumps = len([card for card in opp_cards if
-                          card is not None and card.suit == game_view.trump])
-    played_trumps = len(
-      [card for card in self._played_cards if card.suit == game_view.trump])
-
-    num_remaining_trumps = 5 - num_my_trumps - num_opp_trumps
-    num_remaining_trumps -= played_trumps
-    num_remaining_trumps -= (1 if game_view.trump_card is not None else 0)
-
-    num_opp_unknown_cards = len([card for card in opp_cards if card is None])
-
-    if not game_view.is_talon_closed and len(game_view.talon) == 1:
-      num_opp_trumps += 1
-      num_opp_unknown_cards -= 1
-
-    num_remaining_cards = len(self._remaining_cards)
-    num_remaining_cards -= len([c for c in opp_cards if c is not None])
-
-    total_scenarios = comb(num_remaining_cards, num_opp_unknown_cards)
-    probabilities = []
-    for i in range(num_remaining_trumps + 1):
-      possible_opp_trumps = num_opp_trumps + i
-      if possible_opp_trumps <= num_my_trumps:
-        continue
-      if num_opp_unknown_cards < i:
-        break
-      possibilities = comb(num_remaining_trumps, i) * comb(
-        num_remaining_cards - num_remaining_trumps,
-        num_opp_unknown_cards - i)
-      probabilities.append(possibilities / total_scenarios)
-
-    if sum(probabilities) <= 0.5:
+    fifth_trick_with_open_talon = not game_view.is_talon_closed and \
+                                  len(game_view.talon) == 1
+    probability = prob_opp_has_more_trumps(self._my_cards,
+                                           game_view.cards_in_hand[
+                                             self.id.opponent()],
+                                           self._remaining_cards,
+                                           game_view.trump,
+                                           fifth_trick_with_open_talon)
+    if probability <= 0.5:
       return None
 
     remaining_suits = set(card.suit for card in self._remaining_cards)

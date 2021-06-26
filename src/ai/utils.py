@@ -21,8 +21,7 @@ def card_win_probabilities(cards_in_hand: List[Card],
   :param cards_in_hand: The cards in the player's hand.
   :param remaining_cards: The list of cards that were not played yet, excluding
   the trump card in case the talon is not empty.
-  :param opp_cards: The list of opponent cards. Cards that are not public are
-  None.
+  :param opp_cards: Opponent's cards. Cards that are not public are None.
   :param trump: The trump suit.
   :param must_follow_suit: True if the talon is closed or empty.
   :return: A dictionary mapping each card to its winning probability.
@@ -85,3 +84,53 @@ def card_win_probabilities(cards_in_hand: List[Card],
                                                 num_opp_unknown_cards - i)
     win_prob[card_in_hand] = num_winning_scenarios / num_total_scenarios
   return win_prob
+
+
+def prob_opp_has_more_trumps(my_cards: List[Card],
+                             opp_cards: List[Optional[Card]],
+                             remaining_cards: List[Card],
+                             trump: Suit,
+                             is_forth_trick_with_opened_talon: bool):
+  """
+  Returns the probability that the opponent has more trump cards than the
+  current player.
+  :param my_cards: The cards in the current player's hand.
+  :param opp_cards: The cards in the opponent's hand. The cards that are not
+  public should be None.
+  :param remaining_cards: Cards that are not yet played, excluding the trump
+  card, in case the talon is not empty.
+  :param trump: The trump suit.
+  :param is_forth_trick_with_opened_talon: This must be true if we should assume
+  we are before the fifth trick, the talon is not closed and the current player
+  wins the fifth trick. In this case the opponent will pick up the trump card.
+  :return: The probability that the opponent has more trump cards.
+  """
+  num_my_trumps = len([card for card in my_cards if card.suit == trump])
+  num_opp_trumps = len([card for card in opp_cards if
+                        card is not None and card.suit == trump])
+
+  num_remaining_trumps = len(
+    [card for card in remaining_cards if card.suit == trump]) - num_opp_trumps
+
+  num_opp_unknown_cards = len([card for card in opp_cards if card is None])
+
+  # Assume the opponent will get the trump card after this trick.
+  if is_forth_trick_with_opened_talon:
+    num_opp_trumps += 1
+    num_opp_unknown_cards -= 1
+
+  num_remaining_cards = len(remaining_cards)
+  num_remaining_cards -= len([card for card in opp_cards if card is not None])
+
+  total_scenarios = comb(num_remaining_cards, num_opp_unknown_cards)
+  probabilities = []
+  for i in range(num_remaining_trumps + 1):
+    possible_opp_trumps = num_opp_trumps + i
+    if possible_opp_trumps <= num_my_trumps:
+      continue
+    if num_opp_unknown_cards < i:
+      break
+    possibilities = comb(num_remaining_trumps, i) * comb(
+      num_remaining_cards - num_remaining_trumps, num_opp_unknown_cards - i)
+    probabilities.append(possibilities / total_scenarios)
+  return sum(probabilities)
