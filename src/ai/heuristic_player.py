@@ -62,11 +62,44 @@ class _Priority(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class HeuristicPlayerOptions:
   priority_discard: bool = True
+  """
+  If this is True, instead of always discarding the smallest non-trump card in
+  hand, the player will use discard priority buckets (see _Priority enum).
+  """
+
   can_close_talon: bool = True
+  """
+  If True, the player will consider closing the talon. If False, the player will
+  never close the talon.
+  """
+
   save_marriages: bool = True
+  """
+  If True, the player will not destroy a marriage in hand to win the Jack from
+  the same suit.
+  """
+
   trump_for_marriage: bool = True
+  """
+  If True, when the player doesn't have the lead, cannot win the opponent's card
+  with a same suit card and has a marriage in hand, it will use a trump card to
+  get the lead and announce the marriage. 
+  """
+
   avoid_direct_loss: bool = True
+  """
+  This options has no effect if priority_discard is False. If priority_discard
+  is True and avoid_direct_loss is True, when the player chooses a card to
+  discard using priority buckets and this card would make it lose the game, the
+  player will try to trump or discard the smallest card in hand.  
+  """
+
   trump_control: bool = True
+  """
+  If True, when the player is on-lead and predicts that the opponent has more
+  trump card in hand than itself, it will play a high card (Ten or Ace) to force
+  the opponent to use a trump card or give up many points.
+  """
 
 
 # TODO(heuristic): When closing the talon/winning probs, count trumps from your
