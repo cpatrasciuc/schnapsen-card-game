@@ -27,6 +27,21 @@ class Game:
   def game_state(self) -> GameState:
     return self._game_state
 
+  @property
+  def actions(self) -> List[PlayerAction]:
+    """The list of player actions executed so far."""
+    return self._actions
+
+  @property
+  def seed(self) -> Any:
+    """The seed used to shuffle the deck at the beginning of the game."""
+    return self._seed
+
+  @property
+  def dealer(self) -> PlayerId:
+    """The player that was the dealer at the beginning of the game."""
+    return self._dealer
+
   def play_action(self, action: PlayerAction) -> None:
     """
     Executes the given player action. The action must be a legal action in the

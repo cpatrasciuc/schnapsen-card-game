@@ -17,6 +17,8 @@ from model.suit import Suit
 class GameTest(unittest.TestCase):
   def test_play_a_full_game(self):
     game = Game(PlayerId.ONE, seed=2)
+    self.assertEqual(PlayerId.ONE, game.dealer)
+    self.assertEqual(2, game.seed)
     self.assertEqual(Suit.DIAMONDS, game.game_state.trump)
 
     actions = [
@@ -47,8 +49,9 @@ class GameTest(unittest.TestCase):
       PlayCardAction(PlayerId.TWO, Card(Suit.HEARTS, CardValue.ACE)),
       PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING))
     ]
-    for action in actions:
+    for i, action in enumerate(actions):
       game.play_action(action)
+      self.assertEqual(actions[:i + 1], game.actions)
 
     self.assertTrue(game.game_state.is_game_over)
     self.assertEqual(PlayerPair(13, 67), game.game_state.trick_points)
