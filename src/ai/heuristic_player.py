@@ -417,7 +417,13 @@ class HeuristicPlayer(RandomPlayer):
       return min_trump_card
     return None
 
-  def _should_trump_for_marriage(self, game_view):
+  def _should_trump_for_marriage(self, game_view: GameState) -> bool:
+    """
+    Returns True if the player should play a trump card to take the lead and
+    announce a marriage that it already has in hand. If the marriage is the
+    trump marriage, it also checks whether the player has a third trump card to
+    use now.
+    """
     if not self._options.trump_for_marriage:
       return False
     for suit in Suit:

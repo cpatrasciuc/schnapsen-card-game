@@ -788,3 +788,47 @@ class HeuristicPlayerOptionsTest(unittest.TestCase):
         ]
       },
     ])
+
+  def test_trump_for_marriage(self):
+    self._run_test_cases_with_option("trump_for_marriage", [False, True], [
+      # Trump to take the lead and announce a non-trump marriage.
+      {
+        "cards_in_hand": (["ks", "qs", "th", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("th")),
+        ]
+      },
+      # We have the trump marriage, but we cannot trump since we don't have a
+      # third trump card to use.
+      {
+        "cards_in_hand": (["kh", "qh", "ts", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+        ]
+      },
+      # Use trump Ace to take the lead and announce the trump marriage.
+      {
+        "cards_in_hand": (["kh", "qh", "ts", "ac", "ah"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "th",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("ah")),
+        ]
+      },
+    ])
