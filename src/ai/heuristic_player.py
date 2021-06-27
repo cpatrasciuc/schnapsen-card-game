@@ -61,7 +61,7 @@ class _Priority(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class HeuristicPlayerOptions:
-  smart_discard: bool = True
+  priority_discard: bool = True
   can_close_talon: bool = True
   save_marriages: bool = True
   trump_for_marriage: bool = True
@@ -508,7 +508,7 @@ class HeuristicPlayer(RandomPlayer):
     used to get the leading card in the early stages of the game when we don't
     want to lead with high cards.
     """
-    if self._options.smart_discard:
+    if self._options.priority_discard:
       return self._discard_with_priorities(game_view)
     card = self._my_smallest_non_trump_card(game_view)
     if card is not None:
@@ -522,11 +522,13 @@ class HeuristicPlayer(RandomPlayer):
 
   def _discard_with_priorities(self, game_view: GameState) -> Card:
     buckets = self._discard_buckets(game_view)
+    logging.debug("HeuristicPlayer: Discard priority buckets:\n%s",
+                  pprint.pformat(buckets))
 
     # Get the smallest card from the first non-empty bucket sorted by
     # priority.
     best_card = None
-    for priority in _Priority:
+    for priority in _Priority:  # pragma: no cover
       cards = buckets[priority]
       if len(cards) > 0:
         cards.sort(key=_key_by_value_and_suit)
@@ -547,7 +549,11 @@ class HeuristicPlayer(RandomPlayer):
 
     return best_card
 
-  def _discard_buckets(self, game_view):
+  def _discard_buckets(self, game_view) -> Dict[_Priority, List[Card]]:
+    """
+    Divides the cards in hand in the corresponding discard priority buckets and
+    returns them as a dictionary.
+    """
     buckets = {priority: [] for priority in _Priority}
     remaining_suits = set(card.suit for card in self._remaining_cards)
     played_cards = self._played_cards

@@ -83,7 +83,7 @@ def _is_valid_game_view(game_view: GameState) -> bool:
 
 def _get_player(**kwargs):
   params = {
-    "smart_discard": False,
+    "priority_discard": False,
     "can_close_talon": False,
     "save_marriages": False,
     "trump_for_marriage": False,
@@ -114,27 +114,6 @@ class HeuristicPlayerTest(unittest.TestCase):
       else:
         self.assertIn(actual_action, expected_action,
                       msg=f"TestCase {i}: {test_case}")
-
-  def _run_test_cases_with_option(self, option_name: str,
-                                  option_values: List[Any],
-                                  test_cases: List[Dict[str, Any]]) -> None:
-    players = []
-    for option_value in option_values:
-      players.append(_get_player(**{option_name: option_value}))
-    for i, test_case in enumerate(test_cases):
-      expected_actions = test_case["expected_action"]
-      test_case.pop("expected_action")
-      game_view = _game_view_from_dict(test_case)
-      self.assertTrue(_is_valid_game_view(game_view),
-                      msg=f"TestCase {i}: {test_case}")
-      for player, expected_action in zip(players, expected_actions):
-        actual_action = player.request_next_action(game_view)
-        if isinstance(expected_action, PlayerAction):
-          self.assertEqual(expected_action, actual_action,
-                           msg=f"TestCase {i}: {test_case}")
-        else:
-          self.assertIn(actual_action, expected_action,
-                        msg=f"TestCase {i}: {test_case}")
 
   def test_generic_on_lead_do_not_follow_suit(self):
     self._run_test_cases([
@@ -629,6 +608,31 @@ class HeuristicPlayerTest(unittest.TestCase):
       },
     ])
 
+
+class HeuristicPlayerOptionsTest(unittest.TestCase):
+  """Tests for the HeuristicPlayer options."""
+
+  def _run_test_cases_with_option(self, option_name: str,
+                                  option_values: List[Any],
+                                  test_cases: List[Dict[str, Any]]) -> None:
+    players = []
+    for option_value in option_values:
+      players.append(_get_player(**{option_name: option_value}))
+    for i, test_case in enumerate(test_cases):
+      expected_actions = test_case["expected_action"]
+      test_case.pop("expected_action")
+      game_view = _game_view_from_dict(test_case)
+      self.assertTrue(_is_valid_game_view(game_view),
+                      msg=f"TestCase {i}: {test_case}")
+      for player, expected_action in zip(players, expected_actions):
+        actual_action = player.request_next_action(game_view)
+        if isinstance(expected_action, PlayerAction):
+          self.assertEqual(expected_action, actual_action,
+                           msg=f"TestCase {i}: {test_case}")
+        else:
+          self.assertIn(actual_action, expected_action,
+                        msg=f"TestCase {i}: {test_case}")
+
   def test_can_close_talon(self):
     self._run_test_cases_with_option("can_close_talon", [False, True], [
       # The talon is already closed. Discard the smallest trump card.
@@ -687,6 +691,100 @@ class HeuristicPlayerTest(unittest.TestCase):
         "expected_action": [
           PlayCardAction(PlayerId.ONE, Card.from_string("kd")),
           PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        ]
+      },
+    ])
+
+  def test_priority_discard(self):
+    self._run_test_cases_with_option("priority_discard", [False, True], [
+      # Discard a card from an exhausted suit.
+      {
+        "cards_in_hand": (["jd", "qd", "ac", "ks", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([("qs", "js")], [("ts", "as")]),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("ks")),
+        ]
+      },
+      # Discard a jack with ten protection.
+      {
+        "cards_in_hand": (["jd", "jc", "td", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jc")),
+        ]
+      },
+      # Discard a jack with no ten protection.
+      {
+        "cards_in_hand": (["ks", "jd", "td", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([("qs", "js")], [("ts", "th")]),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jd")),
+        ]
+      },
+      # Discard a Queen/King without marriage chances.
+      {
+        "cards_in_hand": (["ks", "qd", "td", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([("qs", "js")], [("ts", "th")]),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("ks")),
+        ]
+      },
+      # Discard a Queen/King with marriage chances.
+      {
+        "cards_in_hand": (["ks", "qs", "kd", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("kd")),
+        ]
+      },
+      # Discard a Queen/King for a marriage.
+      {
+        "cards_in_hand": (["ks", "qs", "ad", "ac", "tc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("qs")),
+        ]
+      },
+      # Discard a non-trump card.
+      {
+        "cards_in_hand": (["jh", "qh", "th", "ac", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "ks"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("ad")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("ad")),
         ]
       },
     ])
