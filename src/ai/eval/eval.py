@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import os.path
+import random
 from typing import List, Dict
 
 import pandas
@@ -82,6 +83,8 @@ def evaluate_player_pair(players: PlayerPair[Player],
   bummerls_of_interest = PlayerPair(0, 0)
   games_of_interest = PlayerPair(0, 0)
 
+  random_seed_generator = random.Random()
+
   # Simulate the games and update the metrics accordingly.
   for i in range(num_bummerls):
     if i % 100 == 0:
@@ -89,8 +92,7 @@ def evaluate_player_pair(players: PlayerPair[Player],
     bummerl = Bummerl()
     is_bummerl_of_interest = False
     while not bummerl.is_over:
-      # TODO(eval): Fix RNG.
-      bummerl.start_game()
+      bummerl.start_game(seed=random_seed_generator.random())
       players.one.game_of_interest = False
       players.two.game_of_interest = False
       game = bummerl.game

@@ -5,7 +5,7 @@
 import copy
 import dataclasses
 import random
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from model.card import Card
 from model.card_value import CardValue
@@ -184,7 +184,7 @@ class GameState:
 
   @staticmethod
   def new(dealer: PlayerId = PlayerId.ONE,
-          random_seed: Optional[int] = None) -> "GameState":
+          random_seed: Optional[Any] = None) -> "GameState":
     """
     Creates and returns a new game state representing the beginning of a new
     game.

@@ -4,7 +4,7 @@
 
 import random
 import time
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from model.game import Game
 from model.player_id import PlayerId
@@ -49,7 +49,7 @@ class Bummerl:
     """
     return self._game_points
 
-  def start_game(self, seed: Optional[int] = None) -> Game:
+  def start_game(self, seed: Optional[Any] = None) -> Game:
     """
     Starts a new game as part of this Bummerl. It cannot be called if a game is
     already in progress or if one player already reached 7 points.

@@ -2,7 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-from typing import List
+from typing import List, Any
 
 from model.game_state import GameState
 from model.player_action import PlayerAction
@@ -17,7 +17,7 @@ class Game:
   It supports pickling/unpickling.
   """
 
-  def __init__(self, dealer: PlayerId, seed: int):
+  def __init__(self, dealer: PlayerId, seed: Any):
     self._dealer = dealer
     self._seed = seed
     self._game_state: GameState = GameState.new(dealer=dealer, random_seed=seed)
