@@ -886,3 +886,74 @@ class HeuristicPlayerOptionsTest(unittest.TestCase):
         ]
       },
     ])
+
+  def test_trump_control(self):
+    self._run_test_cases_with_option("trump_control", [False, True], [
+      # No trumps after one trick. Play a high card.
+      {
+        "cards_in_hand": (["jh", "jd", "th", "kc", "qd"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "as",
+        "talon": [None, None, None, None, None, None, None],
+        "won_tricks": ([("qc", "jc")], []),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("th")),
+        ]
+      },
+      # There is no need to trump control; discard a small card.
+      {
+        "cards_in_hand": (["jh", "ts", "ks", "tc", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "as",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        ]
+      },
+      # The opponent has more trumps than us, but we cannot play a high card
+      # since the opponent might trump it and win the game.
+      {
+        "cards_in_hand": (["qh", "td", "th", "tc", "ah"],
+                          ["qs", None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([],
+                       [("ad", "ks"), ("qc", "qd")]),
+        "marriage_suits": ([], [Suit.SPADES]),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("qh")),
+        ]
+      },
+      # No trump control since there are no more trumps.
+      {
+        "cards_in_hand": (["qh", "td", "th", "ts", "as"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None, None, None],
+        "won_tricks": ([("ks", "ad"), ("qs", "qd")],
+                       []),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("qh")),
+        ]
+      },
+      # No trump control since we have no high cards.
+      {
+        "cards_in_hand": (["qh", "jd", "jh", "ks", "jc"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        ]
+      },
+    ])

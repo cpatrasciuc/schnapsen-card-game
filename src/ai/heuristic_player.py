@@ -641,6 +641,12 @@ class HeuristicPlayer(RandomPlayer):
     return None
 
   def _maybe_trump_control(self, game_view: GameState) -> Optional[Card]:
+    """
+    If the probability that the opponent has more trump cards than us is greater
+    than 0.5, play an non-trump Ace or a Ten, if available. The method returns
+    the card that should be played. If it's not likely that the opponent has
+    more trumps or we don't have any Ace or Ten, the method returns None.
+    """
     if not self._options.trump_control:
       return None
 
@@ -648,15 +654,23 @@ class HeuristicPlayer(RandomPlayer):
                   card.suit != game_view.trump
                   and card.card_value in [CardValue.TEN, CardValue.ACE]]
     if len(high_cards) == 0:
+      logging.debug("HeuristicPlayer: No high cards")
       return None
 
-    # If the opponent can win the game by trumping out high card, don't play it.
     remaining_trumps = [card for card in self._remaining_cards if
                         card.suit == game_view.trump]
-    if len(remaining_trumps) > 0:
-      max_remaining_trump = max(remaining_trumps)
-      if max_remaining_trump.card_value + CardValue.ACE > 65:
-        return None
+    if len(remaining_trumps) == 0:
+      logging.debug(
+        "HeuristicPLayer: No trump control since there are no trumps remaining")
+      return None
+
+    # If the opponent can win the game by trumping our high card, don't play it.
+    max_remaining_trump = max(remaining_trumps)
+    opp_points = game_view.trick_points[self.id.opponent()]
+    if opp_points + max_remaining_trump.card_value + CardValue.ACE > 65:
+      logging.debug(
+        "HeuristicPlayer: No trump control because the opponent could win")
+      return None
 
     fifth_trick_with_open_talon = not game_view.is_talon_closed and \
                                   len(game_view.talon) == 1
@@ -666,6 +680,9 @@ class HeuristicPlayer(RandomPlayer):
                                            self._remaining_cards,
                                            game_view.trump,
                                            fifth_trick_with_open_talon)
+    logging.debug(
+      "HeuristicPlayer: Probability that the opponent has more trumps: %.2f",
+      probability)
     if probability <= 0.5:
       return None
 
@@ -685,4 +702,4 @@ class HeuristicPlayer(RandomPlayer):
     for card_list in [single_tens, single_aces, other_tens, other_aces]:
       if len(card_list) > 0:
         return random.choice(card_list)
-    assert False, "Should not reach this code"
+    assert False, "Should not reach this code"  # pragma: no cover
