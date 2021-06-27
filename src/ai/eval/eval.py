@@ -56,53 +56,79 @@ def _prop_confidence_interval(pair: PlayerPair[int]):
 
 def _print_pair(label: str, pair: PlayerPair, compute_ci: bool = True):
   ci_text = ""
-  if compute_ci:
+  if compute_ci and pair != PlayerPair(0, 0):
     ci_text = _prop_confidence_interval(pair)
   print(f"{label}: {pair.one}:{pair.two} {ci_text}")
 
 
 def _print_metrics(metrics: Dict[str, PlayerPair]):
   for metric_name, metric_value in metrics.items():
-    compute_ci = metric_name in ["bummerls", "games"]
+    compute_ci = metric_name in ["bummerls", "games", "bummerls_of_interest",
+                                 "games_of_interest"]
     _print_pair(metric_name, metric_value, compute_ci)
   print()
 
 
 def evaluate_player_pair(players: PlayerPair[Player],
                          num_bummerls: int = 2500) -> Dict[str, PlayerPair]:
+  # pylint: disable=too-many-locals,too-many-branches
+
   # Initialize the metrics.
   bummerls = PlayerPair(0, 0)
   game_points = PlayerPair(0, 0)
   games = PlayerPair(0, 0)
   trick_points = PlayerPair(0, 0)
 
+  bummerls_of_interest = PlayerPair(0, 0)
+  games_of_interest = PlayerPair(0, 0)
+
   # Simulate the games and update the metrics accordingly.
   for i in range(num_bummerls):
     if i % 100 == 0:
       print(f"\rSimulating bummerl {i} out of {num_bummerls}...", end="")
     bummerl = Bummerl()
+    is_bummerl_of_interest = False
     while not bummerl.is_over:
+      # TODO(eval): Fix RNG.
       bummerl.start_game()
+      players.one.game_of_interest = False
+      players.two.game_of_interest = False
       game = bummerl.game
       while not game.game_state.is_game_over:
         player = players[game.game_state.next_player]
+        # TODO(eval): Measure the time spend on average in this method.
         action = player.request_next_action(game.game_state.next_player_view())
         game.play_action(action)
+      is_game_of_interest = \
+        players.one.game_of_interest or players.two.game_of_interest
+      if is_game_of_interest:
+        is_bummerl_of_interest = True
       _accumulate_player_pair(trick_points, game.game_state.trick_points)
       last_game_points = game.game_state.game_points
       if last_game_points.one > 0:
         games.one += 1
+        if is_game_of_interest:
+          games_of_interest.one += 1
       else:
         games.two += 1
+        if is_game_of_interest:
+          games_of_interest.two += 1
       _accumulate_player_pair(game_points, last_game_points)
       bummerl.finalize_game()
     if bummerl.game_points.one > 6:
       bummerls.one += 1
+      if is_bummerl_of_interest:
+        bummerls_of_interest.one += 1
     else:
       bummerls.two += 1
+      if is_bummerl_of_interest:
+        bummerls_of_interest.two += 1
+
   print(end="\r")
   return {"bummerls": bummerls, "games": games, "game_points": game_points,
-          "trick_points": trick_points}
+          "trick_points": trick_points,
+          "bummerls_of_interest": bummerls_of_interest,
+          "games_of_interest": games_of_interest}
 
 
 def evaluate_one_player_vs_opponent_list(player: str,
