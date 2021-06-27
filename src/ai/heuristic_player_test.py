@@ -673,3 +673,20 @@ class HeuristicPlayerTest(unittest.TestCase):
         ]
       },
     ])
+
+  def test_save_marriages(self):
+    self._run_test_cases_with_option("save_marriages", [False, True], [
+      # Do not break a marriage to win a Jack.
+      {
+        "cards_in_hand": (["qd", "kd", "ad", "js", "qs"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "ac",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "jd"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("kd")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        ]
+      },
+    ])
