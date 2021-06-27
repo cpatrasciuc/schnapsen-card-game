@@ -394,9 +394,6 @@ class HeuristicPlayer(RandomPlayer):
     If that is not the case, it returns None.
     """
     assert self._opp_card is not None
-    if len(self._my_trump_cards) == 0:
-      logging.debug("HeuristicPlayer: Cannot trump for the win; no trump cards")
-      return None
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
     logging.debug("HeuristicPlayer: Card win probabilities: %s",

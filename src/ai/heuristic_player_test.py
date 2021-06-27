@@ -407,6 +407,15 @@ class HeuristicPlayerTest(unittest.TestCase):
         "current_trick": (None, "th"),
         "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
       },
+      {
+        "cards_in_hand": (["qd", "jc", "kc", "jd", "ac"],
+                          [None, None, None, None, None]),
+        "trump": Suit.CLUBS,
+        "trump_card": "qc",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "th"),
+        "expected_action": PlayCardAction(PlayerId.ONE, Card.from_string("ac"))
+      },
       # If this is the last chance to win a trick and be on-lead to exchange the
       # trump card and announce the trump marriage, use a trump regardless of
       # what the opponent played.
