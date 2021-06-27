@@ -22,6 +22,7 @@ def run_all_tests_with_coverage(folders: List[str] = None) -> float:
   folders = folders or ["./ai", "./model", "./ui"]
   cov = coverage.Coverage(branch=True, source=folders,
                           omit=[tests_file_pattern,
+                                "ai/eval/*",
                                 "model/game_state_validation_test_module.py",
                                 "ui/debuggable_widget_test_module.py"])
   cov.exclude("def __repr__", "exclude")
