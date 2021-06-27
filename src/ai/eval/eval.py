@@ -4,6 +4,7 @@
 
 import os.path
 import random
+import time
 from typing import List, Dict
 
 import pandas
@@ -13,6 +14,7 @@ from statsmodels.stats.proportion import proportion_confint
 from ai.eval.players import PLAYER_NAMES
 from ai.player import Player
 from model.bummerl import Bummerl
+from model.game_state import GameState
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 
@@ -70,6 +72,15 @@ def _print_metrics(metrics: Dict[str, PlayerPair]):
   print()
 
 
+def _request_next_action_and_time_it(game_view: GameState, player: Player):
+  start_perf = time.perf_counter()
+  start_process = time.process_time()
+  action = player.request_next_action(game_view)
+  end_perf = time.perf_counter()
+  end_process = time.process_time()
+  return action, end_perf - start_perf, end_process - start_process
+
+
 def evaluate_player_pair(players: PlayerPair[Player],
                          num_bummerls: int = 2500) -> Dict[str, PlayerPair]:
   # pylint: disable=too-many-locals,too-many-branches
@@ -82,6 +93,10 @@ def evaluate_player_pair(players: PlayerPair[Player],
 
   bummerls_of_interest = PlayerPair(0, 0)
   games_of_interest = PlayerPair(0, 0)
+
+  perf_counter_sum = PlayerPair(0, 0)
+  process_time_sum = PlayerPair(0, 0)
+  num_actions_requested = PlayerPair(0, 0)
 
   random_seed_generator = random.Random()
 
@@ -97,10 +112,13 @@ def evaluate_player_pair(players: PlayerPair[Player],
       players.two.game_of_interest = False
       game = bummerl.game
       while not game.game_state.is_game_over:
-        player = players[game.game_state.next_player]
-        # TODO(eval): Measure the time spend on average in this method.
-        action = player.request_next_action(game.game_state.next_player_view())
+        player_id = game.game_state.next_player
+        action, perf_counter, process_time = _request_next_action_and_time_it(
+          game.game_state.next_player_view(), players[player_id])
         game.play_action(action)
+        perf_counter_sum[player_id] += perf_counter
+        process_time_sum[player_id] += process_time
+        num_actions_requested[player_id] += 1
       is_game_of_interest = \
         players.one.game_of_interest or players.two.game_of_interest
       if is_game_of_interest:
@@ -130,7 +148,10 @@ def evaluate_player_pair(players: PlayerPair[Player],
   return {"bummerls": bummerls, "games": games, "game_points": game_points,
           "trick_points": trick_points,
           "bummerls_of_interest": bummerls_of_interest,
-          "games_of_interest": games_of_interest}
+          "games_of_interest": games_of_interest,
+          "perf_counter_sum": perf_counter_sum,
+          "process_time_sum": process_time_sum,
+          "num_actions_requested": num_actions_requested}
 
 
 def evaluate_one_player_vs_opponent_list(player: str,
