@@ -548,10 +548,7 @@ class HeuristicPlayer(RandomPlayer):
       if points + best_card.card_value > 65:
         if len(self._my_trump_cards) > 0:
           return self._win_with_trump(game_view)
-        smallest_card = self._my_smallest_non_trump_card(game_view)
-        if smallest_card is not None:
-          return smallest_card
-        return min(self._my_cards, key=_key_by_value_and_suit)
+        return self._my_smallest_non_trump_card(game_view)
 
     return best_card
 

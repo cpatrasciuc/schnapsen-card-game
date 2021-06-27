@@ -617,7 +617,10 @@ class HeuristicPlayerOptionsTest(unittest.TestCase):
                                   test_cases: List[Dict[str, Any]]) -> None:
     players = []
     for option_value in option_values:
-      players.append(_get_player(**{option_name: option_value}))
+      kwargs = {option_name: option_value}
+      if option_name == "avoid_direct_loss":
+        kwargs["priority_discard"] = True
+      players.append(_get_player(**kwargs))
     for i, test_case in enumerate(test_cases):
       expected_actions = test_case["expected_action"]
       test_case.pop("expected_action")
@@ -829,6 +832,57 @@ class HeuristicPlayerOptionsTest(unittest.TestCase):
         "expected_action": [
           PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
           PlayCardAction(PlayerId.ONE, Card.from_string("ah")),
+        ]
+      },
+    ])
+
+  def test_avoid_direct_loss(self):
+    self._run_test_cases_with_option("avoid_direct_loss", [False, True], [
+      # Play a trump card instead of discarding the smallest non trump card.
+      {
+        "cards_in_hand": (["jh", "td", "th", "kh", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.HEARTS,
+        "trump_card": "ah",
+        "talon": [None],
+        "won_tricks": ([],
+                       [("kd", "tc"), ("js", "qs"), ("ts", "as"),
+                        ("jc", "ac")]),
+        "current_trick": (None, "qc"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("td")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        ]
+      },
+      # Play the smallest card instead of discarding a card from an exhausted
+      # suit.
+      {
+        "cards_in_hand": (["jh", "td", "th", "tc", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "as",
+        "talon": [None],
+        "won_tricks": ([],
+                       [("jc", "qc"), ("kc", "ts"), ("ac", "js"),
+                        ("jd", "kh")]),
+        "marriage_suits": ([], [Suit.HEARTS]),
+        "current_trick": (None, "ks"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("tc")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        ]
+      },
+      # There is no direct loss; discard a small card.
+      {
+        "cards_in_hand": (["jh", "td", "ts", "tc", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "as",
+        "talon": [None, None, None, None, None, None, None, None, None],
+        "current_trick": (None, "kh"),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+          PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
         ]
       },
     ])

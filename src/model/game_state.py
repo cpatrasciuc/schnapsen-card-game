@@ -142,6 +142,8 @@ class GameState:
     for player in PlayerId:
       for marriage_suit in self.marriage_suits[player]:
         for card in self.cards_in_hand[player]:
+          if card is None:
+            continue
           if card.suit == marriage_suit:
             if card.card_value in [CardValue.QUEEN, CardValue.KING]:
               card.public = True
