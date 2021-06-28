@@ -72,6 +72,8 @@ def card_win_probabilities(cards_in_hand: List[Card],
         smaller_cards_in_opp_hand = len(opp_smaller_cards_same_suit) + i
         # No smaller cards, so make sure the opponent doesn't have any trump.
         if smaller_cards_in_opp_hand == 0 and card_in_hand.suit != trump:
+          # TODO(ai): Here we could take into account that we might pull all
+          #   trumps from the opponent's hand with our high trumps.
           if len(opp_trumps) > 0:
             continue
           num_better_cards = len(unplayed_better_cards) + len(unplayed_trumps)

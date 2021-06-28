@@ -9,13 +9,15 @@ import pprint
 import random
 from typing import List, Optional, Dict
 
-from ai.random_player import RandomPlayer
-from ai.utils import card_win_probabilities, prob_opp_has_more_trumps
+from ai.player import Player
+from ai.utils import card_win_probabilities, prob_opp_has_more_trumps, \
+  get_best_marriage
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
 from model.player_action import PlayerAction, PlayCardAction, \
-  ExchangeTrumpCardAction, AnnounceMarriageAction, CloseTheTalonAction
+  ExchangeTrumpCardAction, AnnounceMarriageAction, CloseTheTalonAction, \
+  get_available_actions
 from model.player_id import PlayerId
 from model.suit import Suit
 
@@ -102,16 +104,13 @@ class HeuristicPlayerOptions:
   """
 
 
-# TODO(heuristic): When closing the talon/winning probs, count trumps from your
-#   hand to counter remaining trumps. Then non-trump Ace or Ten could have
-#   prob == 1.0.
-
-# TODO(ai): Replace RandomPlayer with Player when the implementation in ready.
-class HeuristicPlayer(RandomPlayer):
+class HeuristicPlayer(Player):
   """
   A player implementation based on the strategy outlined here:
   http://psellos.com/schnapsen/strategy.html
   """
+
+  # pylint: disable=too-many-instance-attributes
 
   def __init__(self, player_id: PlayerId,
                options: Optional[HeuristicPlayerOptions] = None):
@@ -121,8 +120,7 @@ class HeuristicPlayer(RandomPlayer):
     TWO).
     :param options: A set of parameters controlling the player's behavior.
     """
-    super().__init__(player_id=player_id, force_trump_exchange=True,
-                     never_close_talon=True, force_marriage_announcement=True)
+    super().__init__(player_id=player_id)
     self._options = options or HeuristicPlayerOptions()
 
     # These variables cache the current state of the game across multiple
@@ -134,6 +132,7 @@ class HeuristicPlayer(RandomPlayer):
     self._my_trump_cards = None
     self._played_cards = None
     self._opp_card = None
+    self._actions: Dict[Card, PlayerAction] = {}
 
   def _cache_game_state(self, game_view: GameState) -> None:
     self._opp_card = game_view.current_trick[self.id.opponent()]
@@ -154,21 +153,27 @@ class HeuristicPlayer(RandomPlayer):
     return self._not_on_lead_action(game_view)
 
   def _on_lead_action(self, game_view: GameState) -> PlayerAction:
-    action = super().request_next_action(game_view)
-
-    # Maybe exchange trump.
-    if isinstance(action, ExchangeTrumpCardAction):
-      return action
+    # Store the available actions.
+    available_actions = get_available_actions(game_view)
+    self._actions = {}
+    for action in available_actions:
+      # Always exchange the trump card if possible.
+      if isinstance(action, ExchangeTrumpCardAction):
+        return action
+      if isinstance(action, (AnnounceMarriageAction, PlayCardAction)):
+        self._actions[action.card] = action
+    assert len(self._actions) == len(self._my_cards)
 
     # Check if we have a preferred marriage in hand, but don't play it yet
     # because we might have higher cards that cannot be beaten by the opponent
     # (e.g., Trump Ace) and can secure the necessary points such that showing
     # the marriage will end the game.
     self._marriage_suit = None
-    if isinstance(action, AnnounceMarriageAction):
+    marriage_action = get_best_marriage(available_actions, game_view.trump)
+    if marriage_action is not None:
       logging.debug("HeuristicPlayer: Storing marriage suit: %s",
-                    action.card.suit)
-      self._marriage_suit = action.card.suit
+                    marriage_action.card.suit)
+      self._marriage_suit = marriage_action.card.suit
 
     # Maybe close the talon.
     close_talon_action = self._should_close_talon(game_view)
@@ -250,10 +255,7 @@ class HeuristicPlayer(RandomPlayer):
     return self._play_card_or_marriage(card)
 
   def _play_card_or_marriage(self, card: Card) -> PlayerAction:
-    if card in [CardValue.QUEEN, CardValue.KING] \
-        and card.marriage_pair in self._my_cards:
-      return AnnounceMarriageAction(self.id, card)
-    return PlayCardAction(self.id, card)
+    return self._actions[card]
 
   def _on_lead_follow_suit(self,
                            game_view: GameState) -> PlayerAction:
