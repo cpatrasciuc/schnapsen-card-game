@@ -249,7 +249,6 @@ class HeuristicPlayer(Player):
       logging.debug("HeuristicPlayer: Cannot get to 66 using winning cards.")
       return None
 
-    # TODO(heuristic): Pick a random winning card.
     card = random.choice(list(winning_cards.keys()))
     logging.debug("HeuristicPlayer: Play winning card: %s", card)
     return self._play_card_or_marriage(card)
