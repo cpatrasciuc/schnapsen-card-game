@@ -5,9 +5,10 @@
 import random
 
 from ai.player import Player
+from ai.utils import get_best_marriage
 from model.game_state import GameState
 from model.player_action import PlayerAction, get_available_actions, \
-  CloseTheTalonAction, ExchangeTrumpCardAction, AnnounceMarriageAction
+  CloseTheTalonAction, ExchangeTrumpCardAction
 from model.player_id import PlayerId
 
 
@@ -54,16 +55,8 @@ class RandomPlayer(Player):
           return action
 
     if self._force_marriage_announcement:
-      marriages = []
-      has_trump_marriage = False
-      for action in available_actions:
-        if isinstance(action, AnnounceMarriageAction):
-          if action.card.suit == game_view.trump and not has_trump_marriage:
-            marriages = [action]
-            has_trump_marriage = True
-          elif action.card.suit == game_view.trump or not has_trump_marriage:
-            marriages.append(action)
-      if len(marriages) > 0:
-        return random.choice(marriages)
+      marriage = get_best_marriage(available_actions, game_view.trump)
+      if marriage is not None:
+        return marriage
 
     return random.choice(available_actions)

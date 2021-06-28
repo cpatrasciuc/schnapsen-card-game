@@ -6,7 +6,11 @@ import unittest
 from typing import List
 
 from ai.test_utils import card_list_from_string
-from ai.utils import card_win_probabilities, prob_opp_has_more_trumps
+from ai.utils import card_win_probabilities, prob_opp_has_more_trumps, \
+  get_best_marriage
+from model.card import Card
+from model.player_action import PlayCardAction, AnnounceMarriageAction
+from model.player_id import PlayerId
 from model.suit import Suit
 
 
@@ -233,3 +237,59 @@ class OpponentTrumpProbabilitiesTest(unittest.TestCase):
         is_forth_trick_with_opened_talon)
       self.assertAlmostEqual(expected_probability, actual_probability,
                              msg=f"TestCase {num_test_case}", places=2)
+
+
+class GetBestMarriageTest(unittest.TestCase):
+  def test_trump_marriage_is_preferred(self):
+    self.assertIn(get_best_marriage(
+      [
+        PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ad")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("qc")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("ks")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qs")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kc")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qc")),
+      ], Suit.SPADES),
+      {
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("ks")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qs")),
+      })
+
+  def test_non_trump_marriages_are_preferred_randomly(self):
+    self.assertIn(get_best_marriage(
+      [
+        PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ad")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("qc")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("ks")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qs")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kc")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qc")),
+      ], Suit.DIAMONDS),
+      {
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qh")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("ks")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qs")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("kc")),
+        AnnounceMarriageAction(PlayerId.ONE, Card.from_string("qc")),
+      })
+
+  def test_no_marriage_available(self):
+    self.assertIsNone(get_best_marriage(
+      [
+        PlayCardAction(PlayerId.ONE, Card.from_string("jh")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ad")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("js")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
+        PlayCardAction(PlayerId.ONE, Card.from_string("qc")),
+      ], Suit.SPADES))

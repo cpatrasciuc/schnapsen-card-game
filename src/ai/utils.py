@@ -2,10 +2,12 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import random
 from math import comb
 from typing import List, Optional, Dict
 
 from model.card import Card
+from model.player_action import PlayerAction, AnnounceMarriageAction
 from model.suit import Suit
 
 
@@ -134,3 +136,27 @@ def prob_opp_has_more_trumps(my_cards: List[Card],
       num_remaining_cards - num_remaining_trumps, num_opp_unknown_cards - i)
     probabilities.append(possibilities / total_scenarios)
   return sum(probabilities)
+
+
+def get_best_marriage(available_actions: List[PlayerAction],
+                      trump: Suit) -> Optional[AnnounceMarriageAction]:
+  """
+  Searches through the list of available_actions for AnnounceMarriageActions. If
+  there is no such action, it returns None. If there is an action that announces
+  the trump marriage, it will return it (either with Queen or with King,
+  randomly). If there are one or more actions that announce non-trump marriages
+  and there is no trump marriage, it will return randomly an action that
+  announces a non-trump marriage.
+  """
+  marriages = []
+  has_trump_marriage = False
+  for action in available_actions:
+    if isinstance(action, AnnounceMarriageAction):
+      if action.card.suit == trump and not has_trump_marriage:
+        marriages = [action]
+        has_trump_marriage = True
+      elif action.card.suit == trump or not has_trump_marriage:
+        marriages.append(action)
+  if len(marriages) > 0:
+    return random.choice(marriages)
+  return None
