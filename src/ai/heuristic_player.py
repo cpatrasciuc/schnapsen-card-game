@@ -83,7 +83,7 @@ class HeuristicPlayerOptions:
   """
   If True, when the player doesn't have the lead, cannot win the opponent's card
   with a same suit card and has a marriage in hand, it will use a trump card to
-  get the lead and announce the marriage. 
+  get the lead and announce the marriage.
   """
 
   avoid_direct_loss: bool = True
@@ -91,7 +91,7 @@ class HeuristicPlayerOptions:
   This options has no effect if priority_discard is False. If priority_discard
   is True and avoid_direct_loss is True, when the player chooses a card to
   discard using priority buckets and this card would make it lose the game, the
-  player will try to trump or discard the smallest card in hand.  
+  player will try to trump or discard the smallest card in hand.
   """
 
   trump_control: bool = True
