@@ -4,6 +4,7 @@
 
 from typing import Dict, Callable
 
+from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.player import Player
 from ai.random_player import RandomPlayer
 from model.player_id import PlayerId
@@ -32,5 +33,24 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
   "RandomTalonTrumpMarriage":
     lambda player_id: RandomPlayer(player_id, force_trump_exchange=True,
                                    never_close_talon=True,
-                                   force_marriage_announcement=True)
+                                   force_marriage_announcement=True),
+  "Heuristic": HeuristicPlayer,
+  "HeuristicNoPriorityDiscard":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      priority_discard=False)),
+  "HeuristicNoCloseTalon":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      can_close_talon=False)),
+  "HeuristicNoSaveMarriages":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      save_marriages=False)),
+  "HeuristicNoTrumpForMarriages":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      trump_for_marriage=False)),
+  "HeuristicNoAvoidDirectLoss":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      avoid_direct_loss=False)),
+  "HeuristicNoTrumpControl":
+    lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
+      trump_control=False)),
 }
