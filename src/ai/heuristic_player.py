@@ -652,11 +652,14 @@ class HeuristicPlayer(RandomPlayer):
     #     than what we estimate here.
     # Overall, despite these two big flaws, it seems the player behaves better
     # with this heuristic enabled.
-    # TODO(heuristic): This should call card_win_probabilities with
-    #  must_follow_suit = True.
-    probabilities = self._get_winning_prob(game_view)
-    logging.debug("HeuristicPlayer: Card win probabilities: %s",
-                  pprint.pformat(probabilities))
+    probabilities = card_win_probabilities(self._my_cards,
+                                           self._remaining_cards,
+                                           game_view.cards_in_hand[
+                                             self.id.opponent()],
+                                           game_view.trump, True)
+    logging.debug(
+      "HeuristicPlayer: Card win probabilities, if suit must be followed: %s",
+      pprint.pformat(probabilities))
     points = game_view.trick_points[self.id]
     prob_and_cards = [(prob, card) for card, prob in probabilities.items()]
     prob_and_cards.sort(reverse=True)

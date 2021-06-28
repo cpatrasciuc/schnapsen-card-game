@@ -688,6 +688,20 @@ class HeuristicPlayerOptionsTest(unittest.TestCase):
           PlayCardAction(PlayerId.ONE, Card.from_string("qd")),
         ]
       },
+      # Make sure the player computes the winning probabilities as if suits must
+      # be followed.
+      {
+        "cards_in_hand": (["qc", "ts", "ah", "as", "ad"],
+                          [None, None, None, None, None]),
+        "trump": Suit.SPADES,
+        "trump_card": "js",
+        "talon": [None, None, None],
+        "won_tricks": ([("td", "kd"), ("qd", "jc")], [("jh", "kh")]),
+        "expected_action": [
+          PlayCardAction(PlayerId.ONE, Card.from_string("qc")),
+          CloseTheTalonAction(PlayerId.ONE),
+        ]
+      },
     ])
 
   def test_save_marriages(self):
