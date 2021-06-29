@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import datetime
 import os.path
 import random
 import time
@@ -178,6 +179,9 @@ def evaluate_all_player_pairs(player_names: List[str] = None) -> DataFrame:
 
 
 if __name__ == "__main__":
+  start_time = time.time()
   dataframe = evaluate_all_player_pairs()
   dataframe.to_csv(os.path.join(os.path.dirname(__file__), "eval_results.csv"),
                    index=False)
+  end_time = time.time()
+  print(f"Duration: {datetime.timedelta(seconds=end_time - start_time)}")
