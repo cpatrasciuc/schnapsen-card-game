@@ -5,6 +5,7 @@
 from typing import Dict, Callable
 
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
+from ai.lib_mcts_player import LibMctsPlayer
 from ai.player import Player
 from ai.random_player import RandomPlayer
 from model.player_id import PlayerId
@@ -53,4 +54,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
   "HeuristicWithTrumpControl":
     lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
       trump_control=True)),
+
+  "LibMctsPlayer": LibMctsPlayer,
 }

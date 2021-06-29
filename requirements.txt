@@ -3,7 +3,6 @@ Kivy~=2.0.0
 
 # Requirements for tests/linting.
 coverage~=5.5
-pylint~=2.8.3
 
 # Requirements for evaluating AI players.
 statsmodels~=0.12.2
@@ -11,3 +10,6 @@ pandas~=1.2.4
 matplotlib~=3.4.2
 numpy~=1.20.3
 graphviz~=0.16
+
+# For lib_mcts_player.
+mcts~=1.0.4
