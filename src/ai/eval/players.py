@@ -50,7 +50,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
   "HeuristicNoAvoidDirectLoss":
     lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
       avoid_direct_loss=False)),
-  "HeuristicNoTrumpControl":
+  "HeuristicWithTrumpControl":
     lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
-      trump_control=False)),
+      trump_control=True)),
 }

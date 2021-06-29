@@ -96,7 +96,7 @@ class HeuristicPlayerOptions:
   player will try to trump or discard the smallest card in hand.
   """
 
-  trump_control: bool = True
+  trump_control: bool = False
   """
   If True, when the player is on-lead and predicts that the opponent has more
   trump card in hand than itself, it will play a high card (Ten or Ace) to force
@@ -733,6 +733,23 @@ class HeuristicPlayer(Player):
     other_aces = [card for card in high_cards if
                   card.card_value == CardValue.ACE and \
                   card.suit in remaining_suits]
+
+    # Ideas that I tried and didn't work (negative after 2500 or 10000 bummerls)
+    # 1) [single_tens, single_aces, other_tens, other_aces]
+    # 2) [single_tens, other_tens, single_aces, other_aces]
+    # 3) - [single_tens, other_tens, single_aces, other_aces]
+    #    - don't use fifth_trick_with_open_talon
+    #    - probability threshold = 0.6 (instead of 0.5)
+    # 4) - [single_tens, other_tens, single_aces, other_aces]
+    #    - probability threshold = 0.7
+    # 5) [single_aces, other_aces]
+    # 6) [other_aces, single_aces]
+    # 7) [single_tens, other_tens] - neutral at 10000, positive on games of
+    #    interest
+    # 8) [other_tens, single_tens]
+    # 9) - [single_tens, single_aces, other_tens, other_aces]
+    #    - only when fifth_trick_with_open_talon
+    #    - probability threshold = 0.5
     for card_list in [single_tens, single_aces, other_tens, other_aces]:
       if len(card_list) > 0:
         return random.choice(card_list)
