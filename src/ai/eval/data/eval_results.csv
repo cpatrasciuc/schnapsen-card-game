@@ -119,3 +119,6 @@ HeuristicWithTrumpControl,HeuristicNoSaveMarriages,4730,5270,31740,32275,52373,5
 HeuristicWithTrumpControl,HeuristicNoTrumpForMarriages,4927,5073,32131,31920,53471,54298,3286083,3347019
 HeuristicWithTrumpControl,HeuristicNoAvoidDirectLoss,4696,5304,31586,32250,52240,55393,3238596,3373776
 HeuristicWithTrumpControl,HeuristicWithTrumpControl,4959,5041,31724,32039,53528,54006,3267795,3281704
+LibMctsPlayer,RandomTalonTrumpMarriage,99,1,400,103,755,146,32209,18139
+LibMctsPlayer,Heuristic,16,84,240,377,344,678,25973,38434
+LibMctsPlayer,LibMctsPlayer,49,51,338,365,522,547,37751,38083
