@@ -47,8 +47,7 @@ def _render_colored_table(player_names, color, win_percentage):
   ax.set_yticklabels(player_names)
 
   # Let the horizontal axes labeling appear on top.
-  ax.tick_params(top=True, bottom=False,
-                 labeltop=True, labelbottom=False)
+  ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
 
   # Rotate the tick labels and set their alignment.
   plt.setp(ax.get_xticklabels(), rotation=-30, ha="right",
@@ -64,6 +63,8 @@ def _render_colored_table(player_names, color, win_percentage):
   # Annotate the heatmap with the win ratios.
   for i in range(len(player_names)):
     for j in range(len(player_names)):
+      if np.isnan(win_percentage[i][j]):
+        continue
       ax.text(j, i, "{:.2%}".format(win_percentage[i][j]), ha="center",
               va="center", color="k" if color[i][j] == 0.5 else "w")
 
@@ -117,6 +118,8 @@ def plot_eval_results(dataframe: DataFrame):
     for j, player_two in enumerate(player_names):
       metric = _get_metric(player_one, player_two, dataframe, "bummerls")
       if metric is None:
+        win_percentage[i][j] = np.nan
+        color[i][j] = 0.5
         continue
       wins_one, wins_two = metric
       ci_low, ci_upp = proportion_confint(wins_one, wins_one + wins_two,
