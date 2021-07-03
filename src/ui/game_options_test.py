@@ -19,13 +19,15 @@ class GameOptionsTest(unittest.TestCase):
     self.assertEqual(0.5, game_options.close_talon_duration)
     self.assertEqual(0.5, game_options.trick_completed_duration)
     self.assertEqual(0.5, game_options.draw_cards_duration)
+    self.assertFalse(game_options.computer_cards_visible)
 
   def test_custom_options(self):
     game_options = GameOptions(animation_duration_multiplier=10,
                                close_talon_duration=2,
                                resource_path="/test/folder/",
                                cards_path="/test/cards/folder/",
-                               enable_animations=False)
+                               enable_animations=False,
+                               computer_cards_visible=True)
     self.assertEqual("/test/folder/", game_options.resource_path)
     self.assertEqual("/test/cards/folder/", game_options.cards_path)
     self.assertFalse(game_options.enable_animations)
@@ -35,6 +37,7 @@ class GameOptionsTest(unittest.TestCase):
     self.assertEqual(20, game_options.close_talon_duration)
     self.assertEqual(5, game_options.trick_completed_duration)
     self.assertEqual(5, game_options.draw_cards_duration)
+    self.assertTrue(game_options.computer_cards_visible)
 
   def test_custom_options_with_no_default(self):
     with self.assertRaisesRegex(AssertionError,

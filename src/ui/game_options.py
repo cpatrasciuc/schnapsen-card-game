@@ -28,6 +28,9 @@ class GameOptions:
       "close_talon_duration": 0.5,
       "trick_completed_duration": 0.5,
       "draw_cards_duration": 0.5,
+
+      # UI Options.
+      "computer_cards_visible": False,
     }
 
     # Maybe override the default options based on kwargs.

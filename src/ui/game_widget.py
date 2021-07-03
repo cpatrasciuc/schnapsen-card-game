@@ -818,7 +818,8 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
         card_widget.visible = True
         card_widget.grayed_out = True
       else:
-        card_widget.visible = card.public
+        card_widget.visible = (
+            card.public or self._game_options.computer_cards_visible)
       self._player_card_widgets[player].add_card(card_widget, 0, i)
       card_widget.check_aspect_ratio(True)
 
