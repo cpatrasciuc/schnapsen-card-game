@@ -10,7 +10,7 @@ from model.player_id import PlayerId
 _TypeName = TypeVar('_TypeName')
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(unsafe_hash=True)
 class PlayerPair(Generic[_TypeName]):
   """
   Generic class that stores a pair of variables, one for each of the two players

@@ -6,7 +6,7 @@ from typing import Optional
 
 from kivy.app import App
 
-from ai.heuristic_player import HeuristicPlayer
+from ai.mcts_player import MctsPlayer
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.game_controller import GameController
@@ -32,7 +32,7 @@ class SchnapsenApp(App):
     self._game_widget.padding_pct = 0.01
     self._game_widget.size_hint = 1, 1
     human_player: Player = self._game_widget
-    computer_player: Player = ComputerPlayer(HeuristicPlayer(PlayerId.TWO))
+    computer_player: Player = ComputerPlayer(MctsPlayer(PlayerId.TWO, True, 5))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     self._game_controller = GameController(self._game_widget, players)
     return self._game_widget

@@ -33,6 +33,14 @@ class Player(abc.ABC):
     this callback.
     """
 
+  def is_cheater(self) -> bool:
+    """
+    If it returns True, the GameController will send the whole GameState as a
+    parameter to request_next_action(). This means that the opponents' cards and
+    the talon are visible.
+    """
+    return False
+
 
 class ComputerPlayer(Player):
   """
@@ -49,3 +57,6 @@ class ComputerPlayer(Player):
                           callback: Callable[[PlayerAction], None]) -> None:
     # TODO(ui): Run the AI in a different thread/process.
     callback(self._player.request_next_action(game_view))
+
+  def is_cheater(self) -> bool:
+    return self._player.cheater
