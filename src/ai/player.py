@@ -14,7 +14,7 @@ class Player(abc.ABC):
   Player interface that has to be implemented by all the AI algorithms.
   """
 
-  def __init__(self, player_id: PlayerId):
+  def __init__(self, player_id: PlayerId, cheater: bool = False):
     """
     Instantiate a new Player.
     :param player_id: The Id of the player in a game of Schnapsen (Player ONE or
@@ -22,11 +22,16 @@ class Player(abc.ABC):
     """
     self._player_id = player_id
     self._game_of_interest = False
+    self._cheater = cheater
 
   # pylint: disable=invalid-name
   @property
   def id(self) -> PlayerId:
     return self._player_id
+
+  @property
+  def cheater(self) -> bool:
+    return self._cheater
 
   @abc.abstractmethod
   def request_next_action(self, game_view: GameState) -> PlayerAction:

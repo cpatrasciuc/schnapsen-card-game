@@ -136,6 +136,22 @@ class GameState:
   current_trick: Trick = dataclasses.field(
     default_factory=lambda: Trick(None, None))
 
+  def __hash__(self):
+    items = tuple(
+      [card for card in self.cards_in_hand.one] +
+      [card for card in self.cards_in_hand.one] +
+      [self.trump] + [self.trump_card] +
+      self.talon + [self.next_player, self.player_that_closed_the_talon] +
+      [self.opponent_points_when_talon_was_closed] +
+      [card for trick in self.won_tricks.one for card in
+       [trick.one, trick.two]] +
+      [card for trick in self.won_tricks.two for card in
+       [trick.one, trick.two]] +
+      self.marriage_suits.one + self.marriage_suits.two +
+      [self.trick_points.one, self.trick_points.two] +
+      [self.current_trick.one, self.current_trick.two])
+    return hash(items)
+
   def __post_init__(self):
     if self.trump_card is not None:
       self.trump_card.public = True

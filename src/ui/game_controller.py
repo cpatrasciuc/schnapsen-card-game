@@ -75,9 +75,13 @@ class GameController:
     """Requests a new action from the player that must play the next move."""
     game_state = self._bummerl.game.game_state
     next_player = game_state.next_player
+    if self._players[next_player].is_cheater():
+      game_view = game_state
+    else:
+      game_view = game_state.next_player_view()
     logging.info("GameController: Requesting next action for %s", next_player)
-    self._players[next_player].request_next_action(
-      game_state.next_player_view(), self._handle_action_response)
+    self._players[next_player].request_next_action(game_view,
+                                                   self._handle_action_response)
 
   def _handle_action_response(self, action: PlayerAction) -> None:
     """
