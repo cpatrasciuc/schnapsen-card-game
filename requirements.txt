@@ -10,7 +10,7 @@ statsmodels~=0.12.2
 pandas~=1.2.4
 matplotlib~=3.4.2
 numpy~=1.21.0
-graphviz~=0.16
+graphviz~=0.17
 
 # For lib_mcts_player.
 mcts~=1.0.4
