@@ -29,6 +29,7 @@ class Player(abc.ABC):
   def id(self) -> PlayerId:
     return self._player_id
 
+  # TODO(tests): Add tests for this.
   @property
   def cheater(self) -> bool:
     return self._cheater

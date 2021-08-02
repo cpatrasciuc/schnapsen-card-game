@@ -9,7 +9,7 @@ from model.player_id import PlayerId
 
 _TypeName = TypeVar('_TypeName')
 
-
+# TODO(tests): Add tests for hashing.
 @dataclasses.dataclass(unsafe_hash=True)
 class PlayerPair(Generic[_TypeName]):
   """
