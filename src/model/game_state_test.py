@@ -290,6 +290,17 @@ class GameStateTest(unittest.TestCase):
                                 "only be closed by the player that is to lead"):
       game_state.close_talon()
 
+  def test_hashing(self):
+    game_state_1 = get_game_state_for_tests()
+    game_state_2 = get_game_state_for_tests()
+    self.assertIsNot(game_state_1, game_state_2)
+    self.assertEqual(game_state_1, game_state_2)
+    self.assertEqual(hash(game_state_1), hash(game_state_2))
+    game_state_set = {game_state_1, game_state_2}
+    self.assertEqual(1, len(game_state_set))
+    self.assertIn(get_game_state_for_tests(), game_state_set)
+    self.assertNotIn(get_game_state_with_all_tricks_played(), game_state_set)
+
 
 class GetGamePointsTest(unittest.TestCase):
   """Tests for the get_game_points() function."""

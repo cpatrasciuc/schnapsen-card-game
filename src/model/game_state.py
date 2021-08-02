@@ -136,7 +136,10 @@ class GameState:
   current_trick: Trick = dataclasses.field(
     default_factory=lambda: Trick(None, None))
 
+  # noinspection PyTypeChecker
   def __hash__(self):
+    # TODO(refactor): Maybe add dynamically the fields based in dataclasses
+    #  utils.
     items = tuple(
       [card for card in self.cards_in_hand.one] +
       [card for card in self.cards_in_hand.one] +
