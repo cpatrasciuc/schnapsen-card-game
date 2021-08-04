@@ -61,7 +61,7 @@ class MctsPlayer(Player):
 
     start_sec = time.process_time()
 
-    while True:
+    for _ in range(num_permutations):
       permutation = copy.deepcopy(cards_set)
       random.shuffle(permutation)
       game_state = self._populate_game_view(game_view, list(permutation))
