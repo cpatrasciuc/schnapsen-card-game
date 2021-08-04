@@ -29,8 +29,12 @@ class Node:
     self.q = 0
     self.n = 0
     self.ucb = None
-    self._final_score = False
+    # TODO(refactor): Remove this field.
     self.reward: Optional[PlayerPair[float]] = None
+    # TODO(refactor): Maybe we can have a convention that player for terminal
+    #  states is always ONE and remove this field.
+    self.player_for_terminal_states: Optional[PlayerId] = None
+    self.fully_simulated = False
     if not self._game_state.is_game_over:
       actions = get_available_actions(self._game_state)
       self.children = {action: None for action in actions}
@@ -51,9 +55,13 @@ class Node:
 
   @property
   def player(self) -> PlayerId:
+    if self.terminal:
+      return self.player_for_terminal_states
     return self._game_state.next_player
 
   def add_children(self, action: PlayerAction) -> "Node":
+    assert action in self.children, ("Invalid action", action)
+    assert action in self.untried_actions, ("Already expanded action", action)
     game_state = copy.deepcopy(self._game_state)
     action.execute(game_state)
     child = Node(game_state, self)
@@ -69,19 +77,19 @@ class Node:
         node.update_ucb(exploration_param)
 
   def update_ucb(self, exploration_param: float):
-    if self.terminal or self._final_score:
+    if self.terminal or self.fully_simulated:
       return
-    num_not_fully_expanded_children = len(
+    num_not_fully_simulated_children = len(
       [child for child in self.children.values() if
-       child is None or not child.fully_expanded])
-    if num_not_fully_expanded_children > 0:
+       child is None or not child.fully_simulated])
+    if num_not_fully_simulated_children > 0:
       self.ucb = self.q / self.n + exploration_param * math.sqrt(
         2 * math.log(self.parent.n) / self.n)
     else:
       children_scores = [_ucb_for_player(child, self.player) for child in
                          self.children.values() if child is not None]
       self.ucb = max(children_scores)
-      self._final_score = True
+      self.fully_simulated = True
 
   def best_child(self) -> "Node":
     children_with_ucb = [(_ucb_for_player(node, self.player), node) for node in
@@ -90,6 +98,13 @@ class Node:
     best_ucb = children_with_ucb[0][0]
     best_children = [x for x in children_with_ucb if x[0] == best_ucb]
     return random.choice(best_children)[1]
+
+  def best_action(self) -> PlayerAction:
+    best_child = self.best_child()
+    for action, child in self.children.items():
+      if child is best_child:
+        return action
+    raise Exception("Should not reach this code")
 
   def __repr__(self):
     return f"Q:{self.q}, N:{self.n}, UCB:{self.ucb}"
@@ -116,34 +131,45 @@ class MCTS:
     self._exploration_param = exploration_param
 
   def search(self, game_state: GameState, time_limit_sec: float):
+    root_node = self.build_tree(game_state, time_limit_sec)
+    logging.info("MCTS: %s", pprint.pformat(root_node.children))
+    if len(game_state.cards_in_hand.one) < 5:
+      debug_print(root_node)
+    return root_node.best_action()
+
+  def build_tree(self, game_state: GameState, time_limit_sec: float) -> Node:
     root_node = Node(copy.deepcopy(game_state), None)
     self._time_limit_sec = time_limit_sec
     self._start_time = time.process_time()
     while not self._is_computation_budget_depleted():
       selected_node = self._selection(root_node)
+      if selected_node is None:
+        break
       end_node = self._fully_expand(selected_node)
       self._evaluate(end_node)
       self._backpropagate(end_node, end_node.reward)
-    logging.info("MCTS: %s", pprint.pformat(root_node.children))
-    if len(game_state.cards_in_hand.one) < 5:
-      debug_print(root_node)
-    best_child = root_node.best_child()
-    for action, child in root_node.children.items():
-      if child is best_child:
-        return action
-    raise Exception("Should not reach this code")
+    return root_node
 
   def _is_computation_budget_depleted(self):
     current_time = time.process_time()
     return current_time - self._start_time > self._time_limit_sec
 
-  def _selection(self, node: Node) -> Node:
+  def _selection(self, node: Node) -> Optional[Node]:
     while not node.terminal:
       if not node.fully_expanded:
         return self._expand(node)
       else:
         # TODO(mcts): No need to do these simulations. Can do something smarter.
-        node = random.choice(list(node.children.values()))  # node.best_child()
+        not_fully_simulated_children = [child for child in
+                                        node.children.values() if
+                                        not child.fully_simulated]
+        if len(not_fully_simulated_children) == 0:
+          return None
+        best_child = node.best_child()
+        if best_child in not_fully_simulated_children:
+          node = best_child
+        else:
+          node = random.choice(not_fully_simulated_children)
     return node
 
   def _expand(self, node: Node):
@@ -156,20 +182,24 @@ class MCTS:
       if not node.fully_expanded:
         node = self._expand(node)
       else:
+        assert False, "Should not reach this"
+        # noinspection PyUnreachableCode
         logging.error("MCTS: Should not reach this")
         node = random.choice(list(node.children.values()))
     return node
 
   def _backpropagate(self, node: Node, reward: PlayerPair[float]):
     while node is not None:
-      node.n += 1
-
-      node.q += reward[node.player] - reward[node.player.opponent()]
-      node.update_children_ucb(self._exploration_param)
+      if not node.terminal:
+        node.n += 1
+        # TODO(stats): Store all rewards in debug mode and check histogram.
+        node.q += reward[node.player] - reward[node.player.opponent()]
+        node.update_children_ucb(self._exploration_param)
       node = node.parent
 
   def _evaluate(self, node):
     score = node._game_state.game_points
     opponent = self._player_id.opponent()
     node.ucb = (score[self._player_id] - score[opponent]) / 3.0
-    node._final_score = True
+    node.fully_simulated = True
+    node.player_for_terminal_states = self._player_id
