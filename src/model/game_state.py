@@ -141,8 +141,7 @@ class GameState:
     # TODO(refactor): Maybe add dynamically the fields based in dataclasses
     #  utils.
     items = tuple(
-      [card for card in self.cards_in_hand.one] +
-      [card for card in self.cards_in_hand.one] +
+      self.cards_in_hand.one + self.cards_in_hand.two +
       [self.trump] + [self.trump_card] +
       self.talon + [self.next_player, self.player_that_closed_the_talon] +
       [self.opponent_points_when_talon_was_closed] +
