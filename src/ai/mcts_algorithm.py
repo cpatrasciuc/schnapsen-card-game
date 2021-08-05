@@ -13,7 +13,6 @@ from typing import Dict, List, Optional
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayerAction
 from model.player_id import PlayerId
-from model.player_pair import PlayerPair
 
 _PLAYER_FOR_TERMINAL_NODES = PlayerId.ONE
 
@@ -31,8 +30,6 @@ class Node:
     self.q = 0
     self.n = 0
     self.ucb = None
-    # TODO(refactor): Remove this field.
-    self.reward: Optional[PlayerPair[float]] = None
     self.fully_simulated = False
     if not self._game_state.is_game_over:
       actions = get_available_actions(self._game_state)
@@ -40,11 +37,8 @@ class Node:
       self.untried_actions = actions
     else:
       score = self._game_state.game_points
-      score.one /= 3
-      score.two /= 3
-      self.reward = score
       opponent = _PLAYER_FOR_TERMINAL_NODES.opponent()
-      self.ucb = score[_PLAYER_FOR_TERMINAL_NODES] - score[opponent]
+      self.ucb = (score[_PLAYER_FOR_TERMINAL_NODES] - score[opponent]) / 3
       self.fully_simulated = True
 
   @property
@@ -157,7 +151,7 @@ class MCTS:
     if selected_node is None:
       return True
     end_node = self._fully_expand(selected_node)
-    self._backpropagate(end_node, end_node.reward)
+    self._backpropagate(end_node, end_node.ucb)
     return False
 
   def _is_computation_budget_depleted(self):
@@ -196,11 +190,11 @@ class MCTS:
       node = self._expand(node)
     return node
 
-  def _backpropagate(self, node: Node, reward: PlayerPair[float]):
+  def _backpropagate(self, node: Node, score: float):
     while node is not None:
       if not node.terminal:
         node.n += 1
         # TODO(stats): Store all rewards in debug mode and check histogram.
-        node.q += reward[node.player] - reward[node.player.opponent()]
+        node.q += score if node.player == _PLAYER_FOR_TERMINAL_NODES else -score
         node.update_children_ucb(self._exploration_param)
       node = node.parent
