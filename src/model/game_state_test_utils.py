@@ -25,7 +25,6 @@ def get_game_state_for_tests() -> GameState:
     * won_tricks: [(K♠, Q♠), (A♦, K♦)], [(J♥, A♥), (X♦, X♣)]
     * marriage_suits: [], [♦]
     * trick_points: (22, 53)
-    * game_points: (0, 0)
     * current_trick: (None, None)
   """
   cards_in_hand = PlayerPair(
@@ -75,7 +74,6 @@ def get_game_state_with_empty_talon_for_tests() -> GameState:
                   [(J♥, A♥), (X♦, X♣), (Q♥, Q♦)]
     * marriage_suits: [], [♦]
     * trick_points: (35, 59)
-    * game_points: (0, 0)
     * current_trick: (None, None)
   """
   cards_in_hand = PlayerPair(
@@ -125,7 +123,6 @@ def get_game_state_with_all_tricks_played() -> GameState:
                   [(Q♥, K♥), (X♥, A♥), (Q♦, K♦), (X♦, A♦), (J♥, J♦)]
     * marriage_suits: [], []
     * trick_points: (60, 60)
-    * game_points: (0, 0)
     * current_trick: (None, None)
   """
   cards_in_hand = PlayerPair([], [])
@@ -174,7 +171,6 @@ def get_game_state_for_you_first_no_you_first_puzzle() -> GameState:
     * won_tricks: [(K♣, Q♠), (K♦, A♣), (A♠, X♠)], [(J♠, K♥), (X♣, X♦)]
     * marriage_suits: [], []
     * trick_points: (43, 26)
-    * game_points: (4, 6)
     * current_trick: (None, None)
     """
   cards_in_hand = PlayerPair(
@@ -220,7 +216,6 @@ def get_game_state_for_elimination_play_puzzle() -> GameState:
     * won_tricks: [(Q♦, Q♠), (K♦, A♣), (J♦, A♠)], [(X♠, K♥), (X♣, X♦)]
     * marriage_suits: [], []
     * trick_points: (34, 34)
-    * game_points: (4, 6)
     * current_trick: (None, None)
     """
   cards_in_hand = PlayerPair(
@@ -248,6 +243,51 @@ def get_game_state_for_elimination_play_puzzle() -> GameState:
   trick_points = PlayerPair(one=34, two=34)
   current_trick = PlayerPair(None, None)
   return GameState(cards_in_hand=cards_in_hand, trump=Suit.DIAMONDS,
+                   trump_card=None, talon=[], won_tricks=won_tricks,
+                   trick_points=trick_points, current_trick=current_trick)
+
+
+def get_game_state_for_playing_to_win_the_last_trick_puzzle() -> GameState:
+  """
+  Generates a game state for the scenario described here:
+  http://psellos.com/schnapsen/blog/2019/12/144-last.html
+
+  The game state is the following:
+    * cards_in_hand: [K♠, X♥, K♣, X♦, Q♦], [J♥, J♣, A♦, K♦, J♦]
+    * trump: ♣
+    * trump_card: None
+    * talon: []
+    * next_player: PlayerId.ONE
+    * won_tricks: [(A♥, Q♠), (A♣, A♠)], [(J♠, X♠), (Q♥, X♣), (K♥, Q♣)]
+    * marriage_suits: [], []
+    * trick_points: (36, 32)
+    * current_trick: (None, None)
+    """
+  cards_in_hand = PlayerPair(
+    one=[Card(Suit.SPADES, CardValue.KING),
+         Card(Suit.HEARTS, CardValue.TEN),
+         Card(Suit.CLUBS, CardValue.KING),
+         Card(Suit.DIAMONDS, CardValue.TEN),
+         Card(Suit.DIAMONDS, CardValue.QUEEN)],
+    two=[Card(Suit.HEARTS, CardValue.JACK),
+         Card(Suit.CLUBS, CardValue.JACK),
+         Card(Suit.DIAMONDS, CardValue.ACE),
+         Card(Suit.DIAMONDS, CardValue.KING),
+         Card(Suit.DIAMONDS, CardValue.JACK)])
+  won_tricks = PlayerPair(
+    one=[PlayerPair(Card(Suit.HEARTS, CardValue.ACE),
+                    Card(Suit.SPADES, CardValue.QUEEN)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.ACE),
+                    Card(Suit.SPADES, CardValue.ACE))],
+    two=[PlayerPair(Card(Suit.SPADES, CardValue.JACK),
+                    Card(Suit.SPADES, CardValue.TEN)),
+         PlayerPair(Card(Suit.HEARTS, CardValue.QUEEN),
+                    Card(Suit.CLUBS, CardValue.TEN)),
+         PlayerPair(Card(Suit.HEARTS, CardValue.KING),
+                    Card(Suit.CLUBS, CardValue.QUEEN))])
+  trick_points = PlayerPair(one=36, two=32)
+  current_trick = PlayerPair(None, None)
+  return GameState(cards_in_hand=cards_in_hand, trump=Suit.CLUBS,
                    trump_card=None, talon=[], won_tricks=won_tricks,
                    trick_points=trick_points, current_trick=current_trick)
 
