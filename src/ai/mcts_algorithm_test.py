@@ -61,8 +61,8 @@ class MCTSAlgorithmTest(unittest.TestCase):
     self.assertAlmostEqual(0, leaf.reward.two)
     self.assertTrue(leaf.fully_expanded)
     self.assertTrue(leaf.terminal)
-    self.assertEqual(PlayerId.TWO, leaf.player)
-    self.assertAlmostEqual(-0.33, leaf.ucb, delta=0.01)
+    self.assertEqual(PlayerId.ONE, leaf.player)
+    self.assertAlmostEqual(0.33, leaf.ucb, delta=0.01)
     self.assertTrue(leaf.fully_simulated)
 
   def test_one_card_left_for_each_player(self):

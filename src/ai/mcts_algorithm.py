@@ -15,6 +15,8 @@ from model.player_action import get_available_actions, PlayerAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 
+_PLAYER_FOR_TERMINAL_NODES = PlayerId.ONE
+
 
 def _ucb_for_player(node: "Node", player_id: PlayerId):
   return node.ucb if node.player == player_id else -node.ucb
@@ -31,9 +33,6 @@ class Node:
     self.ucb = None
     # TODO(refactor): Remove this field.
     self.reward: Optional[PlayerPair[float]] = None
-    # TODO(refactor): Maybe we can have a convention that player for terminal
-    #  states is always ONE and remove this field.
-    self.player_for_terminal_states: Optional[PlayerId] = None
     self.fully_simulated = False
     if not self._game_state.is_game_over:
       actions = get_available_actions(self._game_state)
@@ -44,6 +43,9 @@ class Node:
       score.one /= 3
       score.two /= 3
       self.reward = score
+      opponent = _PLAYER_FOR_TERMINAL_NODES.opponent()
+      self.ucb = score[_PLAYER_FOR_TERMINAL_NODES] - score[opponent]
+      self.fully_simulated = True
 
   @property
   def fully_expanded(self) -> bool:
@@ -56,7 +58,7 @@ class Node:
   @property
   def player(self) -> PlayerId:
     if self.terminal:
-      return self.player_for_terminal_states
+      return _PLAYER_FOR_TERMINAL_NODES
     return self._game_state.next_player
 
   def add_children(self, action: PlayerAction) -> "Node":
@@ -146,7 +148,6 @@ class MCTS:
       if selected_node is None:
         break
       end_node = self._fully_expand(selected_node)
-      self._evaluate(end_node)
       self._backpropagate(end_node, end_node.reward)
     return root_node
 
@@ -196,10 +197,3 @@ class MCTS:
         node.q += reward[node.player] - reward[node.player.opponent()]
         node.update_children_ucb(self._exploration_param)
       node = node.parent
-
-  def _evaluate(self, node):
-    score = node._game_state.game_points
-    opponent = self._player_id.opponent()
-    node.ucb = (score[self._player_id] - score[opponent]) / 3.0
-    node.fully_simulated = True
-    node.player_for_terminal_states = self._player_id
