@@ -147,12 +147,18 @@ class MCTS:
     self._time_limit_sec = time_limit_sec
     self._start_time = time.process_time()
     while not self._is_computation_budget_depleted():
-      selected_node = self._selection(root_node)
-      if selected_node is None:
+      if self._run_one_iteration(root_node):
         break
-      end_node = self._fully_expand(selected_node)
-      self._backpropagate(end_node, end_node.reward)
     return root_node
+
+  def _run_one_iteration(self, root_node: Node) -> bool:
+    """Returns True if the entire game tree is already constructed."""
+    selected_node = self._selection(root_node)
+    if selected_node is None:
+      return True
+    end_node = self._fully_expand(selected_node)
+    self._backpropagate(end_node, end_node.reward)
+    return False
 
   def _is_computation_budget_depleted(self):
     if self._time_limit_sec is None:
@@ -163,19 +169,20 @@ class MCTS:
   def _selection(self, node: Node) -> Optional[Node]:
     while not node.terminal:
       if not node.fully_expanded:
-        return self._expand(node)
+        return node
+      # TODO(mcts): Check if the UCB formula is still valid if we don't pick the
+      #  node randomly.
+      not_fully_simulated_children = [child for child in
+                                      node.children.values() if
+                                      not child.fully_simulated]
+      if len(not_fully_simulated_children) == 0:
+        # This can only happen once we expanded the whole game tree.
+        return None
+      best_child = node.best_child()
+      if best_child in not_fully_simulated_children:
+        node = best_child
       else:
-        # TODO(mcts): No need to do these simulations. Can do something smarter.
-        not_fully_simulated_children = [child for child in
-                                        node.children.values() if
-                                        not child.fully_simulated]
-        if len(not_fully_simulated_children) == 0:
-          return None
-        best_child = node.best_child()
-        if best_child in not_fully_simulated_children:
-          node = best_child
-        else:
-          node = random.choice(not_fully_simulated_children)
+        node = random.choice(not_fully_simulated_children)
     return node
 
   def _expand(self, node: Node):
@@ -185,13 +192,8 @@ class MCTS:
 
   def _fully_expand(self, node: Node) -> Node:
     while not node.terminal:
-      if not node.fully_expanded:
-        node = self._expand(node)
-      else:
-        assert False, "Should not reach this"
-        # noinspection PyUnreachableCode
-        logging.error("MCTS: Should not reach this")
-        node = random.choice(list(node.children.values()))
+      assert not node.fully_expanded
+      node = self._expand(node)
     return node
 
   def _backpropagate(self, node: Node, reward: PlayerPair[float]):
