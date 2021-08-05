@@ -42,7 +42,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
                                      Card(Suit.CLUBS, CardValue.JACK))
     play_jack_clubs.execute(game_state)
     mcts = MCTS(PlayerId.TWO)
-    root_node = mcts.build_tree(game_state, 1)
+    root_node = mcts.build_tree(game_state)
 
     self.assertIsNone(root_node.parent)
     self.assertEqual(1, len(root_node.children))
@@ -70,7 +70,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
   def test_one_card_left_for_each_player(self):
     game_state = _get_game_state_with_one_card_left()
     mcts = MCTS(PlayerId.ONE)
-    root_node = mcts.build_tree(game_state, 1)
+    root_node = mcts.build_tree(game_state)
 
     self.assertIsNone(root_node.parent)
     self.assertEqual(1, len(root_node.children))
@@ -113,7 +113,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
   def test_you_first_no_you_first(self):
     game_state = get_game_state_for_you_first_no_you_first_puzzle()
     mcts = MCTS(PlayerId.ONE)
-    root_node = mcts.build_tree(game_state, 50)
+    root_node = mcts.build_tree(game_state)
     self.assertIsNone(root_node.parent)
     self.assertEqual(5, len(root_node.children))
     self.assertEqual([], root_node.untried_actions)
@@ -135,7 +135,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
   def test_elimination_play_player_one(self):
     game_state = get_game_state_for_elimination_play_puzzle()
     mcts = MCTS(PlayerId.ONE)
-    root_node = mcts.build_tree(game_state, 50)
+    root_node = mcts.build_tree(game_state)
     for action, child in root_node.children.items():
       print(action, child)
     for action, child in root_node.children.items():
@@ -154,7 +154,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
     self.assertEqual(34, game_state.trick_points.one)
     self.assertEqual(40, game_state.trick_points.two)
     mcts = MCTS(PlayerId.TWO)
-    root_node = mcts.build_tree(game_state, 5)
+    root_node = mcts.build_tree(game_state)
     for action, child in root_node.children.items():
       print(action, child)
     for action, child in root_node.children.items():
@@ -180,7 +180,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
     #  simulated.
     game_state = get_game_state_for_elimination_play_puzzle()
     mcts = MCTS(game_state.next_player)
-    root_node = mcts.build_tree(game_state, 50)
+    root_node = mcts.build_tree(game_state)
     golden_data_file = os.path.join(os.path.dirname(__file__), "test_data",
                                     "elimination_play_tree.pickle")
     # Uncomment this to save a golden version of the tree:
@@ -193,7 +193,7 @@ class MCTSAlgorithmTest(unittest.TestCase):
   def _assert_player_one_always_wins(self, game_state: GameState):
     while not game_state.is_game_over:
       mcts = MCTS(game_state.next_player)
-      root_node = mcts.build_tree(game_state, 50)
+      root_node = mcts.build_tree(game_state)
       print()
       for action, child in root_node.children.items():
         print(action, child)

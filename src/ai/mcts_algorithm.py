@@ -131,15 +131,18 @@ class MCTS:
     self._start_time = None
     self._time_limit_sec = None
     self._exploration_param = exploration_param
+    # TODO(mcts): Cache the tree(s) from previous calls.
 
-  def search(self, game_state: GameState, time_limit_sec: float):
+  def search(self, game_state: GameState,
+             time_limit_sec: Optional[float] = None) -> PlayerAction:
     root_node = self.build_tree(game_state, time_limit_sec)
     logging.info("MCTS: %s", pprint.pformat(root_node.children))
     if len(game_state.cards_in_hand.one) < 5:
       debug_print(root_node)
     return root_node.best_action()
 
-  def build_tree(self, game_state: GameState, time_limit_sec: float) -> Node:
+  def build_tree(self, game_state: GameState,
+                 time_limit_sec: Optional[float] = None) -> Node:
     root_node = Node(copy.deepcopy(game_state), None)
     self._time_limit_sec = time_limit_sec
     self._start_time = time.process_time()
@@ -152,6 +155,8 @@ class MCTS:
     return root_node
 
   def _is_computation_budget_depleted(self):
+    if self._time_limit_sec is None:
+      return False
     current_time = time.process_time()
     return current_time - self._start_time > self._time_limit_sec
 
