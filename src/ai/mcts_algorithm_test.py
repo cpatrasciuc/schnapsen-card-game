@@ -14,7 +14,8 @@ from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_with_all_tricks_played, \
   get_game_state_for_you_first_no_you_first_puzzle, \
   get_game_state_for_elimination_play_puzzle, \
-  get_game_state_for_playing_to_win_the_last_trick_puzzle
+  get_game_state_for_playing_to_win_the_last_trick_puzzle, \
+  get_game_state_for_tempo_puzzle
 from model.game_state_validation import GameStateValidator
 from model.player_action import PlayCardAction
 from model.player_id import PlayerId
@@ -193,7 +194,9 @@ class MCTSAlgorithmTest(unittest.TestCase):
     while not game_state.is_game_over:
       mcts = MCTS(game_state.next_player)
       root_node = mcts.build_tree(game_state, 50)
+      print()
       for action, child in root_node.children.items():
+        print(action, child)
         self.assertTrue(child.fully_simulated, msg=action)
       best_action = root_node.best_action()
       logging.debug("MCTSAlgorithmTest: Player %s plays %s",
@@ -207,4 +210,8 @@ class MCTSAlgorithmTest(unittest.TestCase):
 
   def test_playing_to_win_the_last_trick_player_one_always_wins(self):
     game_state = get_game_state_for_playing_to_win_the_last_trick_puzzle()
+    self._assert_player_one_always_wins(game_state)
+
+  def test_tempo_player_one_always_wins(self):
+    game_state = get_game_state_for_tempo_puzzle()
     self._assert_player_one_always_wins(game_state)
