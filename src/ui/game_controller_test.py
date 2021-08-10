@@ -26,6 +26,8 @@ class GameControllerTest(GraphicUnitTest):
 
     game_widget = Mock()
     players = PlayerPair(Mock(), Mock())
+    players.one.is_cheater.return_value = False
+    players.two.is_cheater.return_value = False
     score_view = Mock()
     # noinspection PyTypeChecker
     game_controller = GameController(game_widget, players, score_view)
@@ -110,6 +112,8 @@ class GameControllerTest(GraphicUnitTest):
 
     game_widget = Mock()
     players = PlayerPair(Mock(), Mock())
+    players.one.is_cheater.return_value = False
+    players.two.is_cheater.return_value = False
     score_view = Mock()
     # noinspection PyTypeChecker
     game_controller = GameController(game_widget, players, score_view)
