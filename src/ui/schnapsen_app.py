@@ -9,10 +9,11 @@ from kivy.app import App
 from ai.mcts_player import MctsPlayer
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from ui.computer_player import OutOfProcessComputerPlayer
 from ui.game_controller import GameController
 from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
-from ui.player import Player, ComputerPlayer
+from ui.player import Player
 
 __version__ = '0.1'
 
@@ -32,13 +33,17 @@ class SchnapsenApp(App):
     self._game_widget.padding_pct = 0.01
     self._game_widget.size_hint = 1, 1
     human_player: Player = self._game_widget
-    computer_player: Player = ComputerPlayer(MctsPlayer(PlayerId.TWO, True, 5))
+    computer_player: Player = OutOfProcessComputerPlayer(
+      MctsPlayer, (PlayerId.TWO, False, 5))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     self._game_controller = GameController(self._game_widget, players)
     return self._game_widget
 
   def on_start(self):
     self._game_controller.start()
+
+  def on_stop(self):
+    self._game_controller.stop()
 
 
 if __name__ == '__main__':

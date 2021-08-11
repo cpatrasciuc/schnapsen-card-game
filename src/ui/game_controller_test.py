@@ -10,10 +10,10 @@ from model.game_state import GameState
 from model.game_state_test_utils import get_actions_for_one_complete_game
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from ui.computer_player import ComputerPlayer
 from ui.game_controller import GameController
 from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
-from ui.player import ComputerPlayer
 from ui.test_utils import GraphicUnitTest
 
 
@@ -107,6 +107,8 @@ class GameControllerTest(GraphicUnitTest):
     self.assertEqual(PlayerPair(0, 0), actual_game_state.trick_points)
     self.assertEqual(PlayerPair(0, 3), game_points)
 
+    game_controller.stop()
+
   def test_new_bummerl_is_started_after_the_current_one_is_over(self):
     self.render(None)
 
@@ -198,6 +200,8 @@ class GameControllerTest(GraphicUnitTest):
     self.assertEqual(PlayerPair(0, 0), actual_game_state.trick_points)
     self.assertEqual(PlayerPair(0, 0), game_points)
 
+    game_controller.stop()
+
   def test_two_bummerl_with_random_players(self):
     class TestScoreViewWithBummerlCount:
       # pylint: disable=too-few-public-methods
@@ -231,3 +235,4 @@ class GameControllerTest(GraphicUnitTest):
                                      score_view.score_view_delegate, 0)
     game_controller.start()
     self.wait_for_mock_callback(two_bummerls_played, timeout_seconds=60)
+    game_controller.stop()

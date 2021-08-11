@@ -3,21 +3,16 @@
 #  found in the LICENSE file.
 
 import abc
-from typing import Callable, Optional
+from typing import Callable
 
-from ai.player import Player as AIPlayer
-from ai.random_player import RandomPlayer
 from model.game_state import GameState
 from model.player_action import PlayerAction
-from model.player_id import PlayerId
 
 
 class Player(abc.ABC):
   """
   Player interface used by the GameController to interact with the players.
   """
-
-  # pylint: disable=too-few-public-methods
 
   __metaclass__ = abc.ABCMeta
 
@@ -33,7 +28,7 @@ class Player(abc.ABC):
     this callback.
     """
 
-  def is_cheater(self) -> bool:
+  def is_cheater(self) -> bool:  # pylint: disable=no-self-use
     """
     If it returns True, the GameController will send the whole GameState as a
     parameter to request_next_action(). This means that the opponents' cards and
@@ -41,22 +36,8 @@ class Player(abc.ABC):
     """
     return False
 
-
-class ComputerPlayer(Player):
-  """
-  The Player implementation that runs an AI algorithm to pick the next action to
-  be played. It's a wrapper over an ai.player.Player instance.
-  """
-
-  # pylint: disable=too-few-public-methods
-
-  def __init__(self, player: Optional[AIPlayer] = None):
-    self._player = player or RandomPlayer(PlayerId.TWO)
-
-  def request_next_action(self, game_view: GameState,
-                          callback: Callable[[PlayerAction], None]) -> None:
-    # TODO(ui): Run the AI in a different thread/process.
-    callback(self._player.request_next_action(game_view))
-
-  def is_cheater(self) -> bool:
-    return self._player.cheater
+  def cleanup(self) -> None:
+    """
+    This method should be overridden in case any cleanup needs to be done before
+    the player instance is deleted.
+    """

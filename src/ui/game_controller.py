@@ -13,8 +13,9 @@ from model.player_action import PlayerAction, \
   PlayCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+from ui.computer_player import ComputerPlayer
 from ui.game_widget import GameWidget
-from ui.player import Player, ComputerPlayer
+from ui.player import Player
 from ui.score_view import ScoreView, ScoreHistory
 
 ScoreViewCallback = Callable[[ScoreHistory, Callable[[], None]], ScoreView]
@@ -71,8 +72,16 @@ class GameController:
                                            self._request_next_action,
                                            self._bummerl.game_points)
 
+  def stop(self):
+    self._players.one.cleanup()
+    self._players.two.cleanup()
+    self._players = None
+
   def _request_next_action(self) -> None:
     """Requests a new action from the player that must play the next move."""
+    # TODO(tests): Add tests for this.
+    if self._players is None:
+      return
     game_state = self._bummerl.game.game_state
     next_player = game_state.next_player
     # TODO(tests): Add tests for this.
