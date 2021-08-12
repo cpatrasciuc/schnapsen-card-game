@@ -261,8 +261,9 @@ class GameState:
     cards with None.
     """
     view = copy.deepcopy(self)
+    played_card = self.current_trick[self.next_player.opponent()]
     for i, card in enumerate(self.cards_in_hand[self.next_player.opponent()]):
-      if not card.public:
+      if not card.public and card != played_card:
         view.cards_in_hand[self.next_player.opponent()][i] = None
     for i, card in enumerate(self.talon):
       assert not card.public, "Talon cards should never be public"

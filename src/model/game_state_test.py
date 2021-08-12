@@ -386,3 +386,26 @@ class GameStateNextPlayerViewTest(unittest.TestCase):
     self.assertEqual(game_state.marriage_suits, view.marriage_suits)
     self.assertEqual(game_state.trick_points, view.trick_points)
     self.assertEqual(game_state.current_trick, view.current_trick)
+
+  def test_next_player_two_view_with_played_card(self):
+    game_state = get_game_state_for_tests()
+    played_card = game_state.cards_in_hand[PlayerId.ONE][3]
+    with GameStateValidator(game_state):
+      game_state.current_trick[PlayerId.ONE] = played_card
+      game_state.next_player = PlayerId.TWO
+    view = game_state.next_player_view()
+    self.assertEqual([None, None, None, played_card, None],
+                     view.cards_in_hand.one)
+    self.assertEqual(game_state.cards_in_hand.two, view.cards_in_hand.two)
+    self.assertEqual(game_state.trump, view.trump)
+    self.assertEqual(game_state.trump_card, view.trump_card)
+    self.assertEqual([None], view.talon)
+    self.assertEqual(game_state.next_player, view.next_player)
+    self.assertEqual(game_state.player_that_closed_the_talon,
+                     view.player_that_closed_the_talon)
+    self.assertEqual(game_state.opponent_points_when_talon_was_closed,
+                     view.opponent_points_when_talon_was_closed)
+    self.assertEqual(game_state.won_tricks, view.won_tricks)
+    self.assertEqual(game_state.marriage_suits, view.marriage_suits)
+    self.assertEqual(game_state.trick_points, view.trick_points)
+    self.assertEqual(game_state.current_trick, view.current_trick)

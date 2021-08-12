@@ -86,11 +86,6 @@ class LibMctsPlayer(Player):
                 [trick.two for trick in game_view.won_tricks.two]
     cards_set = {card for card in Card.get_all_cards() if card not in cards_set}
     cards_set = list(sorted(cards_set))
-    played_card = game_view.current_trick[self.id.opponent()]
-    opp_cards = game_view.cards_in_hand[self.id.opponent()]
-    if played_card is not None and played_card not in opp_cards:
-      index = opp_cards.index(None)
-      opp_cards[index] = played_card
 
     best_actions = []
     num_permutations = min(factorial(len(cards_set)), self._max_permutations)
