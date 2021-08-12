@@ -13,6 +13,7 @@ from typing import List
 import mcts
 
 from ai.player import Player
+from ai.utils import populate_game_view
 from model.card import Card
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayerAction
@@ -99,7 +100,7 @@ class LibMctsPlayer(Player):
     while True:
       permutation = copy.deepcopy(cards_set)
       random.shuffle(permutation)
-      game_state = self._populate_game_view(game_view, list(permutation))
+      game_state = populate_game_view(game_view, permutation)
       initial_state = _State(self.id, game_state)
       algorithm = mcts.mcts(
         timeLimit=self._time_limit_sec * 1000 / num_permutations)
@@ -110,20 +111,3 @@ class LibMctsPlayer(Player):
         break
 
     return Counter(best_actions).most_common(1)[0][0]
-
-  def _populate_game_view(self, game_view: GameState,
-                          permutation: List[Card]) -> GameState:
-    """
-    Fill in the unknown cards in the opponent's hand and in the talon in order
-    with the cards from permutation. Returns the resulting perfect information
-    GameState.
-    """
-    game_state = copy.deepcopy(game_view)
-    opp_cards = game_state.cards_in_hand[self.id.opponent()]
-    for i, opp_card in enumerate(opp_cards):
-      if opp_card is None:
-        opp_cards[i] = permutation.pop()
-    for i, talon_card in enumerate(game_state.talon):
-      if talon_card is None:
-        game_state.talon[i] = permutation.pop()
-    return game_state

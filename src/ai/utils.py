@@ -2,11 +2,13 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
 import random
 from math import comb
 from typing import List, Optional, Dict
 
 from model.card import Card
+from model.game_state import GameState
 from model.player_action import PlayerAction, AnnounceMarriageAction
 from model.suit import Suit
 
@@ -162,3 +164,26 @@ def get_best_marriage(available_actions: List[PlayerAction],
   if len(marriages) > 0:
     return random.choice(marriages)
   return None
+
+
+# TODO(tests): Add tests for populate_game_view().
+def populate_game_view(game_view: GameState,
+                       permutation: List[Card]) -> GameState:
+  """
+  Fill in the unknown cards in the opponent's hand and in the talon, in order,
+  with the cards from permutation. Returns the resulting perfect information
+  GameState.
+  """
+  game_state = copy.deepcopy(game_view)
+  if None in game_view.cards_in_hand.one:
+    opp_cards = game_state.cards_in_hand.one
+    assert None not in game_state.cards_in_hand.two
+  else:
+    opp_cards = game_state.cards_in_hand.two
+  for i, opp_card in enumerate(opp_cards):
+    if opp_card is None:
+      opp_cards[i] = permutation.pop()
+  for i, talon_card in enumerate(game_state.talon):
+    if talon_card is None:
+      game_state.talon[i] = permutation.pop()
+  return game_state
