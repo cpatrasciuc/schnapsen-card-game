@@ -2,12 +2,13 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import itertools
 import unittest
 from typing import List
 
 from ai.test_utils import card_list_from_string
 from ai.utils import card_win_probabilities, prob_opp_has_more_trumps, \
-  get_best_marriage, get_unseen_cards
+  get_best_marriage, get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_state_for_tests
@@ -311,3 +312,60 @@ class GetUnseenCardsTest(unittest.TestCase):
 
   def test_game_state(self):
     self.assertEqual([], get_unseen_cards(get_game_state_for_tests()))
+
+
+class PopulateGameViewTest(unittest.TestCase):
+  def test_game_view(self):
+    game_state = get_game_state_for_tests()
+    game_view = game_state.next_player_view()
+    permutation = [Card(Suit.SPADES, CardValue.JACK),
+                   Card(Suit.DIAMONDS, CardValue.JACK),
+                   Card(Suit.CLUBS, CardValue.JACK),
+                   Card(Suit.CLUBS, CardValue.QUEEN),
+                   Card(Suit.CLUBS, CardValue.KING)]
+    new_game_state = populate_game_view(game_view, permutation)
+    self.assertEqual([Card(Suit.DIAMONDS, CardValue.QUEEN),
+                      Card(Suit.SPADES, CardValue.JACK),
+                      Card(Suit.DIAMONDS, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.QUEEN)],
+                     new_game_state.cards_in_hand[PlayerId.TWO])
+    self.assertEqual([Card(Suit.CLUBS, CardValue.KING)], new_game_state.talon)
+    self.assertNotEqual(game_state, new_game_state)
+
+  def test_generate_all_permutations(self):
+    game_state = get_game_state_for_tests()
+    game_view = game_state.next_player_view()
+    unseen_cards = get_unseen_cards(game_view)
+    all_game_states = [populate_game_view(game_view, list(permutation)) for
+                       permutation in itertools.permutations(unseen_cards)]
+    all_game_states = set(all_game_states)
+    self.assertEqual(120,  # factorial(5)
+                     len(all_game_states))
+    self.assertIn(game_state, all_game_states)
+
+  def test_game_state(self):
+    game_state = get_game_state_for_tests()
+    new_game_state = populate_game_view(game_state, [])
+    self.assertEqual(game_state, new_game_state)
+
+  def test_cards_missing_in_both_hands(self):
+    game_state = get_game_state_for_tests()
+    game_view = game_state.next_player_view()
+    game_view.cards_in_hand[PlayerId.ONE][0] = None
+    unseen_cards = get_unseen_cards(game_view)
+    with self.assertRaisesRegex(AssertionError, "Cards missing in both hands"):
+      populate_game_view(game_view, unseen_cards)
+
+  def test_too_many_cards_in_permutation(self):
+    game_state = get_game_state_for_tests()
+    game_view = game_state.next_player_view()
+    permutation = [Card(Suit.SPADES, CardValue.JACK),
+                   Card(Suit.DIAMONDS, CardValue.JACK),
+                   Card(Suit.CLUBS, CardValue.JACK),
+                   Card(Suit.CLUBS, CardValue.QUEEN),
+                   Card(Suit.CLUBS, CardValue.KING),
+                   Card(Suit.DIAMONDS, CardValue.QUEEN)]
+    with self.assertRaisesRegex(AssertionError,
+                                "Too many cards in permutation"):
+      populate_game_view(game_view, permutation)

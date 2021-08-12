@@ -183,7 +183,6 @@ def get_unseen_cards(game_view: GameState) -> List[Card]:
   return cards_set
 
 
-# TODO(tests): Add tests for populate_game_view().
 def populate_game_view(game_view: GameState,
                        permutation: List[Card]) -> GameState:
   """
@@ -194,13 +193,15 @@ def populate_game_view(game_view: GameState,
   game_state = copy.deepcopy(game_view)
   if None in game_view.cards_in_hand.one:
     opp_cards = game_state.cards_in_hand.one
-    assert None not in game_state.cards_in_hand.two
+    assert None not in game_state.cards_in_hand.two, \
+      ("Cards missing in both hands", game_view)
   else:
     opp_cards = game_state.cards_in_hand.two
   for i, opp_card in enumerate(opp_cards):
     if opp_card is None:
-      opp_cards[i] = permutation.pop()
+      opp_cards[i] = permutation.pop(0)
   for i, talon_card in enumerate(game_state.talon):
     if talon_card is None:
-      game_state.talon[i] = permutation.pop()
+      game_state.talon[i] = permutation.pop(0)
+  assert len(permutation) == 0, ("Too many cards in permutation", permutation)
   return game_state
