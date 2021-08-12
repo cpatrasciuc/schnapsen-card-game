@@ -15,7 +15,7 @@ from typing import List, Optional
 
 from ai.mcts_algorithm import MCTS
 from ai.player import Player
-from ai.utils import populate_game_view
+from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
 from model.game_state import GameState
 from model.player_action import PlayerAction
@@ -64,16 +64,7 @@ class MctsPlayer(Player):
     self._pool.join()
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
-    cards_set = game_view.cards_in_hand.one + game_view.cards_in_hand.two + \
-                game_view.talon + [game_view.trump_card] + \
-                [game_view.current_trick[self.id.opponent()]] + \
-                [trick.one for trick in game_view.won_tricks.one] + \
-                [trick.two for trick in game_view.won_tricks.one] + \
-                [trick.one for trick in game_view.won_tricks.two] + \
-                [trick.two for trick in game_view.won_tricks.two]
-    cards_set = {card for card in Card.get_all_cards() if card not in cards_set}
-    cards_set = list(sorted(cards_set))
-
+    cards_set = get_unseen_cards(game_view)
     num_permutations = min(factorial(len(cards_set)), self._max_permutations)
     while num_permutations % self._num_processes != 0:
       num_permutations += 1

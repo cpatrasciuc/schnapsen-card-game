@@ -7,8 +7,10 @@ from typing import List
 
 from ai.test_utils import card_list_from_string
 from ai.utils import card_win_probabilities, prob_opp_has_more_trumps, \
-  get_best_marriage
+  get_best_marriage, get_unseen_cards
 from model.card import Card
+from model.card_value import CardValue
+from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayCardAction, AnnounceMarriageAction
 from model.player_id import PlayerId
 from model.suit import Suit
@@ -293,3 +295,19 @@ class GetBestMarriageTest(unittest.TestCase):
         PlayCardAction(PlayerId.ONE, Card.from_string("ts")),
         PlayCardAction(PlayerId.ONE, Card.from_string("qc")),
       ], Suit.SPADES))
+
+
+class GetUnseenCardsTest(unittest.TestCase):
+  def test_game_view(self):
+    game_state = get_game_state_for_tests()
+    game_view = game_state.next_player_view()
+    unseen_cards = get_unseen_cards(game_view)
+    self.assertEqual([Card(Suit.SPADES, CardValue.JACK),
+                      Card(Suit.DIAMONDS, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.QUEEN),
+                      Card(Suit.CLUBS, CardValue.KING)],
+                     unseen_cards)
+
+  def test_game_state(self):
+    self.assertEqual([], get_unseen_cards(get_game_state_for_tests()))

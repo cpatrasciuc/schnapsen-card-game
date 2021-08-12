@@ -166,6 +166,23 @@ def get_best_marriage(available_actions: List[PlayerAction],
   return None
 
 
+def get_unseen_cards(game_view: GameState) -> List[Card]:
+  """
+  Returns the sorted list of cards that were not yet seen by the player
+  corresponding to the given game view.
+  """
+  cards_set = game_view.cards_in_hand.one + game_view.cards_in_hand.two + \
+              game_view.talon + [game_view.trump_card] + \
+              [game_view.current_trick.one, game_view.current_trick.two] + \
+              [trick.one for trick in game_view.won_tricks.one] + \
+              [trick.two for trick in game_view.won_tricks.one] + \
+              [trick.one for trick in game_view.won_tricks.two] + \
+              [trick.two for trick in game_view.won_tricks.two]
+  cards_set = {card for card in Card.get_all_cards() if card not in cards_set}
+  cards_set = list(sorted(cards_set))
+  return cards_set
+
+
 # TODO(tests): Add tests for populate_game_view().
 def populate_game_view(game_view: GameState,
                        permutation: List[Card]) -> GameState:
