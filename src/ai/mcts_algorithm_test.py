@@ -6,6 +6,7 @@ import logging
 import os
 import pickle
 import unittest
+from typing import List
 
 from ai.mcts_algorithm import MCTS, Node
 from model.card import Card
@@ -23,6 +24,73 @@ from model.player_pair import PlayerPair
 from model.suit import Suit
 
 
+class _TestNode(Node[int, int]):
+  """
+  Implementation of the Node class that expands to the tree in this image:
+  https://miro.medium.com/max/500/1*OpJz2LcElVB_XPEYAvK87Q.jpeg
+
+  The states are numbered in BFS order (left to right on the same level).
+  The actions are integers, representing the index of the children.
+  """
+
+  _tree = {
+    0: [1, 2, 3],
+    1: [4, 5],
+    3: [6, 7],
+    5: [8, 9]
+  }
+
+  @property
+  def terminal(self) -> bool:
+    return self.state not in _TestNode._tree
+
+  def _get_available_actions(self) -> List[int]:
+    return list(range(len(_TestNode._tree[self.state])))
+
+  def _get_reward_for_terminal_node(self) -> PlayerPair[float]:
+    rewards = {
+      2: PlayerPair(0, 0),
+      4: PlayerPair(0, 0),
+      6: PlayerPair(0, 0),
+      7: PlayerPair(1, 0),
+      8: PlayerPair(0, 0),
+      9: PlayerPair(1, 0),
+    }
+    return rewards[self.state]
+
+  def _player(self) -> PlayerId:
+    return PlayerId.ONE
+
+  def _get_next_state(self, action: int) -> int:
+    return _TestNode._tree[self.state][action]
+
+
+class MCTSAlgorithmTest(unittest.TestCase):
+  def test_fully_expanded_tree(self):
+    mcts = MCTS(PlayerId.ONE, _TestNode)
+    root_node = mcts.build_tree(0)
+    nodes = [root_node]
+    index = 0
+    while index < len(nodes):
+      node = nodes[index]
+      if node.children is not None:
+        actions = list(sorted(node.children.keys()))
+        for action in actions:
+          child = node.children[action]
+          nodes.append(child)
+          self.assertEqual(node, child.parent)
+      index += 1
+    self.assertEqual(10, len(nodes))
+    self.assertEqual([(2, 6), (1, 3), (1, 2), (1, 2)],
+                     [(node.q, node.n) for node in nodes if not node.terminal])
+    self.assertEqual([1, 0, 1, 0, 1, 0, 1, 0, 1],
+                     [node.ucb for node in nodes[1:]])
+    for node in nodes:
+      if node != root_node:
+        self.assertTrue(node.fully_expanded, msg=node)
+        self.assertTrue(node.fully_simulated, msg=node)
+
+
 def _get_game_state_with_one_card_left() -> GameState:
   game_state = get_game_state_with_all_tricks_played()
   with GameStateValidator(game_state):
@@ -35,7 +103,7 @@ def _get_game_state_with_one_card_left() -> GameState:
   return game_state
 
 
-class MCTSAlgorithmTest(unittest.TestCase):
+class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
   def test_leaf_node(self):
     game_state = _get_game_state_with_one_card_left()
     play_jack_clubs = PlayCardAction(PlayerId.ONE,
