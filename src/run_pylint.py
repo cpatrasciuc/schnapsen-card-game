@@ -39,7 +39,7 @@ def run_pylint():
     "--generated-members=" + ",".join(generated_members),
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
-    "--good-names=i,j,k,ex,Run,_,ax",
+    "--good-names=i,j,k,q,n,ex,Run,_,ax",
   ]
 
   # Call pylint in a subprocess since it's licensed under GPL. Do not import it.

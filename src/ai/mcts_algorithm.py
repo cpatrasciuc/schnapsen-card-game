@@ -28,6 +28,8 @@ _Action = TypeVar("_Action")
 class Node(abc.ABC, Generic[_State, _Action]):
   """Generic class representing a node in an MCTS tree."""
 
+  # pylint: disable=too-many-instance-attributes
+
   def __init__(self, state: _State, parent: Optional["Node"]):
     """Instantiates a new Node given a State object and a parent node."""
     self.state = state
@@ -217,10 +219,10 @@ class MCTS(Generic[_State, _Action]):
 
   def _run_one_iteration(self, root_node: Node) -> bool:
     """Returns True if the entire game tree is already constructed."""
-    selected_node = self._selection(root_node)
+    selected_node = MCTS._selection(root_node)
     if selected_node is None:
       return True
-    end_node = self._fully_expand(selected_node)
+    end_node = MCTS._fully_expand(selected_node)
     self._backpropagate(end_node, end_node.ucb)
     return False
 
@@ -230,7 +232,8 @@ class MCTS(Generic[_State, _Action]):
     current_time = time.process_time()
     return current_time - self._start_time > self._time_limit_sec
 
-  def _selection(self, node: Node) -> Optional[Node]:
+  @staticmethod
+  def _selection(node: Node) -> Optional[Node]:
     while not node.terminal:
       if not node.fully_expanded:
         return node
@@ -251,7 +254,8 @@ class MCTS(Generic[_State, _Action]):
       node = random.choice(not_fully_simulated_children)
     raise Exception("Should not reach this code")  # pragma: no cover
 
-  def _fully_expand(self, node: Node) -> Node:
+  @staticmethod
+  def _fully_expand(node: Node) -> Node:
     while not node.terminal:
       assert not node.fully_expanded
       node = node.expand()
