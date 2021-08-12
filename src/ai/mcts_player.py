@@ -3,12 +3,15 @@
 #  found in the LICENSE file.
 
 import copy
+import functools
 import logging
+import math
+import multiprocessing
+import pprint
 import random
-import time
 from collections import Counter
 from math import factorial
-from typing import List
+from typing import List, Optional
 
 from ai.mcts_algorithm import MCTS
 from ai.player import Player
@@ -18,11 +21,39 @@ from model.player_action import PlayerAction
 from model.player_id import PlayerId
 
 
+def _populate_game_view(game_view: GameState,
+                        opponent_id: PlayerId,
+                        permutation: List[Card]) -> GameState:
+  """
+  Fill in the unknown cards in the opponent's hand and in the talon in order
+  with the cards from permutation. Returns the resulting perfect information
+  GameState.
+  """
+  game_state = copy.deepcopy(game_view)
+  opp_cards = game_state.cards_in_hand[opponent_id]
+  for i, opp_card in enumerate(opp_cards):
+    if opp_card is None:
+      opp_cards[i] = permutation.pop()
+  for i, talon_card in enumerate(game_state.talon):
+    if talon_card is None:
+      game_state.talon[i] = permutation.pop()
+  return game_state
+
+
+def _run_mcts(permutation: List[Card], game_view: GameState,
+              player_id: PlayerId, time_limit_sec: float) -> PlayerAction:
+  game_state = _populate_game_view(game_view, player_id.opponent(),
+                                   list(permutation))
+  mcts_algorithm = MCTS(player_id)
+  return mcts_algorithm.search(game_state, time_limit_sec)
+
+
 class MctsPlayer(Player):
   """Player implementation that uses the MCTS algorithm."""
 
   def __init__(self, player_id: PlayerId, cheater: bool,
-               time_limit_sec: float = 1, max_permutations: int = 100):
+               time_limit_sec: float = 1, max_permutations: int = 100,
+               num_processes: Optional[int] = None):
     """
     Creates a new LibMctsPlayer.
     :param player_id: The ID of the player in a game of Schnapsen (ONE or TWO).
@@ -32,11 +63,24 @@ class MctsPlayer(Player):
     to a perfect-information game by using a random permutation of the unseen
     cards set. This parameter controls how many such permutations are used
     in the given amount of time. The player then picks the most common best
-    action across all the simulated scenarios.
+    action across all the simulated scenarios. If max_permutations is not a
+    multiple of num_processes it will be rounded up to the next multiple.
+    :param num_processes The number of processes to be used in the pool to
+    process the permutations in parallel. If None, the pool will use cpu_count()
+    processes.
     """
+    # pylint: disable=too-many-arguments
     super().__init__(player_id, cheater)
     self._time_limit_sec = time_limit_sec
     self._max_permutations = max_permutations
+    self._num_processes = num_processes or multiprocessing.cpu_count()
+    # pylint: disable=consider-using-with
+    self._pool = multiprocessing.Pool(processes=self._num_processes)
+    # pylint: enable=consider-using-with
+
+  def cleanup(self):
+    self._pool.terminate()
+    self._pool.join()
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
     cards_set = game_view.cards_in_hand.one + game_view.cards_in_hand.two + \
@@ -54,40 +98,27 @@ class MctsPlayer(Player):
       index = opp_cards.index(None)
       opp_cards[index] = played_card
 
-    best_actions = []
     num_permutations = min(factorial(len(cards_set)), self._max_permutations)
+    while num_permutations % self._num_processes != 0:
+      num_permutations += 1
     logging.info("MCTSPlayer: Num permutations: %s out of %s", num_permutations,
                  factorial(len(cards_set)))
 
-    start_sec = time.process_time()
-
+    permutations = []
     for _ in range(num_permutations):
       permutation = copy.deepcopy(cards_set)
       random.shuffle(permutation)
-      game_state = self._populate_game_view(game_view, list(permutation))
-      mcts_algorithm = MCTS(self.id)
-      best_action = mcts_algorithm.search(
-        game_state, self._time_limit_sec / num_permutations)
-      best_actions.append(best_action)
-      end_sec = time.process_time()
-      if end_sec - start_sec > self._time_limit_sec:
-        break
+      permutations.append(permutation)
 
-    return Counter(best_actions).most_common(1)[0][0]
+    time_limit_per_permutation = self._time_limit_sec / math.ceil(
+      num_permutations / self._num_processes)
+    # TODO(optimization): Experiment with imap_unordered as well.
+    best_actions = self._pool.map(
+      functools.partial(_run_mcts, game_view=game_view, player_id=self.id,
+                        time_limit_sec=time_limit_per_permutation),
+      permutations)
 
-  def _populate_game_view(self, game_view: GameState,
-                          permutation: List[Card]) -> GameState:
-    """
-    Fill in the unknown cards in the opponent's hand and in the talon in order
-    with the cards from permutation. Returns the resulting perfect information
-    GameState.
-    """
-    game_state = copy.deepcopy(game_view)
-    opp_cards = game_state.cards_in_hand[self.id.opponent()]
-    for i, opp_card in enumerate(opp_cards):
-      if opp_card is None:
-        opp_cards[i] = permutation.pop()
-    for i, talon_card in enumerate(game_state.talon):
-      if talon_card is None:
-        game_state.talon[i] = permutation.pop()
-    return game_state
+    counter = Counter(best_actions)
+    logging.info("MCTSPlayer: Best action counts:\n%s",
+                 pprint.pformat(counter.most_common(10), indent=True))
+    return counter.most_common(1)[0][0]
