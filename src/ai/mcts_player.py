@@ -32,14 +32,17 @@ def _run_mcts(permutation: List[Card], game_view: GameState,
 class MctsPlayer(Player):
   """Player implementation that uses the MCTS algorithm."""
 
-  def __init__(self, player_id: PlayerId, cheater: bool,
-               time_limit_sec: float = 1, max_permutations: int = 100,
+  def __init__(self, player_id: PlayerId, cheater: bool = False,
+               time_limit_sec: Optional[float] = 1, max_permutations: int = 100,
                num_processes: Optional[int] = None):
     """
     Creates a new LibMctsPlayer.
     :param player_id: The ID of the player in a game of Schnapsen (ONE or TWO).
+    :param cheater: If True, this player will always know the cards in their
+    opponent's hand and the order of the cards in the talon.
     :param time_limit_sec: The maximum amount of time (in seconds) that the
-    player can use to pick an action, when requested.
+    player can use to pick an action, when requested. If None, there is no time
+    limit.
     :param max_permutations: The player converts an imperfect-information game
     to a perfect-information game by using a random permutation of the unseen
     cards set. This parameter controls how many such permutations are used
@@ -77,8 +80,12 @@ class MctsPlayer(Player):
       random.shuffle(permutation)
       permutations.append(permutation)
 
-    time_limit_per_permutation = self._time_limit_sec / math.ceil(
-      num_permutations / self._num_processes)
+    if self._time_limit_sec is None:
+      time_limit_per_permutation = None
+    else:
+      time_limit_per_permutation = self._time_limit_sec / math.ceil(
+        num_permutations / self._num_processes)
+
     # TODO(optimization): Experiment with imap_unordered as well.
     best_actions = self._pool.map(
       functools.partial(_run_mcts, game_view=game_view, player_id=self.id,

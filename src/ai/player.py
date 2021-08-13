@@ -19,6 +19,8 @@ class Player(abc.ABC):
     Instantiate a new Player.
     :param player_id: The Id of the player in a game of Schnapsen (Player ONE or
     TWO).
+    :param cheater: If True, this player will always know the cards in their
+    opponent's hand and the order of the cards in the talon.
     """
     self._player_id = player_id
     self._game_of_interest = False
