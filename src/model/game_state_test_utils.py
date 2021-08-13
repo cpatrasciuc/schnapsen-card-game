@@ -337,6 +337,51 @@ def get_game_state_for_tempo_puzzle() -> GameState:
                    trick_points=trick_points, current_trick=current_trick)
 
 
+def get_game_view_for_duck_puzzle() -> GameState:
+  """
+  Generates a game view for the scenario described here:
+  http://psellos.com/schnapsen/blog/2012/03/003-duck.html
+
+  The game state is the following:
+    * cards_in_hand: [A♠, X♠, A♥, Q♥, K♦], [K♠, Q♠, None, None, None]
+    * unseen_cards: K♥, X♥, X♦, Q♦
+    * trump: ♦
+    * trump_card: J♦
+    * talon: [None]
+    * next_player: PlayerId.ONE
+    * won_tricks: [(A♦, A♣), (K♣, J♣)], [(Q♣, X♣), (J♥, J♠)]
+    * marriage_suits: [], []
+    * trick_points: (28, 17)
+    * current_trick: (None, None)
+    """
+  cards_in_hand = PlayerPair(
+    one=[Card(Suit.SPADES, CardValue.ACE),
+         Card(Suit.SPADES, CardValue.TEN),
+         Card(Suit.HEARTS, CardValue.ACE),
+         Card(Suit.HEARTS, CardValue.QUEEN),
+         Card(Suit.DIAMONDS, CardValue.KING)],
+    two=[Card(Suit.SPADES, CardValue.KING),
+         Card(Suit.SPADES, CardValue.QUEEN),
+         None, None, None])
+  trump_card = Card(Suit.DIAMONDS, CardValue.JACK)
+  won_tricks = PlayerPair(
+    one=[PlayerPair(Card(Suit.DIAMONDS, CardValue.ACE),
+                    Card(Suit.CLUBS, CardValue.ACE)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.KING),
+                    Card(Suit.CLUBS, CardValue.JACK))],
+    two=[PlayerPair(Card(Suit.CLUBS, CardValue.QUEEN),
+                    Card(Suit.CLUBS, CardValue.TEN)),
+         PlayerPair(Card(Suit.HEARTS, CardValue.JACK),
+                    Card(Suit.SPADES, CardValue.JACK))])
+  trick_points = PlayerPair(one=28, two=37)
+  marriage_suits = PlayerPair(one=[], two=[Suit.SPADES])
+  current_trick = PlayerPair(None, Card(Suit.SPADES, CardValue.QUEEN))
+  return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
+                   trump_card=trump_card, talon=[None], won_tricks=won_tricks,
+                   trick_points=trick_points, marriage_suits=marriage_suits,
+                   current_trick=current_trick)
+
+
 def get_game_state_with_multiple_cards_in_the_talon_for_tests() -> GameState:
   game_state = get_game_state_for_tests()
   with GameStateValidator(game_state):
