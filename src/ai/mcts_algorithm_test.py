@@ -2,13 +2,13 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import logging
 import os
 import pickle
 import unittest
 from typing import List
 
 from ai.mcts_algorithm import MCTS, Node
+from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
@@ -16,7 +16,7 @@ from model.game_state_test_utils import get_game_state_with_all_tricks_played, \
   get_game_state_for_you_first_no_you_first_puzzle, \
   get_game_state_for_elimination_play_puzzle, \
   get_game_state_for_playing_to_win_the_last_trick_puzzle, \
-  get_game_state_for_tempo_puzzle
+  get_game_state_for_tempo_puzzle, get_game_view_for_who_laughs_last_puzzle
 from model.game_state_validation import GameStateValidator
 from model.player_action import PlayCardAction
 from model.player_id import PlayerId
@@ -262,8 +262,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
         print(action, child)
         self.assertTrue(child.fully_simulated, msg=action)
       best_action = root_node.best_action()
-      logging.debug("MCTSAlgorithmTest: Player %s plays %s",
-                    game_state.next_player, best_action)
+      print(f"{game_state.next_player}: {best_action}")
       best_action.execute(game_state)
     self.assertEqual(PlayerPair(1, 0), game_state.game_points)
 
@@ -277,4 +276,15 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def test_tempo_player_one_always_wins(self):
     game_state = get_game_state_for_tempo_puzzle()
+    self._assert_player_one_always_wins(game_state)
+
+  def test_who_laughs_last_part_two_player_one_always_wins(self):
+    game_view = get_game_view_for_who_laughs_last_puzzle()
+    game_view.talon = [Card(Suit.DIAMONDS, CardValue.ACE)]
+    unseen_cards = get_unseen_cards(game_view)
+    self.assertEqual(4, len(unseen_cards))
+    game_state = populate_game_view(game_view, unseen_cards)
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
     self._assert_player_one_always_wins(game_state)

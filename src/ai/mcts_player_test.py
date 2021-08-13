@@ -3,13 +3,17 @@
 #  found in the LICENSE file.
 
 import unittest
+from typing import Optional
 
 from ai.mcts_player import MctsPlayer
+from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
-from model.game_state_test_utils import get_game_view_for_duck_puzzle
+from model.game_state_test_utils import get_game_view_for_duck_puzzle, \
+  get_game_view_for_who_laughs_last_puzzle
 from model.player_action import PlayCardAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 
 
@@ -29,3 +33,38 @@ class MctsPlayerTest(unittest.TestCase):
       PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN))
     }
     self.assertIn(action, expected_actions)
+
+  def test_who_laughs_last_puzzle(self):
+    game_view = get_game_view_for_who_laughs_last_puzzle()
+    action = self._mcts_player.request_next_action(game_view)
+    print(f"Selected action: {action}")
+    expected_actions = {
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN))
+    }
+    self.assertIn(action, expected_actions)
+
+  def test_who_laughs_last_puzzle_part_two(self):
+    game_view = get_game_view_for_who_laughs_last_puzzle()
+    game_view.talon = [Card(Suit.DIAMONDS, CardValue.ACE)]
+    unseen_cards = get_unseen_cards(game_view)
+    self.assertEqual(4, len(unseen_cards))
+    game_state = populate_game_view(game_view, unseen_cards)
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))
+    action.execute(game_state)
+    self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
+
+    player_two: Optional[MctsPlayer] = None
+    try:
+      player_two = MctsPlayer(PlayerId.TWO, time_limit_sec=None)
+      players = PlayerPair(self._mcts_player, player_two)
+      while not game_state.is_game_over:
+        player = players[game_state.next_player]
+        action = player.request_next_action(game_state.next_player_view())
+        print(f"{game_state.next_player}: {action}")
+        action.execute(game_state)
+    finally:
+      if player_two is not None:
+        player_two.cleanup()
+
+    self.assertEqual(0, game_state.game_points.two)
