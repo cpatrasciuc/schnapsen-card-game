@@ -76,6 +76,8 @@ class MctsPlayer(Player):
 
     permutations = []
     for _ in range(num_permutations):
+      # TODO(mcts): Only consider the permutations where the first
+      #  num_missing_cards_in_opponents_hand are sorted.
       permutation = copy.deepcopy(cards_set)
       random.shuffle(permutation)
       permutations.append(permutation)
