@@ -13,7 +13,8 @@ from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_for_playing_to_win_the_last_trick_puzzle, \
   get_game_state_for_tempo_puzzle, get_game_view_for_duck_puzzle, \
   get_game_view_for_who_laughs_last_puzzle, \
-  get_game_state_for_forcing_the_issue_puzzle
+  get_game_state_for_forcing_the_issue_puzzle, \
+  get_game_view_for_the_last_trump_puzzle
 from model.game_state_validation import validate
 
 
@@ -101,4 +102,14 @@ class GameStateTestUtilsTest(unittest.TestCase):
     state.
     """
     game_state = get_game_state_for_forcing_the_issue_puzzle()
+    validate(game_state)
+
+  @staticmethod
+  def test_get_game_view_for_the_last_trump_puzzle():
+    """
+    Verify that get_game_view_for_the_last_trump_puzzle() returns a valid state.
+    """
+    game_view = get_game_view_for_the_last_trump_puzzle()
+    unseen_cards = get_unseen_cards(game_view)
+    game_state = populate_game_view(game_view, unseen_cards)
     validate(game_state)
