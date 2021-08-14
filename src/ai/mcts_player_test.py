@@ -13,7 +13,8 @@ from model.game_state_test_utils import get_game_view_for_duck_puzzle, \
   get_game_state_for_who_laughs_last_puzzle, \
   get_game_state_for_forcing_the_issue_puzzle, \
   get_game_view_for_the_last_trump_puzzle, \
-  get_game_state_for_know_your_opponent_puzzle
+  get_game_state_for_know_your_opponent_puzzle, \
+  get_game_view_for_grab_the_brass_ring_puzzle
 from model.player_action import PlayCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
@@ -105,3 +106,9 @@ class MctsPlayerTest(unittest.TestCase):
     action.execute(game_state)
     self._play_against_another_mcts_player_until_the_end(game_state)
     self.assertEqual(0, game_state.game_points.two)
+
+  def test_grab_the_brass_ring_puzzle(self):
+    game_view = get_game_view_for_grab_the_brass_ring_puzzle()
+    action = self._mcts_player.request_next_action(game_view)
+    self.assertEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.ACE)), action)

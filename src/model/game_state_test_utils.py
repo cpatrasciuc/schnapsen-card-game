@@ -577,6 +577,48 @@ def get_game_state_for_know_your_opponent_puzzle() -> GameState:
   return game_state
 
 
+def get_game_view_for_grab_the_brass_ring_puzzle() -> GameState:
+  """
+  Generates a game view for the scenario described here:
+  http://psellos.com/schnapsen/blog/2020/07/146-grab.html
+
+  The game state is the following:
+    * cards_in_hand: [K♠, J♠, Q♥, A♣, Q♦] [J♣, None, None, None, None]
+    * unseen_cards: A♠, Q♠, A♥, X♥, K♥
+    * trump: ♦
+    * trump_card: J♦
+    * talon: [None]
+    * next_player: PlayerId.ONE
+    * won_tricks: [(A♦, X♣), (K♣, Q♣), (K♦, J♥)], [(X♠, X♦)]
+    * marriage_suits: [], []
+    * trick_points: (34, 20)
+    * current_trick: (None, J♣)
+  """
+  cards_in_hand = PlayerPair(
+    one=[Card(Suit.SPADES, CardValue.KING),
+         Card(Suit.SPADES, CardValue.JACK),
+         Card(Suit.HEARTS, CardValue.QUEEN),
+         Card(Suit.CLUBS, CardValue.ACE),
+         Card(Suit.DIAMONDS, CardValue.QUEEN)],
+    two=[Card(Suit.CLUBS, CardValue.JACK), None, None, None, None])
+  trump_card = Card(Suit.DIAMONDS, CardValue.JACK)
+  won_tricks = PlayerPair(
+    one=[PlayerPair(Card(Suit.DIAMONDS, CardValue.ACE),
+                    Card(Suit.CLUBS, CardValue.TEN)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.KING),
+                    Card(Suit.CLUBS, CardValue.QUEEN)),
+         PlayerPair(Card(Suit.DIAMONDS, CardValue.KING),
+                    Card(Suit.HEARTS, CardValue.JACK))],
+    two=[PlayerPair(Card(Suit.SPADES, CardValue.TEN),
+                    Card(Suit.DIAMONDS, CardValue.TEN))])
+  trick_points = PlayerPair(one=34, two=20)
+  # noinspection PyTypeChecker
+  current_trick = PlayerPair(None, Card(Suit.CLUBS, CardValue.JACK))
+  return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
+                   trump_card=trump_card, talon=[None], won_tricks=won_tricks,
+                   trick_points=trick_points, current_trick=current_trick)
+
+
 def get_game_state_with_multiple_cards_in_the_talon_for_tests() -> GameState:
   game_state = get_game_state_for_tests()
   with GameStateValidator(game_state):
