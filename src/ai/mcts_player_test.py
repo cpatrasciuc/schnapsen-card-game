@@ -10,7 +10,7 @@ from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state_test_utils import get_game_view_for_duck_puzzle, \
-  get_game_view_for_who_laughs_last_puzzle, \
+  get_game_state_for_who_laughs_last_puzzle, \
   get_game_state_for_forcing_the_issue_puzzle, \
   get_game_view_for_the_last_trump_puzzle, \
   get_game_state_for_know_your_opponent_puzzle
@@ -37,16 +37,6 @@ class MctsPlayerTest(unittest.TestCase):
     }
     self.assertIn(action, expected_actions)
 
-  def test_who_laughs_last_puzzle(self):
-    game_view = get_game_view_for_who_laughs_last_puzzle()
-    action = self._mcts_player.request_next_action(game_view)
-    print(f"Selected action: {action}")
-    expected_actions = {
-      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
-      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN))
-    }
-    self.assertIn(action, expected_actions)
-
   def _play_against_another_mcts_player_until_the_end(self, game_state):
     player_two: Optional[MctsPlayer] = None
     try:
@@ -61,15 +51,16 @@ class MctsPlayerTest(unittest.TestCase):
       if player_two is not None:
         player_two.cleanup()
 
-  def test_who_laughs_last_puzzle_part_two(self):
-    game_view = get_game_view_for_who_laughs_last_puzzle()
-    game_view.talon = [Card(Suit.DIAMONDS, CardValue.ACE)]
-    unseen_cards = get_unseen_cards(game_view)
-    self.assertEqual(4, len(unseen_cards))
-    game_state = populate_game_view(game_view, unseen_cards)
-    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))
+  def test_who_laughs_last_puzzle(self):
+    # Part one
+    game_state = get_game_state_for_who_laughs_last_puzzle()
+    action = self._mcts_player.request_next_action(
+      game_state.next_player_view())
+    self.assertEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)), action)
     action.execute(game_state)
     self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
+    # Part two
     self._play_against_another_mcts_player_until_the_end(game_state)
     self.assertEqual(0, game_state.game_points.two)
 

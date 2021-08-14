@@ -382,17 +382,16 @@ def get_game_view_for_duck_puzzle() -> GameState:
                    current_trick=current_trick)
 
 
-def get_game_view_for_who_laughs_last_puzzle() -> GameState:
+def get_game_state_for_who_laughs_last_puzzle() -> GameState:
   """
-  Generates a game view for the scenario described here:
+  Generates a game state for the scenario described here:
   http://psellos.com/schnapsen/blog/2012/03/004-last.html
 
   The game state is the following:
-    * cards_in_hand: [K♥, Q♥, A♣, X♦, Q♦], [X♠, None, None, None, None]
-    * unseen_cards: A♠, X♥, X♣, A♦, K♦
+    * cards_in_hand: [K♥, Q♥, A♣, X♦, Q♦], [X♠, A♠, X♥, X♣, K♦]
     * trump: ♥
     * trump_card: J♥
-    * talon: [None]
+    * talon: [A♦]
     * next_player: PlayerId.ONE
     * won_tricks: [(Q♠, J♦)], [(Q♣, K♣), (J♣, J♠), (K♠, A♥)]
     * marriage_suits: [], []
@@ -405,8 +404,13 @@ def get_game_view_for_who_laughs_last_puzzle() -> GameState:
          Card(Suit.CLUBS, CardValue.ACE),
          Card(Suit.DIAMONDS, CardValue.TEN),
          Card(Suit.DIAMONDS, CardValue.QUEEN)],
-    two=[Card(Suit.SPADES, CardValue.TEN), None, None, None, None])
+    two=[Card(Suit.SPADES, CardValue.TEN),
+         Card(Suit.SPADES, CardValue.ACE),
+         Card(Suit.HEARTS, CardValue.TEN),
+         Card(Suit.CLUBS, CardValue.TEN),
+         Card(Suit.DIAMONDS, CardValue.KING)])
   trump_card = Card(Suit.HEARTS, CardValue.JACK)
+  talon = [Card(Suit.DIAMONDS, CardValue.ACE)]
   won_tricks = PlayerPair(
     one=[PlayerPair(Card(Suit.SPADES, CardValue.QUEEN),
                     Card(Suit.DIAMONDS, CardValue.JACK))],
@@ -419,7 +423,7 @@ def get_game_view_for_who_laughs_last_puzzle() -> GameState:
   trick_points = PlayerPair(one=5, two=26)
   current_trick = PlayerPair(None, Card(Suit.SPADES, CardValue.TEN))
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
-                   trump_card=trump_card, talon=[None], won_tricks=won_tricks,
+                   trump_card=trump_card, talon=talon, won_tricks=won_tricks,
                    trick_points=trick_points, current_trick=current_trick)
 
 
