@@ -375,6 +375,7 @@ def get_game_view_for_duck_puzzle() -> GameState:
                     Card(Suit.SPADES, CardValue.JACK))])
   trick_points = PlayerPair(one=28, two=37)
   marriage_suits = PlayerPair(one=[], two=[Suit.SPADES])
+  # noinspection PyTypeChecker
   current_trick = PlayerPair(None, Card(Suit.SPADES, CardValue.QUEEN))
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                    trump_card=trump_card, talon=[None], won_tricks=won_tricks,
@@ -421,6 +422,7 @@ def get_game_state_for_who_laughs_last_puzzle() -> GameState:
          PlayerPair(Card(Suit.SPADES, CardValue.KING),
                     Card(Suit.HEARTS, CardValue.ACE))])
   trick_points = PlayerPair(one=5, two=26)
+  # noinspection PyTypeChecker
   current_trick = PlayerPair(None, Card(Suit.SPADES, CardValue.TEN))
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                    trump_card=trump_card, talon=talon, won_tricks=won_tricks,
@@ -516,6 +518,7 @@ def get_game_view_for_the_last_trump_puzzle() -> GameState:
                     Card(Suit.DIAMONDS, CardValue.TEN))])
   trick_points = PlayerPair(one=28, two=40)
   marriage_suits = PlayerPair(one=[], two=[Suit.DIAMONDS])
+  # noinspection PyTypeChecker
   current_trick = PlayerPair(None, Card(Suit.DIAMONDS, CardValue.QUEEN))
   return GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
                    trump_card=trump_card, talon=[None], won_tricks=won_tricks,
