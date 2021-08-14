@@ -182,9 +182,11 @@ def debug_print(node: Node, indent: int = 1):
   if node is None:
     print("None")
     return
-  print(f"{node.player.name}: {node}")
+  print(f"{node.player.name}: {node}", end="")
   if node.children is None:
+    print(f" [score: {node.state.trick_points} {node.state.game_points}]")
     return
+  print()
   for action, child in node.children.items():
     print("\t" * indent, end="")
     print(f"{action}", end="")
@@ -215,6 +217,8 @@ class MCTS(Generic[_State, _Action]):
     while not self._is_computation_budget_depleted():
       if self._run_one_iteration(root_node):
         break
+    # if len(state.cards_in_hand.one) <= 2:
+    #   debug_print(root_node, 0)
     return root_node
 
   def _run_one_iteration(self, root_node: Node) -> bool:
