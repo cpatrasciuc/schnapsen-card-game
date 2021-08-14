@@ -423,6 +423,59 @@ def get_game_view_for_who_laughs_last_puzzle() -> GameState:
                    trick_points=trick_points, current_trick=current_trick)
 
 
+def get_game_state_for_forcing_the_issue_puzzle() -> GameState:
+  """
+  Generates a game view for the scenario described here:
+  http://psellos.com/schnapsen/blog/2012/05/013-forcing-solution.html
+
+  The game state is the following:
+    * cards_in_hand: [X♠, Q♥, X♣, A♦, K♦] [X♥, K♥, X♦, Q♦, J♦]
+    * trump: ♥
+    * trump_card: J♥
+    * talon: [A♣], closed
+    * next_player: PlayerId.ONE
+    * won_tricks: [(K♠, Q♠), (A♥, A♠)], [(J♠, K♣), (J♣, Q♣)]
+    * marriage_suits: [], [♣]
+    * trick_points: (29, 31)
+    * current_trick: (None, J♦)
+    * player_that_closed_the_talon: PlayerId.TWO
+    * opponent_points_when_talon_was_closed: 29
+    """
+  cards_in_hand = PlayerPair(
+    one=[Card(Suit.SPADES, CardValue.TEN),
+         Card(Suit.HEARTS, CardValue.QUEEN),
+         Card(Suit.CLUBS, CardValue.TEN),
+         Card(Suit.DIAMONDS, CardValue.ACE),
+         Card(Suit.DIAMONDS, CardValue.KING)],
+    two=[Card(Suit.HEARTS, CardValue.TEN),
+         Card(Suit.HEARTS, CardValue.KING),
+         Card(Suit.DIAMONDS, CardValue.TEN),
+         Card(Suit.DIAMONDS, CardValue.QUEEN),
+         Card(Suit.DIAMONDS, CardValue.JACK)])
+  trump_card = Card(Suit.HEARTS, CardValue.JACK)
+  talon = [Card(Suit.CLUBS, CardValue.ACE)]
+  won_tricks = PlayerPair(
+    one=[PlayerPair(Card(Suit.SPADES, CardValue.KING),
+                    Card(Suit.SPADES, CardValue.QUEEN)),
+         PlayerPair(Card(Suit.HEARTS, CardValue.ACE),
+                    Card(Suit.SPADES, CardValue.ACE))],
+    two=[PlayerPair(Card(Suit.SPADES, CardValue.JACK),
+                    Card(Suit.CLUBS, CardValue.KING)),
+         PlayerPair(Card(Suit.CLUBS, CardValue.JACK),
+                    Card(Suit.CLUBS, CardValue.QUEEN))])
+  marriage_suits = PlayerPair(one=[], two=[Suit.CLUBS])
+  trick_points = PlayerPair(one=29, two=31)
+  game_state = GameState(cards_in_hand=cards_in_hand, trump=trump_card.suit,
+                         trump_card=trump_card, talon=talon,
+                         won_tricks=won_tricks, trick_points=trick_points,
+                         marriage_suits=marriage_suits,
+                         next_player=PlayerId.TWO)
+  game_state.close_talon()
+  game_state.current_trick.two = Card(Suit.DIAMONDS, CardValue.JACK)
+  game_state.next_player = PlayerId.ONE
+  return game_state
+
+
 def get_game_state_with_multiple_cards_in_the_talon_for_tests() -> GameState:
   game_state = get_game_state_for_tests()
   with GameStateValidator(game_state):
