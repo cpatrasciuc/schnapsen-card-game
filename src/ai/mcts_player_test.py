@@ -12,7 +12,8 @@ from model.card_value import CardValue
 from model.game_state_test_utils import get_game_view_for_duck_puzzle, \
   get_game_view_for_who_laughs_last_puzzle, \
   get_game_state_for_forcing_the_issue_puzzle, \
-  get_game_view_for_the_last_trump_puzzle
+  get_game_view_for_the_last_trump_puzzle, \
+  get_game_state_for_know_your_opponent_puzzle
 from model.player_action import PlayCardAction
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
@@ -89,6 +90,27 @@ class MctsPlayerTest(unittest.TestCase):
       PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)), action)
 
     game_state = populate_game_view(game_view, get_unseen_cards(game_view))
+    action.execute(game_state)
+    self._play_against_another_mcts_player_until_the_end(game_state)
+    self.assertEqual(0, game_state.game_points.two)
+
+  def test_know_your_opponent_puzzle(self):
+    game_state = get_game_state_for_know_your_opponent_puzzle()
+    self._play_against_another_mcts_player_until_the_end(game_state)
+    self.assertEqual(0, game_state.game_points.two)
+
+    # If we just run the MctsPlayer for Player.TWO, it doesn't play the Ace
+    # of Spades as the second card to challenge Player.ONE as described in the
+    # puzzle, so we run this scenario manually here.
+    game_state = get_game_state_for_know_your_opponent_puzzle()
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))
+    action.execute(game_state)
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.ACE))
+    action.execute(game_state)
+    action = self._mcts_player.request_next_action(
+      game_state.next_player_view())
+    self.assertEqual(
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), action)
     action.execute(game_state)
     self._play_against_another_mcts_player_until_the_end(game_state)
     self.assertEqual(0, game_state.game_points.two)
