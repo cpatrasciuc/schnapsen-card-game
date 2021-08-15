@@ -10,7 +10,6 @@ import multiprocessing
 import pprint
 import random
 from collections import Counter
-from math import factorial
 from typing import List, Optional
 
 from ai.mcts_algorithm import MCTS
@@ -68,19 +67,26 @@ class MctsPlayer(Player):
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
     cards_set = get_unseen_cards(game_view)
-    num_permutations = min(factorial(len(cards_set)), self._max_permutations)
-    while num_permutations % self._num_processes != 0:
-      num_permutations += 1
+    num_unknown_cards = len(cards_set)
+    num_opponent_unknown_cards = len(
+      [card for card in game_view.cards_in_hand[self.id.opponent()] if
+       card is None])
+    total_permutations = \
+      math.comb(num_unknown_cards, num_opponent_unknown_cards) * \
+      math.perm(num_unknown_cards - num_opponent_unknown_cards)
+    num_permutations = min(total_permutations, self._max_permutations)
     logging.info("MCTSPlayer: Num permutations: %s out of %s", num_permutations,
-                 factorial(len(cards_set)))
+                 total_permutations)
 
-    permutations = []
-    for _ in range(num_permutations):
-      # TODO(mcts): Only consider the permutations where the first
-      #  num_missing_cards_in_opponents_hand are sorted.
+    permutations = set()
+    while len(permutations) < num_permutations:
       permutation = copy.deepcopy(cards_set)
       random.shuffle(permutation)
-      permutations.append(permutation)
+      # noinspection PyTypeChecker
+      permutation = sorted(permutation[:num_opponent_unknown_cards]) + \
+                    permutation[num_opponent_unknown_cards:]
+      permutations.add(tuple(permutation))
+    permutations = list(list(p) for p in permutations)
 
     if self._time_limit_sec is None:
       time_limit_per_permutation = None
