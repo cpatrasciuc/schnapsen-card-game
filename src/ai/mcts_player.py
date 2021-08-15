@@ -2,17 +2,16 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import copy
 import functools
 import logging
 import math
 import multiprocessing
 import pprint
-import random
 from collections import Counter
 from typing import List, Optional
 
 from ai.mcts_algorithm import MCTS
+from ai.permutations import random_perm_generator, PermutationsGenerator
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
@@ -33,7 +32,8 @@ class MctsPlayer(Player):
 
   def __init__(self, player_id: PlayerId, cheater: bool = False,
                time_limit_sec: Optional[float] = 1, max_permutations: int = 100,
-               num_processes: Optional[int] = None):
+               num_processes: Optional[int] = None,
+               perm_generator: Optional[PermutationsGenerator] = None):
     """
     Creates a new LibMctsPlayer.
     :param player_id: The ID of the player in a game of Schnapsen (ONE or TWO).
@@ -51,6 +51,9 @@ class MctsPlayer(Player):
     :param num_processes The number of processes to be used in the pool to
     process the permutations in parallel. If None, the pool will use cpu_count()
     processes.
+    :param perm_generator The function that generates the permutations of the
+    unseen cards set that will be processed when request_next_action() is
+    called.
     """
     # pylint: disable=too-many-arguments
     super().__init__(player_id, cheater)
@@ -60,6 +63,7 @@ class MctsPlayer(Player):
     # pylint: disable=consider-using-with
     self._pool = multiprocessing.Pool(processes=self._num_processes)
     # pylint: enable=consider-using-with
+    self._perm_generator = perm_generator or random_perm_generator
 
   def cleanup(self):
     self._pool.terminate()
@@ -74,25 +78,19 @@ class MctsPlayer(Player):
     total_permutations = \
       math.comb(num_unknown_cards, num_opponent_unknown_cards) * \
       math.perm(num_unknown_cards - num_opponent_unknown_cards)
-    num_permutations = min(total_permutations, self._max_permutations)
-    logging.info("MCTSPlayer: Num permutations: %s out of %s", num_permutations,
-                 total_permutations)
+    num_permutations_to_process = min(total_permutations,
+                                      self._max_permutations)
+    logging.info("MCTSPlayer: Num permutations: %s out of %s",
+                 num_permutations_to_process, total_permutations)
 
-    permutations = set()
-    while len(permutations) < num_permutations:
-      permutation = copy.deepcopy(cards_set)
-      random.shuffle(permutation)
-      # noinspection PyTypeChecker
-      permutation = sorted(permutation[:num_opponent_unknown_cards]) + \
-                    permutation[num_opponent_unknown_cards:]
-      permutations.add(tuple(permutation))
-    permutations = list(list(p) for p in permutations)
+    permutations = self._perm_generator(cards_set, num_opponent_unknown_cards,
+                                        num_permutations_to_process)
 
     if self._time_limit_sec is None:
       time_limit_per_permutation = None
     else:
       time_limit_per_permutation = self._time_limit_sec / math.ceil(
-        num_permutations / self._num_processes)
+        num_permutations_to_process / self._num_processes)
 
     # TODO(optimization): Experiment with imap_unordered as well.
     best_actions = self._pool.map(
