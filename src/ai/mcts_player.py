@@ -11,7 +11,7 @@ from collections import Counter
 from typing import List, Optional
 
 from ai.mcts_algorithm import MCTS
-from ai.permutations import PermutationsGenerator, lexicographic_perm_generator
+from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
@@ -63,7 +63,7 @@ class MctsPlayer(Player):
     # pylint: disable=consider-using-with
     self._pool = multiprocessing.Pool(processes=self._num_processes)
     # pylint: enable=consider-using-with
-    self._perm_generator = perm_generator or lexicographic_perm_generator
+    self._perm_generator = perm_generator or sims_table_perm_generator
 
   def cleanup(self):
     self._pool.terminate()
