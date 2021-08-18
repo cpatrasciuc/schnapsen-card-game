@@ -2,6 +2,8 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+# pylint: disable=invalid-name
+
 import copy
 import itertools
 import logging
@@ -209,10 +211,12 @@ class SimsTablePermGenerator:
        possible_increments]
     dispersion_and_increments.sort()
     best_dispersion, best_increment = dispersion_and_increments[-1]
+    # pylint: disable=logging-not-lazy
     logging.info("SimsTablePermGenerator: For n=%s, m=%s, r=%s, counter=%s, " +
                  "the best increment found was %s with dispersion %.3f.",
                  self._n, self._m, self._r, self._counter, best_increment,
                  best_dispersion)
+    # pylint: enable=logging-not-lazy
     return best_increment
 
   def convert_to_mixed_radix(self, c: int) -> MixedRadixNumber:
