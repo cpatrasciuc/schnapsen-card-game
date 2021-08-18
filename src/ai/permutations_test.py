@@ -2,12 +2,16 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+# pylint: disable=invalid-name
+
+import os
 import random
 import time
 import unittest
-from typing import Callable, List
+from typing import List
 
 import pandas
+from matplotlib import pyplot as plt
 
 from ai.permutations import random_perm_generator, lexicographic_perm_generator, \
   SimsTablePermGenerator, distance, dispersion, sims_table_perm_generator, \
@@ -260,40 +264,75 @@ class SimsTablePermGeneratorTest(unittest.TestCase):
 
 
 class PermutationsEval(unittest.TestCase):
-  def _time_it(self, perm_gen: Callable[[], List[List[Card]]],
+  @staticmethod
+  def _time_it(perm_gen: PermutationsGenerator,
+               cards_set: List[Card],
+               num_opponent_unknown_cards: int,
+               num_permutations_requested: int,
                num_runs: int) -> List[float]:
     timing_data = []
     for run_id in range(num_runs):
       if run_id % 10 == 0:
         print(".", end="", flush=True)
       start_time = time.process_time()
-      permutations = perm_gen()
+      permutations = perm_gen(cards_set, num_opponent_unknown_cards,
+                              num_permutations_requested)
       end_time = time.process_time()
-      self.assertGreater(len(permutations), 0)
+      assert len(permutations) > 0
       timing_data.append(end_time - start_time)
     return timing_data
 
-  @unittest.skip("Should only be run manually for eval purposes")
-  def test_speed(self):
+  @staticmethod
+  def _compute_metric(metric_name, func):
+    # pylint: disable=too-many-locals
     cards = Card.get_all_cards()[:14]
-    num_runs = 1000
-    num_permutations_requested = 100
+    num_runs = 10
     permutations_generators = [random_perm_generator,
                                lexicographic_perm_generator,
                                sims_table_perm_generator]
+    num_generators = len(permutations_generators)
+    generator_columns = []
     series = []
+    test_scenarios = [10, 20, 50, 100, 200, 500, 1000]
     for perm_generator in permutations_generators:
       name = perm_generator.__name__
-      timing_data = self._time_it(
-        lambda: perm_generator(cards, 5, num_permutations_requested), num_runs)
-      timing_data = pandas.Series(timing_data)
-      timing_data.name = name
-      print(name)
-      print(timing_data.describe())
-      series.append(timing_data)
+      generator_columns.append(name)
+      all_timing_data = []
+      for num_permutations_requested in test_scenarios:
+        timing_data = func(perm_generator, cards, 5, num_permutations_requested,
+                           num_runs)
+        all_timing_data.extend(timing_data)
+      all_timing_data = pandas.Series(all_timing_data)
+      all_timing_data.name = name
+      series.append(all_timing_data)
+
+    series_description = []
+    for num_permutations_requested in test_scenarios:
+      series_description.extend([num_permutations_requested] * num_runs)
+    series.append(
+      pandas.Series(data=series_description, name="test_scenarios"))
 
     dataframe = pandas.concat(series, axis=1)
-    print(dataframe.describe())
+
+    eval_data_folder = os.path.join(os.path.dirname(__file__), "eval", "data")
+    # noinspection PyTypeChecker
+    dataframe.to_csv(
+      os.path.join(eval_data_folder, f"permutations_{metric_name}.csv"),
+      index=False)
+
+    dataframe.boxplot(column=generator_columns, by="test_scenarios",
+                      layout=(1, num_generators),
+                      figsize=(5 * num_generators, 5))
+    plt.suptitle(f"{metric_name} data based on {num_runs} runs for each " +
+                 "test_scenarios")
+    plt.savefig(
+      os.path.join(eval_data_folder, f"permutations_{metric_name}.png"))
+
+  @unittest.skip("Should only be run manually for eval purposes")
+  def test_time(self):
+    # TODO(optimization): Find out where do we spend most of the CPU time in
+    #  sims_table_perm_generator.
+    self._compute_metric("time", self._time_it)
 
   @staticmethod
   def _measure_dispersion(perm_gen: PermutationsGenerator,
@@ -313,24 +352,4 @@ class PermutationsEval(unittest.TestCase):
 
   @unittest.skip("Should only be run manually for eval purposes")
   def test_dispersion(self):
-    cards = Card.get_all_cards()[:14]
-    num_runs = 1000
-    num_opponent_unknown_cards = 5
-    num_permutations_requested = 100
-    permutations_generators = [random_perm_generator,
-                               lexicographic_perm_generator,
-                               sims_table_perm_generator]
-    series = []
-    for perm_generator in permutations_generators:
-      name = perm_generator.__name__
-      dispersion_data = self._measure_dispersion(
-        perm_generator, cards, num_opponent_unknown_cards,
-        num_permutations_requested, num_runs)
-      dispersion_data = pandas.Series(dispersion_data)
-      dispersion_data.name = name
-      print(name)
-      print(dispersion_data.describe())
-      series.append(dispersion_data)
-
-    dataframe = pandas.concat(series, axis=1)
-    print(dataframe.describe())
+    self._compute_metric("dispersion", self._measure_dispersion)
