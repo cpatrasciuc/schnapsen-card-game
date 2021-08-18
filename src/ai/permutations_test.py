@@ -330,8 +330,6 @@ class PermutationsEval(unittest.TestCase):
 
   @unittest.skip("Should only be run manually for eval purposes")
   def test_time(self):
-    # TODO(optimization): Find out where do we spend most of the CPU time in
-    #  sims_table_perm_generator.
     self._compute_metric("time", self._time_it)
 
   @staticmethod

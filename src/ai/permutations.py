@@ -90,6 +90,8 @@ def random_perm_generator(cards_set: List[Card],
   A simple implementation of a PermutationsGenerator. It generates permutations
   randomly where the first num_opponent_unknown_cards are sorted until it
   manages to generate num_permutations_requested unique examples.
+  Advantages: High dispersion. Fast for a small number of permutations.
+  Disadvantages: Slow for a high number of permutations requested (e.g., 1000).
   """
   assert num_opponent_unknown_cards <= len(cards_set)
   rng = rng or random.random
@@ -120,7 +122,8 @@ def lexicographic_perm_generator(
   generates all possible permutations of remaining cards. It stops as soon as
   it reaches num_permutations_requested, if num_permutations_requested is not
   None and smaller than the total number of permutations that can be generated.
-  TODO(permutations): Add the advantages and disadvantages for each method.
+  Advantages: Very fast, even for a high number of permutations requested.
+  Disadvantages: Very very low dispersion.
   """
   assert num_opponent_unknown_cards <= len(cards_set)
   permutations = []
@@ -266,6 +269,8 @@ class SimsTablePermGenerator:
       num_permutations_generated += 1
 
 
+# TODO(optimization): Find out where do we spend most of the CPU time in
+#  sims_table_perm_generator.
 def sims_table_perm_generator(
     cards_set: List[Card],
     num_opponent_unknown_cards: int,
@@ -273,6 +278,10 @@ def sims_table_perm_generator(
   """
   A PermutationsGenerator that tries to generate the permutations in an order
   that maximizes dispersion.
+  Advantages: High dispersion. Faster than random_perm_generator for a high
+  number of permutations requested.
+  Disadvantages: Slower than random_perm_generator for a small number of
+  permutations requested, without providing a lot more dispersion.
   """
   assert num_opponent_unknown_cards <= len(cards_set)
   perm_generator = SimsTablePermGenerator(len(cards_set),
