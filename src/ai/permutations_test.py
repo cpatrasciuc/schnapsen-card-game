@@ -172,6 +172,8 @@ class SimsTablePermGeneratorTest(unittest.TestCase):
     generator = SimsTablePermGenerator(n=5, m=5)
     self.assertEqual([[0, 1, 2, 3, 4]], list(generator.permutations()))
     self.assertEqual([[0, 1, 2, 3, 4]], list(generator.permutations(7)))
+    generator = SimsTablePermGenerator(n=1, m=0)
+    self.assertEqual([[0]], list(generator.permutations()))
 
   def test_distance(self):
     self.assertAlmostEqual(0.47, distance([0, 1, 2, 3, 4], [0, 2, 1, 3, 4], 2),

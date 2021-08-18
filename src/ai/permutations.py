@@ -193,11 +193,11 @@ class SimsTablePermGenerator:
     # TODO(optimization): Maybe precompute this for all (n, m) combinations in a
     #  game of Schnapsen.
     self._increment = increment or self._find_best_increment()
-    assert (m == n) or (self._increment > 0), self._increment
+    assert self._increment > 0, self._increment
 
   def _find_best_increment(self, max_searches: int = 100) -> int:
-    if self._m == self._n:
-      return 0
+    if self._m == self._n or self._n == 1:
+      return 1  # It doesn't matter. There will be only one permutation.
     num_searches = min(self._r - 1, max_searches)
     possible_increments = list(
       set(_next_relative_prime(random.randint(0, self._r - 1), self._r) for _ in
