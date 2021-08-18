@@ -57,10 +57,16 @@ class MctsPlayerTest(unittest.TestCase):
     game_state = get_game_state_for_who_laughs_last_puzzle()
     action = self._mcts_player.request_next_action(
       game_state.next_player_view())
-    self.assertEqual(
-      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)), action)
+    expected_actions = {
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)),
+      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN))
+    }
+    self.assertIn(action, expected_actions)
     action.execute(game_state)
-    self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
+    if action.card.card_value == CardValue.KING:
+      self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
+    else:
+      self.assertEqual(PlayerPair(18, 26), game_state.trick_points)
     # Part two
     self._play_against_another_mcts_player_until_the_end(game_state)
     self.assertEqual(0, game_state.game_points.two)
