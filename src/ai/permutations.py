@@ -9,7 +9,7 @@ import itertools
 import logging
 import math
 import random
-from typing import List, Callable, Optional, Generator, TypeVar
+from typing import List, Callable, Optional, Generator, TypeVar, Any
 
 from model.card import Card
 
@@ -75,17 +75,12 @@ If N is None, it returns all possible permutations of unknown cards where the
 first M are sorted.
 """
 
-Rng = Callable[[], float]
-"""
-A random number generator that receives no arguments and returns a random number
-in [0, 1).
-"""
-
 
 def random_perm_generator(cards_set: List[Card],
                           num_opponent_unknown_cards: int,
                           num_permutations_requested: Optional[int],
-                          rng: Optional[Rng] = None) -> List[Permutation[Card]]:
+                          seed: Optional[Any] = None) -> List[
+  Permutation[Card]]:
   """
   A simple implementation of a PermutationsGenerator. It generates permutations
   randomly where the first num_opponent_unknown_cards are sorted until it
@@ -94,7 +89,7 @@ def random_perm_generator(cards_set: List[Card],
   Disadvantages: Slow for a high number of permutations requested (e.g., 1000).
   """
   assert num_opponent_unknown_cards <= len(cards_set)
-  rng = rng or random.random
+  rng = random.Random(seed)
   permutations = set()
   if num_permutations_requested is None:
     num_unknown_cards = len(cards_set)
@@ -103,7 +98,7 @@ def random_perm_generator(cards_set: List[Card],
       math.perm(num_unknown_cards - num_opponent_unknown_cards)
   while len(permutations) < num_permutations_requested:
     permutation = copy.deepcopy(cards_set)
-    random.shuffle(permutation, rng)  # pylint: disable=deprecated-argument
+    rng.shuffle(permutation)
     # noinspection PyTypeChecker
     permutation = sorted(permutation[:num_opponent_unknown_cards]) + \
                   permutation[num_opponent_unknown_cards:]

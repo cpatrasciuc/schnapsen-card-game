@@ -5,7 +5,6 @@
 # pylint: disable=invalid-name
 
 import os
-import random
 import time
 import unittest
 from typing import List
@@ -22,22 +21,19 @@ from model.card import Card
 class RandomPermGeneratorTest(unittest.TestCase):
   def test(self):
     all_cards = Card.get_all_cards()
-    rng = random.Random(1234)
+    seed = 1234
 
-    def rng_func():
-      return rng.random()
-
-    permutations = random_perm_generator(all_cards[:6], 0, 10, rng_func)
+    permutations = random_perm_generator(all_cards[:6], 0, 10, seed)
     self.assertEqual(10, len(permutations))
     self.assertEqual(len(set(tuple(p) for p in permutations)),
                      len(permutations))
 
-    permutations = random_perm_generator(all_cards[:6], 0, None, rng_func)
+    permutations = random_perm_generator(all_cards[:6], 0, None, seed)
     self.assertEqual(720, len(permutations))
     self.assertEqual(len(set(tuple(p) for p in permutations)),
                      len(permutations))
 
-    permutations = random_perm_generator(all_cards[:6], 4, None, rng_func)
+    permutations = random_perm_generator(all_cards[:6], 4, None, seed)
     self.assertEqual(30, len(permutations))
     self.assertEqual(len(set(tuple(p) for p in permutations)),
                      len(permutations))
