@@ -9,7 +9,7 @@ pylint~=2.9.6
 statsmodels~=0.12.2
 pandas~=1.3.2
 matplotlib~=3.4.3
-numpy~=1.21.1
+numpy~=1.21.2
 graphviz~=0.17
 
 # For lib_mcts_player.
