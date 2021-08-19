@@ -432,7 +432,7 @@ def get_game_state_for_who_laughs_last_puzzle() -> GameState:
 def get_game_state_for_forcing_the_issue_puzzle() -> GameState:
   """
   Generates a game view for the scenario described here:
-  http://psellos.com/schnapsen/blog/2012/05/013-forcing-solution.html
+  http://psellos.com/schnapsen/blog/2012/05/013-forcing.html
 
   The game state is the following:
     * cards_in_hand: [X♠, Q♥, X♣, A♦, K♦] [X♥, K♥, X♦, Q♦, J♦]
