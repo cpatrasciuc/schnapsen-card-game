@@ -7,7 +7,7 @@ pylint~=2.9.6
 
 # Requirements for evaluating AI players.
 statsmodels~=0.12.2
-pandas~=1.3.1
+pandas~=1.3.2
 matplotlib~=3.4.3
 numpy~=1.21.1
 graphviz~=0.17
