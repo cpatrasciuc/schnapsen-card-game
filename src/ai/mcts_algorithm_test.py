@@ -4,6 +4,7 @@
 
 import os
 import pickle
+import random
 import unittest
 from typing import List
 
@@ -261,7 +262,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
       for action, child in root_node.children.items():
         print(action, child)
         self.assertTrue(child.fully_simulated, msg=action)
-      best_action = root_node.best_action()
+      best_action = random.choice(root_node.best_actions())
       print(f"{game_state.next_player}: {best_action}")
       best_action.execute(game_state)
     self.assertEqual(0, game_state.game_points.two)
@@ -282,10 +283,11 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     game_state = get_game_state_for_who_laughs_last_puzzle()
     mcts = MCTS(PlayerId.ONE)
     root_node = mcts.build_tree(game_state)
-    action = root_node.best_action()
+    actions = root_node.best_actions()
     self.assertEqual(
-      PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING)), action)
-    action.execute(game_state)
+      [PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))],
+      actions)
+    actions[0].execute(game_state)
     self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
     self._assert_player_one_always_wins(game_state)
 

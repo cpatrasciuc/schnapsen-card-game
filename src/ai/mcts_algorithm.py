@@ -7,7 +7,7 @@ import copy
 import math
 import random
 import time
-from typing import Dict, List, Optional, Generic, TypeVar, Type
+from typing import Dict, List, Optional, Generic, TypeVar, Type, Tuple
 
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayerAction
@@ -132,23 +132,19 @@ class Node(abc.ABC, Generic[_State, _Action]):
       self.ucb = max(children_scores)
       self.fully_simulated = True
 
-  def best_child(self) -> "Node":
-    children_with_ucb = [(_ucb_for_player(node, self.player), node) for node in
-                         self.children.values() if node is not None]
-    children_with_ucb.sort(key=lambda x: x[0], reverse=True)
-    best_ucb = children_with_ucb[0][0]
-    best_children = [x for x in children_with_ucb if x[0] == best_ucb]
-    return random.choice(best_children)[1]
+  def best_children(self) -> List[Tuple["Node", _Action]]:
+    children_with_ucbs = \
+      [(_ucb_for_player(child, self.player), child, action)
+       for action, child in self.children.items() if child is not None]
+    best_ucb = max([ucb for ucb, child, action in children_with_ucbs])
+    return [(child, action) for ucb, child, action in children_with_ucbs if
+            ucb == best_ucb]
 
-  def best_action(self) -> _Action:
-    best_child = self.best_child()
-    for action, child in self.children.items():
-      if child is best_child:
-        return action
-    raise Exception("Should not reach this code")  # pragma: no cover
+  def best_actions(self) -> List[_Action]:
+    return [action for child, action in self.best_children()]
 
   def __repr__(self):
-    return f"Q:{self.q}, N:{self.n}, UCB:{self.ucb}"
+    return f"Q:{self.q}, N:{self.n}, UCB({self.player}):{self.ucb}"
 
 
 class SchnapsenNode(Node[GameState, PlayerAction]):
@@ -204,13 +200,9 @@ class MCTS(Generic[_State, _Action]):
     self._exploration_param = exploration_param
     # TODO(mcts): Cache the tree(s) from previous calls.
 
-  def search(self, state: _State,
-             time_limit_sec: Optional[float] = None) -> _Action:
-    root_node = self.build_tree(state, time_limit_sec)
-    return root_node.best_action()
-
   def build_tree(self, state: _State,
-                 time_limit_sec: Optional[float] = None) -> Node:
+                 time_limit_sec: Optional[float] = None) -> Node[
+    _State, _Action]:
     root_node = self._node_class(copy.deepcopy(state), None)
     self._time_limit_sec = time_limit_sec
     self._start_time = time.process_time()

@@ -10,7 +10,7 @@ import pprint
 from collections import Counter
 from typing import List, Optional
 
-from ai.mcts_algorithm import MCTS
+from ai.mcts_algorithm import MCTS, SchnapsenNode
 from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
@@ -21,10 +21,21 @@ from model.player_id import PlayerId
 
 
 def _run_mcts(permutation: List[Card], game_view: GameState,
-              player_id: PlayerId, time_limit_sec: float) -> PlayerAction:
+              player_id: PlayerId, time_limit_sec: float) -> SchnapsenNode:
   game_state = populate_game_view(game_view, permutation)
   mcts_algorithm = MCTS(player_id)
-  return mcts_algorithm.search(game_state, time_limit_sec)
+  return mcts_algorithm.build_tree(game_state, time_limit_sec)
+
+
+def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> PlayerAction:
+  """Returns the most popular action across all root nodes' best actions."""
+  best_actions = []
+  for root_node in root_nodes:
+    best_actions.extend(root_node.best_actions())
+  counter = Counter(best_actions)
+  logging.info("MCTSPlayer: Best action counts:\n%s",
+               pprint.pformat(counter.most_common(10), indent=True))
+  return counter.most_common(1)[0][0]
 
 
 class MctsPlayer(Player):
@@ -93,12 +104,15 @@ class MctsPlayer(Player):
         num_permutations_to_process / self._num_processes)
 
     # TODO(optimization): Experiment with imap_unordered as well.
-    best_actions = self._pool.map(
+    root_nodes = self._pool.map(
       functools.partial(_run_mcts, game_view=game_view, player_id=self.id,
                         time_limit_sec=time_limit_per_permutation),
       permutations)
 
-    counter = Counter(best_actions)
-    logging.info("MCTSPlayer: Best action counts:\n%s",
-                 pprint.pformat(counter.most_common(10), indent=True))
-    return counter.most_common(1)[0][0]
+    if __debug__:
+      for root_node in root_nodes:
+        for action, child in root_node.children.items():
+          print(action, "-->", child)
+        print()
+
+    return most_frequent_best_action(root_nodes)
