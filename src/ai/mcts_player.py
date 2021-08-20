@@ -7,8 +7,9 @@ import logging
 import math
 import multiprocessing
 import pprint
+import random
 from collections import Counter
-from typing import List, Optional
+from typing import List, Optional, Callable, Tuple
 
 from ai.mcts_algorithm import MCTS, SchnapsenNode
 from ai.permutations import PermutationsGenerator, sims_table_perm_generator
@@ -27,6 +28,14 @@ def _run_mcts(permutation: List[Card], game_view: GameState,
   return mcts_algorithm.build_tree(game_state, time_limit_sec)
 
 
+MergeRootNodesFunc = Callable[[List[SchnapsenNode]], PlayerAction]
+"""
+Function that receives the root nodes for all the permutations processed by an
+MCTSPlayer and returns the action that the player chose to play, after taking
+into account the data from all these trees.
+"""
+
+
 def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> PlayerAction:
   """Returns the most popular action across all root nodes' best actions."""
   best_actions = []
@@ -38,13 +47,82 @@ def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> PlayerAction:
   return counter.most_common(1)[0][0]
 
 
+def _all_nodes_are_fully_simulated(root_nodes: List[SchnapsenNode]) -> bool:
+  is_fully_expanded = True
+  for root_node in root_nodes:
+    for child in root_node.children.values():
+      if child is None or not child.fully_simulated:
+        is_fully_expanded = False
+        break
+    if not is_fully_expanded:
+      break
+  return is_fully_expanded
+
+
+def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
+  num = sum(q for q, n in ucbs)
+  denom = sum(n for q, n in ucbs)
+  return num / denom
+
+
+def _get_action_scores_for_fully_simulated_trees(
+    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
+  player_id = root_nodes[0].player
+  stats = {}
+  for root_node in root_nodes:
+    for action, child in root_node.children.items():
+      stats[action] = stats.get(action, []) + [
+        child.ucb if child.player == player_id else -child.ucb]
+  if __debug__:
+    pprint.pprint(stats)
+  actions_and_scores = [(action, sum(ucb) / len(ucb)) for action, ucb in
+                        stats.items()]
+  return actions_and_scores
+
+
+def _get_action_scores_for_partially_simulated_trees(
+    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
+  player_id = root_nodes[0].player
+  stats = {}
+  for root_node in root_nodes:
+    for action, child in root_node.children.items():
+      if child is None:
+        continue
+      stats[action] = stats.get(action, []) + [
+        (child.q if child.player == player_id else -child.q, child.n)]
+  if __debug__:
+    pprint.pprint(stats)
+  actions_and_scores = [(action, _agg_ucb(ucbs)) for action, ucbs in
+                        stats.items()]
+  return actions_and_scores
+
+
+# TODO(tests): Add tests for this function.
+def merge_ucbs(root_nodes: List[SchnapsenNode]) -> PlayerAction:
+  assert len(set(root_node.player for root_node in root_nodes)) == 1
+  is_fully_simulated = _all_nodes_are_fully_simulated(root_nodes)
+  if is_fully_simulated:
+    actions_and_scores = _get_action_scores_for_fully_simulated_trees(
+      root_nodes)
+  else:
+    actions_and_scores = _get_action_scores_for_partially_simulated_trees(
+      root_nodes)
+  if __debug__:
+    pprint.pprint(sorted(actions_and_scores, key=lambda x: x[1], reverse=True))
+  best_score = max(score for action, score in actions_and_scores)
+  best_actions = \
+    [action for action, score in actions_and_scores if score == best_score]
+  return random.choice(best_actions)
+
+
 class MctsPlayer(Player):
   """Player implementation that uses the MCTS algorithm."""
 
   def __init__(self, player_id: PlayerId, cheater: bool = False,
                time_limit_sec: Optional[float] = 1, max_permutations: int = 100,
                num_processes: Optional[int] = None,
-               perm_generator: Optional[PermutationsGenerator] = None):
+               perm_generator: Optional[PermutationsGenerator] = None,
+               merge_root_nodes_func: Optional[MergeRootNodesFunc] = None):
     """
     Creates a new LibMctsPlayer.
     :param player_id: The ID of the player in a game of Schnapsen (ONE or TWO).
@@ -65,6 +143,9 @@ class MctsPlayer(Player):
     :param perm_generator The function that generates the permutations of the
     unseen cards set that will be processed when request_next_action() is
     called.
+    :param merge_root_nodes_func The function that receives all the trees
+    corresponding to all the processed permutations, merges the information and
+    picks the best action to be played.
     """
     # pylint: disable=too-many-arguments
     super().__init__(player_id, cheater)
@@ -75,6 +156,7 @@ class MctsPlayer(Player):
     self._pool = multiprocessing.Pool(processes=self._num_processes)
     # pylint: enable=consider-using-with
     self._perm_generator = perm_generator or sims_table_perm_generator
+    self._merge_root_nodes_func = merge_root_nodes_func or merge_ucbs
 
   def cleanup(self):
     self._pool.terminate()
@@ -115,4 +197,4 @@ class MctsPlayer(Player):
           print(action, "-->", child)
         print()
 
-    return most_frequent_best_action(root_nodes)
+    return self._merge_root_nodes_func(root_nodes)
