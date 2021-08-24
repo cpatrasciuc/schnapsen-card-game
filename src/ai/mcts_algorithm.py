@@ -144,7 +144,8 @@ class Node(abc.ABC, Generic[_State, _Action]):
     return [action for child, action in self.best_children()]
 
   def __repr__(self):
-    return f"Q:{self.q}, N:{self.n}, UCB({self.player}):{self.ucb}"
+    return f"Q:{self.q}, N:{self.n}, UCB({self.player}):{self.ucb} " + \
+           f"FullSim:{self.fully_simulated}"
 
 
 class SchnapsenNode(Node[GameState, PlayerAction]):
