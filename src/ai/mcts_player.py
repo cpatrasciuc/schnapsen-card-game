@@ -47,6 +47,18 @@ def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> PlayerAction:
   return counter.most_common(1)[0][0]
 
 
+if __debug__:
+  def _assert_action_is_terminal_across_root_nodes(
+      root_nodes: List[SchnapsenNode], action: PlayerAction) -> None:
+    for root_node in root_nodes:
+      child = root_node.children[action]
+      # TODO(tests): Double check this is not a bug. This means this action was
+      #  not even visited for this root node.
+      if child is None:
+        continue
+      assert child.terminal
+
+
 def _all_nodes_are_fully_simulated(root_nodes: List[SchnapsenNode]) -> bool:
   is_fully_expanded = True
   for root_node in root_nodes:
@@ -59,8 +71,12 @@ def _all_nodes_are_fully_simulated(root_nodes: List[SchnapsenNode]) -> bool:
   return is_fully_expanded
 
 
+# TODO(mcts): Can we aggregate better across permutations? Here we weight each
+#  permutation by how many times a given action was visited for that
+#  simulation. In max_average_ucb_across_root_nodes() we weight all permutations
+#  equally.
 def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
-  num = sum(q for q, n in ucbs)
+  num = sum(q * n for q, n in ucbs)
   denom = sum(n for q, n in ucbs)
   return num / denom
 
@@ -88,8 +104,15 @@ def _get_action_scores_for_partially_simulated_trees(
     for action, child in root_node.children.items():
       if child is None:
         continue
-      stats[action] = stats.get(action, []) + [
-        (child.q if child.player == player_id else -child.q, child.n)]
+      if child.terminal:
+        if __debug__:
+          _assert_action_is_terminal_across_root_nodes(root_nodes, action)
+        q = child.ucb if child.player == player_id else -child.ucb
+        n = 1
+      else:
+        q = child.q if child.player == player_id else -child.q
+        n = child.n
+      stats[action] = stats.get(action, []) + [(q, n)]
   if __debug__:
     pprint.pprint(stats)
   actions_and_scores = [(action, _agg_ucb(ucbs)) for action, ucbs in
