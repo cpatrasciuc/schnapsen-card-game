@@ -208,13 +208,13 @@ class MCTS(Generic[_State, _Action]):
     self._time_limit_sec = time_limit_sec
     self._start_time = time.process_time()
     while not self._is_computation_budget_depleted():
-      if self._run_one_iteration(root_node):
+      if self.run_one_iteration(root_node):
         break
     # if len(state.cards_in_hand.one) <= 2:
     #   debug_print(root_node, 0)
     return root_node
 
-  def _run_one_iteration(self, root_node: Node) -> bool:
+  def run_one_iteration(self, root_node: Node) -> bool:
     """Returns True if the entire game tree is already constructed."""
     selected_node = MCTS._selection(root_node)
     if selected_node is None:
