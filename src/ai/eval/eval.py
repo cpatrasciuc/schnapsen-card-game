@@ -84,7 +84,7 @@ def _request_next_action_and_time_it(game_view: GameState, player: Player):
 
 def evaluate_player_pair(players: PlayerPair[Player],
                          num_bummerls: int = 100) -> Dict[str, PlayerPair]:
-  # pylint: disable=too-many-locals,too-many-branches
+  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 
   # Initialize the metrics.
   bummerls = PlayerPair(0, 0)
