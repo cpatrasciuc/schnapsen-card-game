@@ -83,7 +83,7 @@ def _request_next_action_and_time_it(game_view: GameState, player: Player):
 
 
 def evaluate_player_pair(players: PlayerPair[Player],
-                         num_bummerls: int = 2500) -> Dict[str, PlayerPair]:
+                         num_bummerls: int = 100) -> Dict[str, PlayerPair]:
   # pylint: disable=too-many-locals,too-many-branches
 
   # Initialize the metrics.
@@ -103,8 +103,8 @@ def evaluate_player_pair(players: PlayerPair[Player],
 
   # Simulate the games and update the metrics accordingly.
   for i in range(num_bummerls):
-    if i % 100 == 0:
-      print(f"\rSimulating bummerl {i} out of {num_bummerls}...", end="")
+    print(f"\rSimulating bummerl {i} out of {num_bummerls} ({bummerls})...",
+          end="")
     bummerl = Bummerl()
     is_bummerl_of_interest = False
     while not bummerl.is_over:
@@ -114,8 +114,12 @@ def evaluate_player_pair(players: PlayerPair[Player],
       game = bummerl.game
       while not game.game_state.is_game_over:
         player_id = game.game_state.next_player
+        if players[player_id].cheater:
+          game_view = game.game_state
+        else:
+          game_view = game.game_state.next_player_view()
         action, perf_counter, process_time = _request_next_action_and_time_it(
-          game.game_state.next_player_view(), players[player_id])
+          game_view, players[player_id])
         game.play_action(action)
         perf_counter_sum[player_id] += perf_counter
         process_time_sum[player_id] += process_time
