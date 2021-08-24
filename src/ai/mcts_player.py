@@ -87,6 +87,8 @@ def _get_action_scores_for_fully_simulated_trees(
   stats = {}
   for root_node in root_nodes:
     for action, child in root_node.children.items():
+      if child is None:
+        continue
       stats[action] = stats.get(action, []) + [
         child.ucb if child.player == player_id else -child.ucb]
   if __debug__:
