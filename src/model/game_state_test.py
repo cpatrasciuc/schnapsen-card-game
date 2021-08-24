@@ -124,11 +124,11 @@ class GameStateNewGameTest(unittest.TestCase):
     for _ in range(num_games):
       game_state = GameState.new()
 
-      def count_trumps(hand):
-        return len([card for card in hand if card.suit == game_state.trump])
+      def count_trumps(hand: List[Card], trump: Suit) -> int:
+        return len([card for card in hand if card.suit == trump])
 
-      trumps_p1 = count_trumps(game_state.cards_in_hand.one)
-      trumps_p2 = count_trumps(game_state.cards_in_hand.two)
+      trumps_p1 = count_trumps(game_state.cards_in_hand.one, game_state.trump)
+      trumps_p2 = count_trumps(game_state.cards_in_hand.two, game_state.trump)
 
       num[trumps_p1][trumps_p2] += 1
       denom[trumps_p2] += 1
