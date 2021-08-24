@@ -5,7 +5,7 @@
 import unittest
 from typing import Optional
 
-from ai.mcts_player import MctsPlayer, most_frequent_best_action
+from ai.mcts_player import MctsPlayer, most_frequent_best_action, merge_ucbs
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -125,3 +125,9 @@ class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
     self._mcts_player = MctsPlayer(
       PlayerId.ONE, time_limit_sec=None,
       merge_root_nodes_func=most_frequent_best_action)
+
+
+class MctsPlayerMergeUcbsTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    self._mcts_player = MctsPlayer(PlayerId.ONE, time_limit_sec=None,
+                                   merge_root_nodes_func=merge_ucbs)

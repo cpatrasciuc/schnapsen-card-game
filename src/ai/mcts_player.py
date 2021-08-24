@@ -98,6 +98,17 @@ def _get_action_scores_for_partially_simulated_trees(
 
 
 # TODO(tests): Add tests for this function.
+# This function doesn't work if the children of a root node are terminal nodes.
+# If the nodes to be expanded are chosen randomly, using Q and N directly might
+# only increase the confidence of scenarios that where visited more frequently.
+# On the other hand, terminal children should have the highest confidence, but
+# are only visited once. I think if the next action leads to a terminal node, it
+# does so in all permutations. If that is the case, we should just average the
+# ucb (i.e., we never have to merge terminal and non-terminal children for the
+# same action across two different permutations).
+# Leaving this function here in case we can use it when we pick the best child
+# to be expanded in MCTS and/or consider the best node to be the mode visited
+# one.
 def merge_ucbs(root_nodes: List[SchnapsenNode]) -> PlayerAction:
   assert len(set(root_node.player for root_node in root_nodes)) == 1
   is_fully_simulated = _all_nodes_are_fully_simulated(root_nodes)
@@ -109,6 +120,17 @@ def merge_ucbs(root_nodes: List[SchnapsenNode]) -> PlayerAction:
       root_nodes)
   if __debug__:
     pprint.pprint(sorted(actions_and_scores, key=lambda x: x[1], reverse=True))
+  best_score = max(score for action, score in actions_and_scores)
+  best_actions = \
+    [action for action, score in actions_and_scores if score == best_score]
+  return random.choice(best_actions)
+
+
+# TODO(tests): Add tests for this function.
+def max_average_ucb_across_root_nodes(
+    root_nodes: List[SchnapsenNode]) -> PlayerAction:
+  assert len(set(root_node.player for root_node in root_nodes)) == 1
+  actions_and_scores = _get_action_scores_for_fully_simulated_trees(root_nodes)
   best_score = max(score for action, score in actions_and_scores)
   best_actions = \
     [action for action, score in actions_and_scores if score == best_score]
@@ -156,7 +178,8 @@ class MctsPlayer(Player):
     self._pool = multiprocessing.Pool(processes=self._num_processes)
     # pylint: enable=consider-using-with
     self._perm_generator = perm_generator or sims_table_perm_generator
-    self._merge_root_nodes_func = merge_root_nodes_func or merge_ucbs
+    self._merge_root_nodes_func = merge_root_nodes_func or \
+                                  max_average_ucb_across_root_nodes
 
   def cleanup(self):
     self._pool.terminate()
@@ -164,6 +187,7 @@ class MctsPlayer(Player):
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
     cards_set = get_unseen_cards(game_view)
+    assert len(cards_set) == 0 or not self.cheater, cards_set
     num_unknown_cards = len(cards_set)
     num_opponent_unknown_cards = len(
       [card for card in game_view.cards_in_hand[self.id.opponent()] if
@@ -173,6 +197,7 @@ class MctsPlayer(Player):
       math.perm(num_unknown_cards - num_opponent_unknown_cards)
     num_permutations_to_process = min(total_permutations,
                                       self._max_permutations)
+    assert num_permutations_to_process == 1 or not self.cheater
     logging.info("MCTSPlayer: Num permutations: %s out of %s",
                  num_permutations_to_process, total_permutations)
 
