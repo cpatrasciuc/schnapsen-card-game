@@ -92,6 +92,11 @@ class MCTSAlgorithmTest(unittest.TestCase):
         self.assertTrue(node.fully_expanded, msg=node)
         self.assertTrue(node.fully_simulated, msg=node)
 
+  def test_best_children_for_node_with_no_expanded_children(self):
+    node = _TestNode(3, None)
+    self.assertEqual([(None, 0), (None, 1)], node.best_children())
+    self.assertEqual([0, 1], node.best_actions())
+
 
 def _get_game_state_with_one_card_left() -> GameState:
   game_state = get_game_state_with_all_tricks_played()

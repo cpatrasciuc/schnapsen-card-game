@@ -4,7 +4,9 @@
 
 import abc
 import copy
+import logging
 import math
+import pprint
 import random
 import time
 from typing import Dict, List, Optional, Generic, TypeVar, Type, Tuple
@@ -136,6 +138,11 @@ class Node(abc.ABC, Generic[_State, _Action]):
     children_with_ucbs = \
       [(_ucb_for_player(child, self.player), child, action)
        for action, child in self.children.items() if child is not None]
+    if len(children_with_ucbs) == 0:
+      # TODO(mcts): Find out why this happens.
+      logging.error("MCTSAlgorithm: All children are None: %s",
+                    pprint.pformat(self.children, indent=True))
+      return [(child, action) for action, child in self.children.items()]
     best_ucb = max([ucb for ucb, child, action in children_with_ucbs])
     return [(child, action) for ucb, child, action in children_with_ucbs if
             ucb == best_ucb]
