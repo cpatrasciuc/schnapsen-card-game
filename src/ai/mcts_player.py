@@ -247,4 +247,6 @@ class MctsPlayer(Player):
           print(action, "-->", child)
         print()
 
+    # TODO(mcts): If multiple actions have the same score, use tiebreakers like
+    #  ucb, card value * sign(ucb).
     return self._merge_root_nodes_func(root_nodes)
