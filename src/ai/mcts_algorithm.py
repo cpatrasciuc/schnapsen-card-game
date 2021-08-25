@@ -19,7 +19,7 @@ from model.player_pair import PlayerPair
 _PLAYER_FOR_TERMINAL_NODES = PlayerId.ONE
 
 
-def _ucb_for_player(node: "Node", player_id: PlayerId):
+def ucb_for_player(node: "Node", player_id: PlayerId):
   return node.ucb if node.player == player_id else -node.ucb
 
 
@@ -129,14 +129,14 @@ class Node(abc.ABC, Generic[_State, _Action]):
       self.ucb = self.q / self.n + exploration_param * math.sqrt(
         2 * math.log(self.parent.n) / self.n)
     else:
-      children_scores = [_ucb_for_player(child, self.player) for child in
+      children_scores = [ucb_for_player(child, self.player) for child in
                          self.children.values() if child is not None]
       self.ucb = max(children_scores)
       self.fully_simulated = True
 
   def best_children(self) -> List[Tuple["Node", _Action]]:
     children_with_ucbs = \
-      [(_ucb_for_player(child, self.player), child, action)
+      [(ucb_for_player(child, self.player), child, action)
        for action, child in self.children.items() if child is not None]
     if len(children_with_ucbs) == 0:
       # TODO(mcts): Find out why this happens.
