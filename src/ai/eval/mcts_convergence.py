@@ -29,7 +29,8 @@ def _get_children_data(node: SchnapsenNode) -> DataFrame:
     [(ucb_for_player(child, node.player), str(action))
      for action, child in node.children.items() if child is not None]
   dataframe = DataFrame(children_and_scores, columns=["score", "action"])
-  dataframe["rank"] = dataframe["score"].sort_values().rank(method="first")
+  dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
+                                                            ascending=False)
   return dataframe
 
 
@@ -82,6 +83,7 @@ def _generate_data():
       GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   dataframes.extend(_run_simulations(partially_simulated_game_states, 10000))
   dataframe = pandas.concat(dataframes, ignore_index=True)
+  # noinspection PyTypeChecker
   dataframe.to_csv(_csv_path, index=False)
 
 
@@ -91,6 +93,7 @@ def _plot_results():
   dataframe: DataFrame = pandas.read_csv(_csv_path)
   scenarios = dataframe.scenario.drop_duplicates()
   num_scenarios = len(scenarios)
+  # noinspection PyTypeChecker
   _, axes = plt.subplots(num_scenarios, 2, figsize=(20, 5 * num_scenarios),
                          squeeze=False, sharex=False, sharey=False)
   for i, scenario in enumerate(scenarios):
@@ -111,7 +114,58 @@ def _plot_results():
   plt.savefig(os.path.join(_folder, "mcts_convergence.png"))
 
 
+def _min_iterations_to_find_the_best_action(
+    num_game_states: int = 100,
+    num_samples_per_game_state: int = 10,
+    max_iterations: int = 10000):
+  """
+  This functions computes the number of iterations required until the best
+  action seems to be found. It looks for the moment when an action becomes the
+  best action and it remains the best action even if we continue to run up to
+  max_iterations iterations. It measures this for num_game_states different game
+  states and plots a histogram.
+  """
+  data = []
+  for seed in range(num_game_states):
+    for sample_index in range(num_samples_per_game_state):
+      game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
+      dataframe = _simulate_game_state(game_state, max_iterations)
+      last_iteration = dataframe.iteration.max()
+      best_actions = dataframe[
+        dataframe.iteration.eq(last_iteration) & dataframe["rank"].eq(
+          1)].action
+      best_actions_per_iteration = dataframe[dataframe["rank"].eq(1)]
+      found_at_iteration = max(
+        iteration for iteration in range(last_iteration) if
+        iteration not in best_actions_per_iteration[
+          best_actions_per_iteration.action.isin(
+            best_actions)].iteration.values)
+      best_action = min(best_actions)
+      logging.info("Best action for seed %s: %s, found at iteration %s",
+                   seed, best_action, found_at_iteration)
+      data.append((seed, sample_index, best_action, found_at_iteration))
+  dataframe = DataFrame(data,
+                        columns=["seed", "sample_index", "action", "iteration"])
+  csv_path = os.path.join(_folder, "min_iterations_to_find_the_best_action.csv")
+  # noinspection PyTypeChecker
+  dataframe.to_csv(csv_path, index=False)
+  # dataframe = pandas.read_csv(csv_path)
+  dataframe.iteration.plot(kind="kde", label="Overall", color="r", linewidth=3)
+  for seed in dataframe.seed.drop_duplicates():
+    filtered_dataframe = dataframe[dataframe.seed.eq(seed)]
+    filtered_dataframe.iteration.plot(kind="kde", alpha=0.5,
+                                      label=f"GameState.new(seed={seed})")
+  plt.legend(loc=0)
+  plt.xlabel("Iterations")
+  plt.title("Number of iterations until the best action is found")
+  plt.gcf().set_size_inches(10, 5)
+  plt.savefig(
+    os.path.join(_folder, "min_iterations_to_find_the_best_action.png"))
+  logging.info("Overall results: %s", dataframe.iteration.describe())
+
+
 if __name__ == "__main__":
   logging.basicConfig(level=logging.DEBUG)
   _generate_data()
   _plot_results()
+  _min_iterations_to_find_the_best_action(10, 10)
