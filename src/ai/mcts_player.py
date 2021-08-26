@@ -28,23 +28,27 @@ def _run_mcts(permutation: List[Card], game_view: GameState,
   return mcts_algorithm.build_tree(game_state, time_limit_sec)
 
 
-MergeRootNodesFunc = Callable[[List[SchnapsenNode]], PlayerAction]
+MergeRootNodesFunc = Callable[
+  [List[SchnapsenNode]], List[Tuple[PlayerAction, float]]]
 """
 Function that receives the root nodes for all the permutations processed by an
-MCTSPlayer and returns the action that the player chose to play, after taking
-into account the data from all these trees.
+MCTSPlayer and returns a list with (action, score) tuples, where the score is
+some aggregation across all the root nodes for that particular action. Each
+action should only appear once in the output.
 """
 
 
-def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> PlayerAction:
+def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> List[
+  Tuple[PlayerAction, float]]:
   """Returns the most popular action across all root nodes' best actions."""
   best_actions = []
   for root_node in root_nodes:
     best_actions.extend(root_node.best_actions())
   counter = Counter(best_actions)
+  action_and_scores = counter.most_common(10)
   logging.info("MCTSPlayer: Best action counts:\n%s",
-               pprint.pformat(counter.most_common(10), indent=True))
-  return counter.most_common(1)[0][0]
+               pprint.pformat(action_and_scores, indent=True))
+  return action_and_scores
 
 
 if __debug__:
@@ -134,7 +138,8 @@ def _get_action_scores_for_partially_simulated_trees(
 # Leaving this function here in case we can use it when we pick the best child
 # to be expanded in MCTS and/or consider the best node to be the mode visited
 # one.
-def merge_ucbs(root_nodes: List[SchnapsenNode]) -> PlayerAction:
+def merge_ucbs(root_nodes: List[SchnapsenNode]) -> List[
+  Tuple[PlayerAction, float]]:
   assert len(set(root_node.player for root_node in root_nodes)) == 1
   is_fully_simulated = _all_nodes_are_fully_simulated(root_nodes)
   if is_fully_simulated:
@@ -145,21 +150,14 @@ def merge_ucbs(root_nodes: List[SchnapsenNode]) -> PlayerAction:
       root_nodes)
   if __debug__:
     pprint.pprint(sorted(actions_and_scores, key=lambda x: x[1], reverse=True))
-  best_score = max(score for action, score in actions_and_scores)
-  best_actions = \
-    [action for action, score in actions_and_scores if score == best_score]
-  return random.choice(best_actions)
+  return actions_and_scores
 
 
 # TODO(tests): Add tests for this function.
 def max_average_ucb_across_root_nodes(
-    root_nodes: List[SchnapsenNode]) -> PlayerAction:
+    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
   assert len(set(root_node.player for root_node in root_nodes)) == 1
-  actions_and_scores = _get_action_scores_for_fully_simulated_trees(root_nodes)
-  best_score = max(score for action, score in actions_and_scores)
-  best_actions = \
-    [action for action, score in actions_and_scores if score == best_score]
-  return random.choice(best_actions)
+  return _get_action_scores_for_fully_simulated_trees(root_nodes)
 
 
 class MctsPlayer(Player):
@@ -249,4 +247,8 @@ class MctsPlayer(Player):
 
     # TODO(mcts): If multiple actions have the same score, use tiebreakers like
     #  ucb, card value * sign(ucb).
-    return self._merge_root_nodes_func(root_nodes)
+    actions_and_scores = self._merge_root_nodes_func(root_nodes)
+    best_score = max(score for action, score in actions_and_scores)
+    best_actions = \
+      [action for action, score in actions_and_scores if score == best_score]
+    return random.choice(best_actions)
