@@ -5,7 +5,6 @@
 import os
 import pickle
 import random
-import time
 import unittest
 from typing import List
 
@@ -300,29 +299,3 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
   def test_forcing_the_issue_player_one_always_wins(self):
     game_state = get_game_state_for_forcing_the_issue_puzzle()
     self._assert_player_one_always_wins(game_state)
-
-
-class MCTSAlgorithmTimingTest(unittest.TestCase):
-  def test(self):
-    class TestMCTS(MCTS):
-      def run_one_iteration(self, root_node: Node) -> bool:
-        return False
-
-    game_state = GameState.new(PlayerId.ONE, 0)
-    mcts = TestMCTS(game_state.next_player)
-
-    # Run for one second.
-    start_time = time.process_time()
-    mcts.build_tree(game_state, 1)
-    end_time = time.process_time()
-    time_spent = end_time - start_time
-    self.assertLess(1, time_spent)
-    self.assertLess(time_spent, 1.001)
-
-    # Run for five seconds.
-    start_time = time.process_time()
-    mcts.build_tree(game_state, 5)
-    end_time = time.process_time()
-    time_spent = end_time - start_time
-    self.assertLess(5, time_spent)
-    self.assertLess(time_spent, 5.001)
