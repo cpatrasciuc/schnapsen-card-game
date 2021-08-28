@@ -209,6 +209,7 @@ class MctsPlayer(Player):
     self._pool.join()
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
+    # pylint: disable=too-many-locals
     cards_set = get_unseen_cards(game_view)
     assert len(cards_set) == 0 or not self.cheater, cards_set
     num_unknown_cards = len(cards_set)
