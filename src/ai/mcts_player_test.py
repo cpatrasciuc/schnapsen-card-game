@@ -5,7 +5,9 @@
 import unittest
 from typing import Optional
 
-from ai.mcts_player import MctsPlayer, most_frequent_best_action, merge_ucbs
+from ai.mcts_player import MctsPlayer
+from ai.mcts_player_options import MctsPlayerOptions
+from ai.merge_root_nodes_func import most_frequent_best_action, merge_ucbs
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -23,7 +25,8 @@ from model.suit import Suit
 
 class MctsPlayerTest(unittest.TestCase):
   def setUp(self) -> None:
-    self._mcts_player = MctsPlayer(PlayerId.ONE, time_limit_sec=None)
+    options = MctsPlayerOptions(time_limit_sec=None)
+    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
   def tearDown(self) -> None:
     self._mcts_player.cleanup()
@@ -41,7 +44,8 @@ class MctsPlayerTest(unittest.TestCase):
   def _play_against_another_mcts_player_until_the_end(self, game_state):
     player_two: Optional[MctsPlayer] = None
     try:
-      player_two = MctsPlayer(PlayerId.TWO, time_limit_sec=None)
+      options = MctsPlayerOptions(time_limit_sec=None)
+      player_two = MctsPlayer(PlayerId.TWO, options=options)
       players = PlayerPair(self._mcts_player, player_two)
       while not game_state.is_game_over:
         player = players[game_state.next_player]
@@ -122,12 +126,13 @@ class MctsPlayerTest(unittest.TestCase):
 
 class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
-    self._mcts_player = MctsPlayer(
-      PlayerId.ONE, time_limit_sec=None,
-      merge_root_nodes_func=most_frequent_best_action)
+    options = MctsPlayerOptions(time_limit_sec=None,
+                                merge_root_nodes_func=most_frequent_best_action)
+    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
 class MctsPlayerMergeUcbsTest(MctsPlayerTest):
   def setUp(self) -> None:
-    self._mcts_player = MctsPlayer(PlayerId.ONE, time_limit_sec=None,
-                                   merge_root_nodes_func=merge_ucbs)
+    options = MctsPlayerOptions(time_limit_sec=None,
+                                merge_root_nodes_func=merge_ucbs)
+    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
