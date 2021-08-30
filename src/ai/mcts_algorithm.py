@@ -8,7 +8,6 @@ import logging
 import math
 import pprint
 import random
-import time
 from typing import Dict, List, Optional, Generic, TypeVar, Type, Tuple
 
 from model.game_state import GameState
@@ -203,20 +202,24 @@ class MCTS(Generic[_State, _Action]):
                exploration_param: float = 0):
     self._player_id = player_id
     self._node_class = node_class
-    self._start_time = None
-    self._time_limit_sec = None
+    self._max_iterations = None
     self._exploration_param = exploration_param
     # TODO(mcts): Cache the tree(s) from previous calls.
 
   def build_tree(self, state: _State,
-                 time_limit_sec: Optional[float] = None) -> Node[
+                 max_iterations: Optional[int] = None) -> Node[
     _State, _Action]:
+    assert max_iterations is None or max_iterations > 0, \
+      "max_iterations must be positive"
     root_node = self._node_class(copy.deepcopy(state), None)
-    self._time_limit_sec = time_limit_sec
-    self._start_time = time.process_time()
-    while not self._is_computation_budget_depleted():
+    iterations = 0
+    while True:
+      iterations += 1
       if self.run_one_iteration(root_node):
         break
+      if max_iterations is not None and iterations >= max_iterations:
+        break
+    logging.info("MctsAlgorithm: Run %s iterations", iterations)
     # if len(state.cards_in_hand.one) <= 2:
     #   debug_print(root_node, 0)
     return root_node
@@ -229,12 +232,6 @@ class MCTS(Generic[_State, _Action]):
     end_node = MCTS._fully_expand(selected_node)
     self._backpropagate(end_node, end_node.ucb)
     return False
-
-  def _is_computation_budget_depleted(self):
-    if self._time_limit_sec is None:
-      return False
-    current_time = time.process_time()
-    return current_time - self._start_time > self._time_limit_sec
 
   @staticmethod
   def _selection(node: Node) -> Optional[Node]:

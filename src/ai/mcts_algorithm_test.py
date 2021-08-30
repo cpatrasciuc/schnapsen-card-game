@@ -179,6 +179,38 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     self.assertAlmostEqual(0.33, leaf.ucb, delta=0.01)
     self.assertTrue(leaf.fully_simulated)
 
+  def test_max_iterations(self):
+    class TestMcts(MCTS):
+      def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.counter = 0
+
+      def run_one_iteration(self, root_node: Node) -> bool:
+        self.counter += 1
+        return False
+
+    game_state = GameState.new(random_seed=0)
+
+    # Run ten iterations.
+    mcts = TestMcts(game_state.next_player)
+    self.assertEqual(0, mcts.counter)
+    mcts.build_tree(game_state, 10)
+    self.assertEqual(10, mcts.counter)
+
+    # Run one hundred iterations.
+    mcts = TestMcts(game_state.next_player)
+    self.assertEqual(0, mcts.counter)
+    mcts.build_tree(game_state, 100)
+    self.assertEqual(100, mcts.counter)
+
+    # Negative or zero max_iterations are not allowed.
+    with self.assertRaisesRegex(AssertionError,
+                                "max_iterations must be positive"):
+      mcts.build_tree(game_state, 0)
+    with self.assertRaisesRegex(AssertionError,
+                                "max_iterations must be positive"):
+      mcts.build_tree(game_state, -1)
+
   def test_you_first_no_you_first(self):
     game_state = get_game_state_for_you_first_no_you_first_puzzle()
     mcts = MCTS(PlayerId.ONE)

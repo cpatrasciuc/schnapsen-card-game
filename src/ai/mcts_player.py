@@ -20,10 +20,10 @@ from model.player_id import PlayerId
 
 
 def _run_mcts(permutation: List[Card], game_view: GameState,
-              player_id: PlayerId, time_limit_sec: float) -> SchnapsenNode:
+              player_id: PlayerId, max_iterations: int) -> SchnapsenNode:
   game_state = populate_game_view(game_view, permutation)
   mcts_algorithm = MCTS(player_id)
-  return mcts_algorithm.build_tree(game_state, time_limit_sec)
+  return mcts_algorithm.build_tree(game_state, max_iterations)
 
 
 class MctsPlayer(Player):
@@ -71,16 +71,10 @@ class MctsPlayer(Player):
     permutations = self._options.perm_generator(
       cards_set, num_opponent_unknown_cards, num_permutations_to_process)
 
-    if self._options.time_limit_sec is None:
-      time_limit_per_permutation = None
-    else:
-      time_limit_per_permutation = self._options.time_limit_sec / math.ceil(
-        num_permutations_to_process / self._options.num_processes)
-
     # TODO(optimization): Experiment with imap_unordered as well.
     root_nodes = self._pool.map(
       functools.partial(_run_mcts, game_view=game_view, player_id=self.id,
-                        time_limit_sec=time_limit_per_permutation),
+                        max_iterations=self._options.max_iterations),
       permutations)
 
     if __debug__:

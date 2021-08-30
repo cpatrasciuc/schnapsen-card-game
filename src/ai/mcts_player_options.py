@@ -15,13 +15,15 @@ from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 class MctsPlayerOptions:
   """The set of parameters used to configure an MctsPlayer."""
 
-  time_limit_sec: Optional[float] = 1
+  # TODO(mcts): Find a good default value.
+  max_iterations: Optional[int] = 1
   """
-  The maximum amount of time (in seconds) that the player can use to pick an
-  action, when requested. If None, there is no time limit.
+  The maximum number of MCTS iterations run for one permutation. The total
+  number of iterations is max_iterations x max_permutations, spread across
+  multiple processes (num_processes).
   """
 
-  max_permutations: int = 100
+  max_permutations: int = multiprocessing.cpu_count()
   """
   The player converts an imperfect-information game to a perfect-information
   game by using a random permutation of the unseen cards set. This parameter

@@ -25,7 +25,7 @@ from model.suit import Suit
 
 class MctsPlayerTest(unittest.TestCase):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(time_limit_sec=None)
+    options = MctsPlayerOptions(max_iterations=None)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
   def tearDown(self) -> None:
@@ -44,7 +44,7 @@ class MctsPlayerTest(unittest.TestCase):
   def _play_against_another_mcts_player_until_the_end(self, game_state):
     player_two: Optional[MctsPlayer] = None
     try:
-      options = MctsPlayerOptions(time_limit_sec=None)
+      options = MctsPlayerOptions(max_iterations=None)
       player_two = MctsPlayer(PlayerId.TWO, options=options)
       players = PlayerPair(self._mcts_player, player_two)
       while not game_state.is_game_over:
@@ -126,13 +126,13 @@ class MctsPlayerTest(unittest.TestCase):
 
 class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(time_limit_sec=None,
+    options = MctsPlayerOptions(max_iterations=None,
                                 merge_root_nodes_func=most_frequent_best_action)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
 class MctsPlayerMergeUcbsTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(time_limit_sec=None,
+    options = MctsPlayerOptions(max_iterations=None,
                                 merge_root_nodes_func=merge_ucbs)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
