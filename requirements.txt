@@ -14,3 +14,6 @@ graphviz~=0.17
 
 # For lib_mcts_player.
 mcts~=1.0.4
+
+# For printing CPU details when profiling.
+py-cpuinfo~=8.0.0
