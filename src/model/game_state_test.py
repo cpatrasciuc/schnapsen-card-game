@@ -498,7 +498,17 @@ class GameStateCopyTest(unittest.TestCase):
     # self.assertEqual("deep_copy", results[1][1])
 
   def test_deepcopy_alternatives_initial_state(self):
+    # Results:
+    # 0.0000030352	copy
+    # 0.0000291062	deep_copy
+    # 0.0000806335	pickle
+    # 0.0003028298	deepcopy
     self._eval_deepcopy_alternatives(GameState.new(random_seed=10))
 
   def test_deepcopy_alternatives_game_state_for_tests(self):
+    # Results:
+    # 0.0000030374	copy
+    # 0.0000301123	deep_copy
+    # 0.0000763181	pickle
+    # 0.0003223606	deepcopy
     self._eval_deepcopy_alternatives(get_game_state_for_tests())
