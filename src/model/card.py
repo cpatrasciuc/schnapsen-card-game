@@ -87,3 +87,10 @@ class Card:
     card_string_lower = card_string.lower()
     return Card(Suit.from_char(card_string_lower[1]),
                 CardValue.from_char(card_string_lower[0]))
+
+  def copy(self) -> "Card":
+    """
+    Returns a new card instance having the same suit and card value as this
+    card.
+    """
+    return Card(suit=self.suit, card_value=self.card_value, public=self.public)

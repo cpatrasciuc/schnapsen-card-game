@@ -150,3 +150,22 @@ class CardTest(unittest.TestCase):
       Card.from_string("zh")
     with self.assertRaisesRegex(AssertionError, "must be a two letter string"):
       Card.from_string("multiple_chars")
+
+  def test_copy(self):
+    card1 = Card(Suit.HEARTS, CardValue.TEN, True)
+    card2 = card1.copy()
+    self.assertEqual(card1, card2)
+    self.assertIsNot(card1, card2)
+    card2.suit = Suit.DIAMONDS
+    self.assertNotEqual(card1, card2)
+    self.assertEqual(Suit.HEARTS, card1.suit)
+    card2.suit = Suit.HEARTS
+    self.assertEqual(card1, card2)
+    card2.card_value = CardValue.ACE
+    self.assertNotEqual(card1, card2)
+    self.assertEqual(CardValue.TEN, card1.card_value)
+    card2.card_value = CardValue.TEN
+    self.assertEqual(card1, card2)
+    card2.public = False
+    self.assertEqual(card1, card2)
+    self.assertTrue(card1.public)
