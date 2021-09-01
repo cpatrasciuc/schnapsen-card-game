@@ -176,9 +176,7 @@ class SchnapsenNode(Node[GameState, PlayerAction]):
     return self.state.next_player
 
   def _get_next_state(self, action: PlayerAction) -> GameState:
-    new_state = self.state.deep_copy()
-    action.execute(new_state)
-    return new_state
+    return action.execute(self.state)
 
 
 def debug_print(node: Node, indent: int = 1):

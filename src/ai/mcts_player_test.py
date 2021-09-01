@@ -11,6 +11,7 @@ from ai.merge_root_nodes_func import most_frequent_best_action, merge_ucbs
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
+from model.game_state import GameState
 from model.game_state_test_utils import get_game_view_for_duck_puzzle, \
   get_game_state_for_who_laughs_last_puzzle, \
   get_game_state_for_forcing_the_issue_puzzle, \
@@ -41,7 +42,8 @@ class MctsPlayerTest(unittest.TestCase):
     }
     self.assertIn(action, expected_actions)
 
-  def _play_against_another_mcts_player_until_the_end(self, game_state):
+  def _play_against_another_mcts_player_until_the_end(self,
+                                                      game_state) -> GameState:
     player_two: Optional[MctsPlayer] = None
     try:
       options = MctsPlayerOptions(max_iterations=None)
@@ -51,10 +53,11 @@ class MctsPlayerTest(unittest.TestCase):
         player = players[game_state.next_player]
         action = player.request_next_action(game_state.next_player_view())
         print(f"{game_state.next_player}: {action}")
-        action.execute(game_state)
+        game_state = action.execute(game_state)
     finally:
       if player_two is not None:
         player_two.cleanup()
+    return game_state
 
   def test_who_laughs_last_puzzle(self):
     # Part one
@@ -66,13 +69,14 @@ class MctsPlayerTest(unittest.TestCase):
       PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN))
     }
     self.assertIn(action, expected_actions)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     if action.card.card_value == CardValue.KING:
       self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
     else:
       self.assertEqual(PlayerPair(18, 26), game_state.trick_points)
     # Part two
-    self._play_against_another_mcts_player_until_the_end(game_state)
+    game_state = self._play_against_another_mcts_player_until_the_end(
+      game_state)
     self.assertEqual(0, game_state.game_points.two)
 
   # TODO(mcts): See if this improves after merging the parallel trees.
@@ -81,7 +85,8 @@ class MctsPlayerTest(unittest.TestCase):
     "so it's probably doing the right moves")
   def test_forcing_the_issue_puzzle(self):
     game_state = get_game_state_for_forcing_the_issue_puzzle()
-    self._play_against_another_mcts_player_until_the_end(game_state)
+    game_state = self._play_against_another_mcts_player_until_the_end(
+      game_state)
     self.assertEqual(0, game_state.game_points.two)
 
   def test_the_last_trump_puzzle(self):
@@ -92,13 +97,15 @@ class MctsPlayerTest(unittest.TestCase):
       PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN)), action)
 
     game_state = populate_game_view(game_view, get_unseen_cards(game_view))
-    action.execute(game_state)
-    self._play_against_another_mcts_player_until_the_end(game_state)
+    game_state = action.execute(game_state)
+    game_state = self._play_against_another_mcts_player_until_the_end(
+      game_state)
     self.assertEqual(0, game_state.game_points.two)
 
   def test_know_your_opponent_puzzle(self):
     game_state = get_game_state_for_know_your_opponent_puzzle()
-    self._play_against_another_mcts_player_until_the_end(game_state)
+    game_state = self._play_against_another_mcts_player_until_the_end(
+      game_state)
     self.assertEqual(0, game_state.game_points.two)
 
     # If we just run the MctsPlayer for Player.TWO, it doesn't play the Ace
@@ -106,15 +113,16 @@ class MctsPlayerTest(unittest.TestCase):
     # puzzle, so we run this scenario manually here.
     game_state = get_game_state_for_know_your_opponent_puzzle()
     action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.ACE))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     action = self._mcts_player.request_next_action(
       game_state.next_player_view())
     self.assertEqual(
       PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), action)
-    action.execute(game_state)
-    self._play_against_another_mcts_player_until_the_end(game_state)
+    game_state = action.execute(game_state)
+    game_state = self._play_against_another_mcts_player_until_the_end(
+      game_state)
     self.assertEqual(0, game_state.game_points.two)
 
   def test_grab_the_brass_ring_puzzle(self):

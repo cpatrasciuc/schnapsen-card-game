@@ -114,7 +114,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     game_state = _get_game_state_with_one_card_left()
     play_jack_clubs = PlayCardAction(PlayerId.ONE,
                                      Card(Suit.CLUBS, CardValue.JACK))
-    play_jack_clubs.execute(game_state)
+    game_state = play_jack_clubs.execute(game_state)
     mcts = MCTS(PlayerId.TWO)
     root_node = mcts.build_tree(game_state)
 
@@ -249,9 +249,9 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
   def test_elimination_play_player_two(self):
     game_state = get_game_state_for_elimination_play_puzzle()
     action = PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.JACK))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     action = PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.KING))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self.assertEqual(34, game_state.trick_points.one)
     self.assertEqual(40, game_state.trick_points.two)
     mcts = MCTS(PlayerId.TWO)
@@ -301,7 +301,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
         self.assertTrue(child.fully_simulated, msg=action)
       best_action = random.choice(root_node.best_actions())
       print(f"{game_state.next_player}: {best_action}")
-      best_action.execute(game_state)
+      game_state = best_action.execute(game_state)
     self.assertEqual(0, game_state.game_points.two)
 
   def test_elimination_play_player_one_always_wins(self):
@@ -324,7 +324,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     self.assertEqual(
       [PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.KING))],
       actions)
-    actions[0].execute(game_state)
+    game_state = actions[0].execute(game_state)
     self.assertEqual(PlayerPair(19, 26), game_state.trick_points)
     self._assert_player_one_always_wins(game_state)
 

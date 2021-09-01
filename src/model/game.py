@@ -49,7 +49,7 @@ class Game:
     """
     assert not self._game_state.is_game_over
     self._actions.append(action)
-    action.execute(self._game_state)
+    self._game_state = action.execute(self._game_state)
 
   def __getstate__(self):
     """
@@ -70,4 +70,4 @@ class Game:
     self._game_state: GameState = GameState.new(dealer=self._dealer,
                                                 random_seed=self._seed)
     for action in self._actions:
-      action.execute(self._game_state)
+      self._game_state = action.execute(self._game_state)

@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import abc
+import copy
 from typing import List
 
 from model.card import Card
@@ -53,10 +54,11 @@ class PlayerAction(abc.ABC):
     """
 
   @abc.abstractmethod
-  def execute(self, game_state: GameState):
+  def execute(self, game_state: GameState) -> GameState:
     """
-    Abstract method that must apply the necessary changes corresponding to
-    performing this action on the game state provided as an argument.
+    Abstract method that returns a new game state object that represents the
+    result of performing this player action on the game state provided as an
+    argument. The input and output game states share as much info as possible.
     The action must be a legal action given the current state of the game.
     This can be checked with can_execute_on().
     """
@@ -124,7 +126,7 @@ class PlayCardAction(PlayerAction):
     return True
 
   @validate_game_states
-  def execute(self, game_state: GameState):
+  def execute(self, game_state: GameState) -> GameState:
     """
     Plays self._card and updates the game_state accordingly.
 
@@ -139,51 +141,77 @@ class PlayCardAction(PlayerAction):
     At the end, it resets the current_trick and sets the next_player to the ID
     of the player that won the trick.
     """
+    # pylint: disable=too-many-branches
     assert self.can_execute_on(game_state)
-    game_state.current_trick[self.player_id] = self._card
-    if game_state.current_trick[self.player_id.opponent()] is None:
-      # The player lead the trick. Wait for the other player to play a card.
-      game_state.next_player = self.player_id.opponent()
+    new_game_state = copy.copy(game_state)
+
+    if self.player_id == PlayerId.ONE:
+      new_game_state.current_trick = PlayerPair(self._card,
+                                                game_state.current_trick.two)
     else:
-      # The player completes a trick. Check who won it.
-      if self._card.wins(game_state.current_trick[self.player_id.opponent()],
-                         game_state.trump):
-        winner = self.player_id
+      new_game_state.current_trick = PlayerPair(game_state.current_trick.one,
+                                                self._card)
+
+    if new_game_state.current_trick[self.player_id.opponent()] is None:
+      # The player lead the trick. Wait for the other player to play a card.
+      new_game_state.next_player = self.player_id.opponent()
+      return new_game_state
+
+    # The player completes a trick. Check who won it.
+    if self._card.wins(game_state.current_trick[self.player_id.opponent()],
+                       game_state.trump):
+      winner = self.player_id
+    else:
+      winner = self.player_id.opponent()
+
+    # If it's the first trick won by this player, check if there are any
+    # pending marriage points to be added.
+    new_game_state.trick_points = PlayerPair(game_state.trick_points.one,
+                                             game_state.trick_points.two)
+    if new_game_state.trick_points[winner] == 0:
+      for suit in new_game_state.marriage_suits[winner]:
+        _add_marriage_points(new_game_state, winner, suit)
+
+    # Update won_tricks and trick_points.
+    if winner == PlayerId.ONE:
+      new_game_state.won_tricks = PlayerPair(list(game_state.won_tricks.one),
+                                             game_state.won_tricks.two)
+      new_game_state.won_tricks.one.append(new_game_state.current_trick)
+    else:
+      new_game_state.won_tricks = PlayerPair(game_state.won_tricks.one,
+                                             list(game_state.won_tricks.two))
+      new_game_state.won_tricks.two.append(new_game_state.current_trick)
+    new_game_state.trick_points[winner] += \
+      new_game_state.current_trick.one.card_value
+    new_game_state.trick_points[winner] += \
+      new_game_state.current_trick.two.card_value
+
+    # Remove the cards from players' hands.
+    new_game_state.cards_in_hand = PlayerPair(
+      list(game_state.cards_in_hand.one), list(game_state.cards_in_hand.two))
+    for player_id in PlayerId:
+      new_game_state.cards_in_hand[player_id].remove(
+        new_game_state.current_trick[player_id])
+
+    # Clear current trick.
+    new_game_state.current_trick = PlayerPair(None, None)
+
+    # Maybe draw new cards from the talon.
+    if len(game_state.talon) > 0 and not game_state.is_talon_closed:
+      new_game_state.talon = list(game_state.talon)
+      new_game_state.cards_in_hand[winner].append(new_game_state.talon.pop(0))
+      if len(new_game_state.talon) > 0:
+        new_game_state.cards_in_hand[winner.opponent()].append(
+          new_game_state.talon.pop(0))
       else:
-        winner = self.player_id.opponent()
+        new_game_state.cards_in_hand[winner.opponent()].append(
+          new_game_state.trump_card)
+        new_game_state.trump_card = None
 
-      # If it's the first trick won by this player, check if there are any
-      # pending marriage points to be added.
-      if game_state.trick_points[winner] == 0:
-        for suit in game_state.marriage_suits[winner]:
-          _add_marriage_points(game_state, winner, suit)
+    # Update the next player
+    new_game_state.next_player = winner
 
-      # Update won_tricks and trick_points.
-      game_state.won_tricks[winner].append(game_state.current_trick)
-      game_state.trick_points[winner] += game_state.current_trick.one.card_value
-      game_state.trick_points[winner] += game_state.current_trick.two.card_value
-
-      # Remove the cards from players' hands.
-      for player_id in PlayerId:
-        game_state.cards_in_hand[player_id].remove(
-          game_state.current_trick[player_id])
-
-      # Clear current trick.
-      game_state.current_trick = PlayerPair(None, None)
-
-      # Maybe draw new cards from the talon.
-      if len(game_state.talon) > 0 and not game_state.is_talon_closed:
-        game_state.cards_in_hand[winner].append(game_state.talon.pop(0))
-        if len(game_state.talon) > 0:
-          game_state.cards_in_hand[winner.opponent()].append(
-            game_state.talon.pop(0))
-        else:
-          game_state.cards_in_hand[winner.opponent()].append(
-            game_state.trump_card)
-          game_state.trump_card = None
-
-      # Update the next player
-      game_state.next_player = winner
+    return new_game_state
 
   def __eq__(self, other):
     if not isinstance(other, PlayCardAction):
@@ -226,7 +254,7 @@ class AnnounceMarriageAction(PlayerAction):
     return True
 
   @validate_game_states
-  def execute(self, game_state: GameState):
+  def execute(self, game_state: GameState) -> GameState:
     """
     Updates game_state to include the marriage announcement and plays
     self._card. The next player will be the opponent.
@@ -236,14 +264,33 @@ class AnnounceMarriageAction(PlayerAction):
     they win a trick.
     """
     assert self.can_execute_on(game_state)
-    cards_in_hand = game_state.cards_in_hand[self.player_id]
-    marriage_pair_index = cards_in_hand.index(self._card.marriage_pair)
-    cards_in_hand[marriage_pair_index].public = True
-    game_state.current_trick[self.player_id] = self._card
-    game_state.marriage_suits[self.player_id].append(self._card.suit)
-    if game_state.trick_points[self.player_id] > 0:
-      _add_marriage_points(game_state, self.player_id, self._card.suit)
-    game_state.next_player = self.player_id.opponent()
+    new_game_state = copy.copy(game_state)
+    player_cards = list(game_state.cards_in_hand[self.player_id])
+    marriage_pair_index = player_cards.index(self._card.marriage_pair)
+    player_cards[marriage_pair_index] = self._card.marriage_pair.copy()
+    player_cards[marriage_pair_index].public = True
+    if self.player_id == PlayerId.ONE:
+      new_game_state.cards_in_hand = PlayerPair(player_cards,
+                                                game_state.cards_in_hand.two)
+      new_game_state.current_trick = PlayerPair(self._card,
+                                                game_state.current_trick.two)
+      new_game_state.marriage_suits = PlayerPair(
+        list(game_state.marriage_suits.one), game_state.marriage_suits.two)
+      new_game_state.marriage_suits.one.append(self._card.suit)
+    else:
+      new_game_state.cards_in_hand = PlayerPair(game_state.cards_in_hand.one,
+                                                player_cards)
+      new_game_state.current_trick = PlayerPair(game_state.current_trick.one,
+                                                self._card)
+      new_game_state.marriage_suits = PlayerPair(
+        game_state.marriage_suits.one, list(game_state.marriage_suits.two))
+      new_game_state.marriage_suits.two.append(self._card.suit)
+    new_game_state.trick_points = PlayerPair(game_state.trick_points.one,
+                                             game_state.trick_points.two)
+    if new_game_state.trick_points[self.player_id] > 0:
+      _add_marriage_points(new_game_state, self.player_id, self._card.suit)
+    new_game_state.next_player = self.player_id.opponent()
+    return new_game_state
 
   def __eq__(self, other):
     if not isinstance(other, AnnounceMarriageAction):
@@ -273,13 +320,22 @@ class ExchangeTrumpCardAction(PlayerAction):
     return True
 
   @validate_game_states
-  def execute(self, game_state: GameState):
+  def execute(self, game_state: GameState) -> GameState:
     assert self.can_execute_on(game_state)
+    new_game_state = copy.copy(game_state)
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
-    game_state.cards_in_hand[self.player_id].remove(trump_jack)
-    game_state.cards_in_hand[self.player_id].append(game_state.trump_card)
-    game_state.trump_card = trump_jack
-    game_state.trump_card.public = True
+    new_player_cards = [card for card in
+                        game_state.cards_in_hand[self.player_id] if
+                        card != trump_jack]
+    new_player_cards.append(new_game_state.trump_card)
+    if self.player_id == PlayerId.ONE:
+      cards_in_hand = PlayerPair(new_player_cards, game_state.cards_in_hand.two)
+    else:
+      cards_in_hand = PlayerPair(game_state.cards_in_hand.one, new_player_cards)
+    new_game_state.cards_in_hand = cards_in_hand
+    new_game_state.trump_card = trump_jack
+    new_game_state.trump_card.public = True
+    return new_game_state
 
   def __eq__(self, other):
     if not isinstance(other, ExchangeTrumpCardAction):
@@ -306,9 +362,11 @@ class CloseTheTalonAction(PlayerAction):
     return True
 
   @validate_game_states
-  def execute(self, game_state: GameState):
+  def execute(self, game_state: GameState) -> GameState:
     assert self.can_execute_on(game_state)
-    game_state.close_talon()
+    new_game_state = copy.copy(game_state)
+    new_game_state.close_talon()
+    return new_game_state
 
   def __eq__(self, other):
     if not isinstance(other, CloseTheTalonAction):

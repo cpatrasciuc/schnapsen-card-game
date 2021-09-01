@@ -222,7 +222,8 @@ class GameStateValidator:
 def validate_game_states(func):
   """
   Function decorator that calls validate() on all GameState arguments passed to
-  the decorated function before and after the decorated function is called.
+  the decorated function before and after the decorated function is called. If
+  the function returns a GameState object, validate() will also be called on it.
   It has no effect if __debug__ is False.
   """
   if __debug__:
@@ -237,6 +238,8 @@ def validate_game_states(func):
       return_value = func(*args, **kwds)
       for game_state in game_states:
         validate(game_state)
+      if isinstance(return_value, GameState):
+        validate(return_value)
       return return_value
 
     return wrapper

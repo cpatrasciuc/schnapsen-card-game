@@ -494,8 +494,8 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
       def can_execute_on(self, _):
         return True
 
-      def execute(self, _):
-        pass
+      def execute(self, game_state):
+        return game_state
 
     game_widget = self.create_game_widget()
     self.render(game_widget)
@@ -511,14 +511,14 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
@@ -539,14 +539,14 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
@@ -566,7 +566,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     king_hearts_widget = game_widget.cards[king_hearts]
     queen_hearts_widget = game_widget.cards[king_hearts.marriage_pair]
     action = AnnounceMarriageAction(PlayerId.ONE, king_hearts)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, king_hearts_widget.parent)
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
@@ -574,7 +574,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
     self.assertIs(game_widget.play_area, queen_hearts_widget.parent)
@@ -601,11 +601,11 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
@@ -637,14 +637,14 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     ace_clubs = Card(Suit.CLUBS, CardValue.ACE)
     ace_clubs_widget = game_widget.cards[ace_clubs]
     action = PlayCardAction(PlayerId.ONE, ace_clubs)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_clubs_widget.parent)
 
     jack_clubs = Card(Suit.CLUBS, CardValue.JACK)
     jack_clubs_widget = game_widget.cards[jack_clubs]
     action = PlayCardAction(PlayerId.TWO, jack_clubs)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, jack_clubs_widget.parent)
 
@@ -664,14 +664,14 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
@@ -710,14 +710,14 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     queen_diamonds_widget = game_widget.cards[queen_diamonds]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, queen_diamonds_widget.parent)
 
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     ace_spades_widget = game_widget.cards[ace_spades]
     action = PlayCardAction(PlayerId.ONE, ace_spades)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     self.assertIs(game_widget.play_area, ace_spades_widget.parent)
 
@@ -758,11 +758,11 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
@@ -799,11 +799,11 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
 
     queen_diamonds = Card(Suit.DIAMONDS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
     queen_hearts = Card(Suit.HEARTS, CardValue.QUEEN)
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     self._on_action(game_widget, action)
 
     self.assertIs(first_talon_card, game_widget.talon_widget.top_card())
@@ -1483,7 +1483,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
     self.render(game_widget)
     self._init_from_game_state(game_widget, game_state)
     action = PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
 
     trump_card_widget = game_widget.talon_widget.trump_card
     trump_jack_widget = game_widget.cards[trump_jack]
@@ -1687,7 +1687,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
     callback.assert_not_called()
 
     # Close the talon and request the next action.
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     game_widget.request_next_action(game_state, callback)
 
     # A double-click on the talon card should have no effect.
@@ -1701,7 +1701,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
     with GameStateValidator(game_state):
       game_state.next_player = PlayerId.TWO
     action = PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
 
     game_widget = self.create_game_widget()
     self.render(game_widget)
@@ -1882,7 +1882,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
       game_state.next_player = PlayerId.TWO
       game_state.close_talon()
     action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     game_widget = self.create_game_widget()
     self.render(game_widget)
     self._init_from_game_state(game_widget, game_state)
@@ -1920,7 +1920,7 @@ class GameWidgetPlayerGraphicTest(_GameWidgetBaseTest):
       game_state.next_player = PlayerId.TWO
       game_state.close_talon()
     action = PlayCardAction(PlayerId.TWO, Card(Suit.SPADES, CardValue.JACK))
-    action.execute(game_state)
+    game_state = action.execute(game_state)
     game_widget = self.create_game_widget()
     self.render(game_widget)
     self._init_from_game_state(game_widget, game_state)
