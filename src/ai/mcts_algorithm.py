@@ -176,7 +176,7 @@ class SchnapsenNode(Node[GameState, PlayerAction]):
     return self.state.next_player
 
   def _get_next_state(self, action: PlayerAction) -> GameState:
-    new_state = copy.deepcopy(self.state)
+    new_state = self.state.deep_copy()
     action.execute(new_state)
     return new_state
 
@@ -211,7 +211,11 @@ class MCTS(Generic[_State, _Action]):
     _State, _Action]:
     assert max_iterations is None or max_iterations > 0, \
       "max_iterations must be positive"
-    root_node = self._node_class(copy.deepcopy(state), None)
+    if isinstance(state, GameState):
+      state_copy = state.deep_copy()
+    else:
+      state_copy = copy.deepcopy(state)
+    root_node = self._node_class(state_copy, None)
     iterations = 0
     while True:
       iterations += 1

@@ -2,7 +2,6 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import copy
 import dataclasses
 import random
 from typing import List, Optional, Any
@@ -260,7 +259,7 @@ class GameState:
     next_player's perspective. It replaces the opponent's unseen cards and talon
     cards with None.
     """
-    view = copy.deepcopy(self)
+    view = self.deep_copy()
     played_card = self.current_trick[self.next_player.opponent()]
     for i, card in enumerate(self.cards_in_hand[self.next_player.opponent()]):
       if not card.public and card != played_card:

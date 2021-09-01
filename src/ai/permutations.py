@@ -4,7 +4,6 @@
 
 # pylint: disable=invalid-name
 
-import copy
 import itertools
 import logging
 import math
@@ -97,7 +96,7 @@ def random_perm_generator(cards_set: List[Card],
       math.comb(num_unknown_cards, num_opponent_unknown_cards) * \
       math.perm(num_unknown_cards - num_opponent_unknown_cards)
   while len(permutations) < num_permutations_requested:
-    permutation = copy.deepcopy(cards_set)
+    permutation = [card.copy() for card in cards_set]
     rng.shuffle(permutation)
     # noinspection PyTypeChecker
     permutation = sorted(permutation[:num_opponent_unknown_cards]) + \

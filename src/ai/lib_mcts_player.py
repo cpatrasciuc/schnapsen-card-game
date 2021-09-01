@@ -2,7 +2,6 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import copy
 import pprint
 import random
 import time
@@ -35,7 +34,7 @@ class _State:
 
   def takeAction(self, action: PlayerAction) -> "_State":
     """Returns the state which results from taking the given action."""
-    new_game_state = copy.deepcopy(self._game_state)
+    new_game_state = self._game_state.deep_copy()
     try:
       action.execute(new_game_state)
     except:
@@ -83,7 +82,7 @@ class LibMctsPlayer(Player):
     start_sec = time.process_time()
 
     while True:
-      permutation = copy.deepcopy(cards_set)
+      permutation = [card.copy() for card in cards_set]
       random.shuffle(permutation)
       game_state = populate_game_view(game_view, permutation)
       initial_state = _State(self.id, game_state)

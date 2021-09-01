@@ -2,7 +2,6 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import copy
 import logging
 import os.path
 from typing import Dict, Tuple, Optional, List, Callable
@@ -80,7 +79,7 @@ def _sort_cards_for_player(cards: List[Card], player: PlayerId) -> List[Card]:
   then card value. For the computer player (TWO), it sorts the public cards by
   suit and then card value. The non-public cards are left as they are.
   """
-  cards_copy = copy.deepcopy(cards)
+  cards_copy = [card.copy() for card in cards]
   if player == PlayerId.ONE:
     # noinspection PyTypeChecker
     return list(sorted(cards_copy))

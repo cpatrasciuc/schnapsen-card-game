@@ -2,7 +2,6 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import copy
 import random
 from math import comb
 from typing import List, Optional, Dict
@@ -190,7 +189,7 @@ def populate_game_view(game_view: GameState,
   with the cards from permutation. Returns the resulting perfect information
   GameState.
   """
-  game_state = copy.deepcopy(game_view)
+  game_state = game_view.deep_copy()
   if None in game_view.cards_in_hand.one:
     opp_cards = game_state.cards_in_hand.one
     assert None not in game_state.cards_in_hand.two, \
