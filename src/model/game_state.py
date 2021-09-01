@@ -269,3 +269,37 @@ class GameState:
       assert not card.public, "Talon cards should never be public"
       view.talon[i] = None
     return view
+
+  def deep_copy(self) -> "GameState":
+    """
+    Creates and returns a deep copy of this game state. This is faster than
+    using copy.deepcopy(), see GameStateCopyTest.test_deep_copy_alternatives*.
+    """
+
+    def copy_card(card: Card) -> Card:
+      return None if card is None else card.copy()
+
+    cards_in_hand = PlayerPair(
+      one=[copy_card(card) for card in self.cards_in_hand.one],
+      two=[copy_card(card) for card in self.cards_in_hand.two])
+    talon = [copy_card(card) for card in self.talon]
+    won_tricks = PlayerPair(
+      one=[PlayerPair(copy_card(trick.one), copy_card(trick.two)) for trick in
+           self.won_tricks.one],
+      two=[PlayerPair(copy_card(trick.one), copy_card(trick.two)) for trick in
+           self.won_tricks.two])
+    marriage_suits = PlayerPair(one=list(self.marriage_suits.one),
+                                two=list(self.marriage_suits.two))
+    return GameState(
+      cards_in_hand=cards_in_hand, talon=talon,
+      trump=self.trump,
+      trump_card=copy_card(self.trump_card),
+      next_player=self.next_player,
+      player_that_closed_the_talon=self.player_that_closed_the_talon,
+      opponent_points_when_talon_was_closed=
+      self.opponent_points_when_talon_was_closed,
+      won_tricks=won_tricks,
+      marriage_suits=marriage_suits,
+      trick_points=PlayerPair(self.trick_points.one, self.trick_points.two),
+      current_trick=PlayerPair(copy_card(self.current_trick.one),
+                               copy_card(self.current_trick.two)))

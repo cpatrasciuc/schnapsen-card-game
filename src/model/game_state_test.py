@@ -6,7 +6,9 @@ import copy
 import dataclasses
 import enum
 import inspect
+import pickle
 import pprint
+import timeit
 import unittest
 from typing import List, Tuple, Optional
 
@@ -409,3 +411,94 @@ class GameStateNextPlayerViewTest(unittest.TestCase):
     self.assertEqual(game_state.marriage_suits, view.marriage_suits)
     self.assertEqual(game_state.trick_points, view.trick_points)
     self.assertEqual(game_state.current_trick, view.current_trick)
+
+
+class GameStateCopyTest(unittest.TestCase):
+  def _assert_is_copy(self, obj1, obj2):
+    self.assertEqual(obj1, obj2)
+    self.assertIsNot(obj1, obj2)
+
+  def _assert_list_is_copy(self, list1, list2):
+    self._assert_is_copy(list1, list2)
+    for item1, item2 in zip(list1, list2):
+      self._assert_is_copy(item1, item2)
+
+  def _assert_is_deep_copy(self, game_state_1: GameState,
+                           game_state_2: GameState):
+    self._assert_is_copy(game_state_1, game_state_2)
+
+    self._assert_is_copy(game_state_1.cards_in_hand, game_state_2.cards_in_hand)
+    self._assert_list_is_copy(game_state_1.cards_in_hand.one,
+                              game_state_2.cards_in_hand.one)
+    self._assert_list_is_copy(game_state_1.cards_in_hand.two,
+                              game_state_2.cards_in_hand.two)
+    self._assert_list_is_copy(game_state_1.talon, game_state_2.talon)
+    self._assert_is_copy(game_state_1.trump_card, game_state_2.trump_card)
+    self._assert_is_copy(game_state_1.won_tricks, game_state_2.won_tricks)
+    self._assert_list_is_copy(game_state_1.won_tricks.one,
+                              game_state_2.won_tricks.one)
+    for trick1, trick2 in zip(game_state_1.won_tricks.one,
+                              game_state_2.won_tricks.one):
+      self._assert_is_copy(trick1.one, trick2.one)
+      self._assert_is_copy(trick1.two, trick2.two)
+    self._assert_list_is_copy(game_state_1.won_tricks.two,
+                              game_state_2.won_tricks.two)
+    for trick1, trick2 in zip(game_state_1.won_tricks.two,
+                              game_state_2.won_tricks.two):
+      self._assert_is_copy(trick1.one, trick2.one)
+      self._assert_is_copy(trick1.two, trick2.two)
+    self._assert_is_copy(game_state_1.marriage_suits,
+                         game_state_2.marriage_suits)
+    self._assert_is_copy(game_state_1.marriage_suits.one,
+                         game_state_2.marriage_suits.one)
+    self._assert_is_copy(game_state_1.marriage_suits.two,
+                         game_state_2.marriage_suits.two)
+    self._assert_is_copy(game_state_1.trick_points, game_state_2.trick_points)
+    self._assert_is_copy(game_state_1.current_trick, game_state_2.current_trick)
+
+  def test_make_deep_copy_initial_game_state(self):
+    game_state = GameState.new(random_seed=100)
+    self._assert_is_deep_copy(game_state, game_state.deep_copy())
+
+  def test_make_deep_copy_game_state_for_tests(self):
+    game_state = get_game_state_for_tests()
+    self._assert_is_deep_copy(game_state, game_state.deep_copy())
+
+  def _eval_deepcopy_alternatives(self, game_state: GameState):
+    # TODO(optimization): Maybe try json and ujson.
+    copy_functions = {
+      "deepcopy": lambda: copy.deepcopy(game_state),
+      "copy": lambda: copy.copy(game_state),
+      "pickle": lambda: pickle.loads(pickle.dumps(game_state)),
+      "deep_copy": game_state.deep_copy,
+    }
+
+    results = []
+    for name, func in copy_functions.items():
+      # Make a copy.
+      other_game_state = func()
+
+      # Check that the copy works as intended.
+      if name == "copy":
+        with self.assertRaises(AssertionError):
+          self._assert_is_deep_copy(game_state, other_game_state)
+      else:
+        self._assert_is_deep_copy(game_state, other_game_state)
+
+      # Measure how fast is this copy solution.
+      timer = timeit.Timer(func)
+      number, time_taken = timer.autorange()
+      results.append((time_taken / number, name))
+
+    results.sort()
+    print()
+    print("\n".join(
+      ("%.10f\t%s" % (time_taken, name)) for time_taken, name in results))
+    # self.assertEqual("copy", results[0][1])
+    # self.assertEqual("deep_copy", results[1][1])
+
+  def test_deepcopy_alternatives_initial_state(self):
+    self._eval_deepcopy_alternatives(GameState.new(random_seed=10))
+
+  def test_deepcopy_alternatives_game_state_for_tests(self):
+    self._eval_deepcopy_alternatives(get_game_state_for_tests())
