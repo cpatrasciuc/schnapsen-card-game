@@ -47,14 +47,16 @@ def iterations_and_time():
   for seed in sorted(dataframe.seed.drop_duplicates()):
     filtered_dataframe = dataframe[dataframe["seed"].eq(seed)]
     plt.plot(filtered_dataframe.iterations, filtered_dataframe.duration_sec,
-             label=f"seed={seed}")
+             label=f"seed={seed}", alpha=0.5)
     plt.scatter(filtered_dataframe.iterations, filtered_dataframe.duration_sec,
                 s=10)
+  mean = dataframe.groupby("iterations").mean().sort_index()
+  plt.plot(mean.index, mean.duration_sec, label="Average", color="r",
+           linewidth=3)
   plt.grid(which="both", linestyle="--")
   plt.legend(loc=0)
   plt.xlabel("Iterations")
   plt.ylabel("Duration (seconds)")
-  plt.xscale("log")
   plt.title(cpuinfo.get_cpu_info()["brand_raw"])
   plt.savefig(os.path.join(folder, "iterations_and_time.png"))
 
