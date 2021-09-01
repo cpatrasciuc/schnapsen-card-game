@@ -57,6 +57,8 @@ def iterations_and_time():
   plt.legend(loc=0)
   plt.xlabel("Iterations")
   plt.ylabel("Duration (seconds)")
+  plt.xscale("log")
+  plt.yscale("log")
   plt.title(cpuinfo.get_cpu_info()["brand_raw"])
   plt.savefig(os.path.join(folder, "iterations_and_time.png"))
 
