@@ -532,7 +532,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                       rotation=10, duration=duration / 2)
     self._add_animation(trump_card_widget, trump_card_animation)
 
-  def _get_card_pos_delta(self, player) -> Tuple[int, int]:
+  def _get_card_pos_delta(self, player) -> Tuple[float, float]:
     """
     Position delta that should be used to avoid card overlaps when multiple
     cards should be moved roughly to the same position.
@@ -553,7 +553,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   def _animate_card_to_play_area(self, player: PlayerId, card: Card,
                                  center: Optional[
-                                   Tuple[int, int]] = None) -> None:
+                                   Tuple[float, float]] = None) -> None:
     card_widget = self._cards[card]
     duration = self._game_options.play_card_duration
     if card_widget.parent is not self._play_area:
@@ -573,7 +573,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
 
   def _move_player_card_to_play_area(self, player: PlayerId, card: Card,
                                      center: Optional[
-                                       Tuple[int, int]] = None) -> None:
+                                       Tuple[float, float]] = None) -> None:
     """
     Move the card given as argument from the player's hand to the play area.
     :param player: The player holding the card to be moved.
