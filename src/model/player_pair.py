@@ -26,11 +26,13 @@ class PlayerPair(Generic[_TypeName]):
   two: Optional[_TypeName] = None
 
   def __getitem__(self, key: PlayerId) -> Optional[_TypeName]:
-    self._check_key_type(key)
+    if __debug__:
+      self._check_key_type(key)
     return self.one if key == PlayerId.ONE else self.two
 
   def __setitem__(self, key: PlayerId, value: Optional[_TypeName]) -> None:
-    self._check_key_type(key)
+    if __debug__:
+      self._check_key_type(key)
     if key == PlayerId.ONE:
       self.one = value
     else:
