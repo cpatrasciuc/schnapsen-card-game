@@ -18,6 +18,7 @@ from pandas import DataFrame
 from ai.mcts_algorithm import MCTS, SchnapsenNode, ucb_for_player
 from ai.permutations import sims_table_perm_generator
 from ai.utils import get_unseen_cards, populate_game_view
+from main_wrapper import main_wrapper
 from model.game_state import GameState
 from model.game_state_test_utils import \
   get_game_state_for_you_first_no_you_first_puzzle, \
@@ -291,8 +292,13 @@ def _min_iterations_to_find_the_best_action(
   logging.info("Overall results: %s", dataframe.iteration.describe())
 
 
-if __name__ == "__main__":
-  logging.basicConfig(level=logging.DEBUG)
+def main():
   # _generate_data(False)
   # _plot_results(False)
-  _min_iterations_to_find_the_best_action(10, False, 10, 10000)
+  _min_iterations_to_find_the_best_action(num_game_states=10, cheater=False,
+                                          num_samples_per_game_state=10,
+                                          max_iterations=10000)
+
+
+if __name__ == "__main__":
+  main_wrapper(main)
