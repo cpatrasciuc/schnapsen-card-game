@@ -5,6 +5,7 @@
 # pylint: disable=too-many-locals
 
 import logging
+import math
 import multiprocessing
 import os
 from multiprocessing.connection import Connection, Pipe
@@ -91,8 +92,8 @@ def _run_simulation_out_of_process(game_state: GameState,
 def _simulate_game_view(game_view: GameState,
                         max_iterations: Optional[int],
                         max_permutations: Optional[int] = 7) -> DataFrame:
-  if max_permutations > multiprocessing.cpu_count() - 1:
-    raise ValueError("Too many permutations")
+  batch_size = multiprocessing.cpu_count() - 1
+  num_batches = math.ceil(max_permutations // batch_size)
   cards_set = get_unseen_cards(game_view)
   player_id = game_view.next_player
   num_opponent_unknown_cards = len(
@@ -116,11 +117,13 @@ def _simulate_game_view(game_view: GameState,
   is_fully_simulated = [False for _ in game_states]
   while True:
     iteration += STEP
-    for i, pipe in enumerate(pipes):
-      if is_fully_simulated[i]:
-        continue
-      actions_and_scores_for_each_permutation[i] = pipe[0].recv()
-      is_fully_simulated[i] = pipe[0].recv()
+    for batch in range(num_batches):
+      start = batch * batch_size
+      for i, pipe in enumerate(pipes[start:start + batch_size]):
+        if is_fully_simulated[start + i]:
+          continue
+        actions_and_scores_for_each_permutation[start + i] = pipe[0].recv()
+        is_fully_simulated[start + i] = pipe[0].recv()
     stats: Dict[PlayerAction, List[float]] = {}
     for actions_and_scores in actions_and_scores_for_each_permutation:
       for action, score in actions_and_scores:
@@ -232,7 +235,8 @@ def _min_iterations_to_find_the_best_action(
     num_game_states: int = 100,
     cheater: bool = True,
     num_samples_per_game_state: int = 10,
-    max_iterations: int = 10000):
+    max_iterations: int = 10000,
+    max_permutations: int = 7):
   """
   This functions computes the number of iterations required until the best
   action seems to be found. It looks for the moment when an action becomes the
@@ -240,7 +244,6 @@ def _min_iterations_to_find_the_best_action(
   max_iterations iterations. It measures this for num_game_states different game
   states and plots a histogram.
   """
-  max_permutations = 7
   data = []
   for seed in range(num_game_states):
     for sample_index in range(num_samples_per_game_state):
@@ -293,11 +296,13 @@ def _min_iterations_to_find_the_best_action(
 
 
 def main():
-  # _generate_data(False)
-  # _plot_results(False)
+  # cheater = True
+  # _generate_data(cheater)
+  # _plot_results(cheater)
   _min_iterations_to_find_the_best_action(num_game_states=10, cheater=False,
-                                          num_samples_per_game_state=10,
-                                          max_iterations=10000)
+                                          num_samples_per_game_state=50,
+                                          max_iterations=10000,
+                                          max_permutations=14)
 
 
 if __name__ == "__main__":
