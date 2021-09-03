@@ -13,6 +13,7 @@ from cpuinfo import cpuinfo
 from pandas import DataFrame
 
 from ai.mcts_algorithm import MCTS
+from main_wrapper import main_wrapper
 from model.game_state import GameState
 
 
@@ -68,5 +69,4 @@ def iterations_and_time():
 
 
 if __name__ == "__main__":
-  logging.basicConfig(level=logging.DEBUG)
-  iterations_and_time()
+  main_wrapper(iterations_and_time)
