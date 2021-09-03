@@ -5,9 +5,8 @@
 import dataclasses
 import enum
 import logging
-import pprint
 import random
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from ai.player import Player
 from ai.utils import card_win_probabilities, prob_opp_has_more_trumps, \
@@ -20,6 +19,14 @@ from model.player_action import PlayerAction, PlayCardAction, \
   get_available_actions
 from model.player_id import PlayerId
 from model.suit import Suit
+
+if __debug__:
+  from pprint import pformat
+
+  _pprint = pformat
+else:
+  def _pprint(obj: Any) -> Any:
+    return obj
 
 
 def _get_played_cards(game_view: GameState) -> List[Card]:
@@ -228,7 +235,7 @@ class HeuristicPlayer(Player):
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
     logging.debug("HeuristicPlayer: Card win probabilities:\n%s",
-                  pprint.pformat(winning_cards))
+                  _pprint(winning_cards))
 
     if len(winning_cards) == 0:
       return None
@@ -263,7 +270,7 @@ class HeuristicPlayer(Player):
     # play the card with the highest probability to win (can be smaller than 1).
     probabilities = self._get_winning_prob(game_view)
     logging.debug("HeuristicPlayer: Card win probabilities:\n%s",
-                  pprint.pformat(probabilities))
+                  _pprint(probabilities))
     max_prob = max(probabilities.values())
     logging.debug("HeuristicPlayer: The maximum winning probability is %.2f",
                   max_prob)
@@ -431,7 +438,7 @@ class HeuristicPlayer(Player):
     winning_cards = {card: prob for card, prob in
                      self._get_winning_prob(game_view).items() if prob == 1.0}
     logging.debug("HeuristicPlayer: Card win probabilities: %s",
-                  pprint.pformat(winning_cards))
+                  _pprint(winning_cards))
     unplayed_cards = [card for card in self._remaining_cards if
                       card != self._opp_card]
     min_trump_card = min(self._my_trump_cards)
@@ -560,7 +567,7 @@ class HeuristicPlayer(Player):
   def _discard_with_priorities(self, game_view: GameState) -> Card:
     buckets = self._discard_buckets(game_view)
     logging.debug("HeuristicPlayer: Discard priority buckets:\n%s",
-                  pprint.pformat(buckets))
+                  _pprint(buckets))
 
     # Get the smallest card from the first non-empty bucket sorted by
     # priority.
@@ -660,7 +667,7 @@ class HeuristicPlayer(Player):
                                            game_view.trump, True)
     logging.debug(
       "HeuristicPlayer: Card win probabilities, if suit must be followed: %s",
-      pprint.pformat(probabilities))
+      _pprint(probabilities))
     points = game_view.trick_points[self.id]
     prob_and_cards = [(prob, card) for card, prob in probabilities.items()]
     prob_and_cards.sort(reverse=True)
