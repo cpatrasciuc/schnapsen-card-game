@@ -283,7 +283,8 @@ def _min_iterations_to_find_the_best_action(
                                       label=f"GameState.new(seed={seed})")
   plt.legend(loc=0)
   plt.xlabel("Iterations")
-  title_suffix = "" if cheater else f" ({options.max_permutations} permutations)"
+  title_suffix = \
+    "" if cheater else f" ({options.max_permutations} permutations)"
   plt.title(
     f"Number of iterations until the best action is found{title_suffix}")
   plt.gcf().set_size_inches(10, 5)
@@ -294,10 +295,10 @@ def _min_iterations_to_find_the_best_action(
 
 
 def main():
-  cheater = True
-  options = MctsPlayerOptions(max_iterations=10000, max_permutations=14)
-  # _generate_data(cheater, options)
-  # _plot_results(cheater)
+  cheater = False
+  options = MctsPlayerOptions(max_iterations=10000, max_permutations=7)
+  _generate_data(cheater, options)
+  _plot_results(cheater)
   _min_iterations_to_find_the_best_action(num_game_states=10, cheater=cheater,
                                           num_samples_per_game_state=50,
                                           options=options)
