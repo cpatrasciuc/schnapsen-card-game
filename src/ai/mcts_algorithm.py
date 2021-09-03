@@ -10,6 +10,7 @@ import pprint
 import random
 from typing import Dict, List, Optional, Generic, TypeVar, Type, Tuple
 
+from ai.heuristic_player import HeuristicPlayer
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayerAction
 from model.player_id import PlayerId
@@ -96,8 +97,11 @@ class Node(abc.ABC, Generic[_State, _Action]):
     It returns the newly created node.
     """
     assert not self.fully_expanded
-    # TODO(mcts): Start with the action that the HeuristicPlayer would play.
-    action = random.choice(self.untried_actions)
+    if len(self.untried_actions) == len(self.children):
+      heuristic_player = HeuristicPlayer(self.player)
+      action = heuristic_player.request_next_action(self.state)
+    else:
+      action = random.choice(self.untried_actions)
     new_state = self._get_next_state(action)
     child = self.__class__(new_state, self)
     self.children[action] = child
@@ -197,7 +201,7 @@ def debug_print(node: Node, indent: int = 1):
 class MCTS(Generic[_State, _Action]):
   def __init__(self, player_id: PlayerId,
                node_class: Type[Node[_State, _Action]] = SchnapsenNode,
-               exploration_param: float = 0):
+               exploration_param: float = 0.5):
     self._player_id = player_id
     self._node_class = node_class
     self._max_iterations = None
@@ -250,11 +254,12 @@ class MCTS(Generic[_State, _Action]):
         return None
       # TODO(mcts): Check if it's better to select the best_child instead of a
       #  random child.
-      # best_child = node.best_child()
-      # if best_child in not_fully_simulated_children:
-      #   node = best_child
-      # else:
-      node = random.choice(not_fully_simulated_children)
+      for best_child in node.best_children():
+        if best_child in not_fully_simulated_children:
+          node = best_child
+          break
+      else:
+        node = random.choice(not_fully_simulated_children)
     raise Exception("Should not reach this code")  # pragma: no cover
 
   @staticmethod
