@@ -119,7 +119,6 @@ same amount of time. The amount of time spent in copying the game state and
 executing a player action decreased from 73% (GameState.deep_copy: 66%,
 PlayerAction.execute: 7%) to 26% (only PlayerAction.execute).
 
-TODO: Look for other things that could be sped up.
 [//]: # (TODO: Look for other things that could be sped up.)
 
 ## Tune the max_iterations and max_permutations params
