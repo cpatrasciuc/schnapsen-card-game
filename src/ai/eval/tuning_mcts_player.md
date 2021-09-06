@@ -69,6 +69,22 @@ As a result of this initial debugging, the ideas to experiment with are:
 - [ ] Improve merging the scores across root nodes
 - [ ] Expand an action and a permutation in each iteration
 
+> **Computational budget: `time_limit_sec` vs `max_iterations`**
+>
+> Limiting the time used by the MctsPlayer makes it difficult to compare its
+> performance across different runs and/or different machines. If we use raw time,
+> the number of iterations that the player manages to run in the given amount of
+> time depends on the system's load. If we use process time and our workers are
+> scheduled sequentially on the same core(s), the actual time required to find a
+> move will be larger than expected (as perceived by a human player). In both
+> case the performance cannot be compared across different machines.
+> 
+> At this point I decided to limit the maximum number of iterations that the
+> MCTS algorithm is allowed to perform before it must pick a move 
+> ([commit](https://github.com/cpatrasciuc/schnapsen-card-game/commit/d267004c089d9d2ba15d4ed6d96de0b98b3d33ca)).
+> This makes the performance of the MctsPlayer comparable across different runs, even
+> across different machines.
+
 ## Reduce CPU usage
 
 TODO
