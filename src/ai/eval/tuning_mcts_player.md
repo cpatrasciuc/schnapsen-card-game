@@ -61,7 +61,7 @@ consider.
 
 As a result of this initial debugging, the ideas to experiment with are:
 
-- [ ] Reduce CPU usage, so we can run more iterations within the budget
+- [x] Reduce CPU usage, so we can run more iterations within the budget
 - [ ] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [ ] Pick the best child during the selection phase and balance exploration versus exploitation
 - [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
@@ -87,7 +87,40 @@ As a result of this initial debugging, the ideas to experiment with are:
 
 ## Reduce CPU usage
 
-TODO
+I added CPU profiling to [`iterations_and_time.py`](https://github.com/cpatrasciuc/schnapsen-card-game/blob/main/src/ai/eval/mcts_iterations_and_time.py).
+The [first results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/e19317e77cf9533f813ae651b2d996f153074e4b/src/ai/eval/data/iterations_and_time.profile.txt)
+showed that 88% of the time is spent in `copy.deepcopy()`.
+
+#### Step 1: Replace copy.deepcopy() with GameState.deep_copy()
+
+I added my own `GameState.deep_copy()`, to create a deep copy of itself. I
+measured its speed in `GameStateCopyTest`. The results as follows:
+
+| Function | Time (ms) |
+| :------: | :--------: |
+| `copy.copy(game_state)` | 0.0030352 |
+| `game_state.deep_copy()` | 0.0291062 |
+| `pickle.loads(pickle.dumps(game_state))` | 0.0806335 |
+| `copy.deepcopy(game_state)` | 0.3028298 |
+
+Overall, this change allows the MctsPlayer to run ~2x more iterations in the
+same amount of time. However, [the new CPU profile](https://github.com/cpatrasciuc/schnapsen-card-game/blob/95eacb321110269495dbee47d5a8f185acb66c04/src/ai/eval/data/iterations_and_time.profile.txt)
+shows that the new `GameState.deep_copy()` method takes ~66% of the time.
+
+#### Step 2: Replace deep copies with shallow copies
+
+Instead of making deep copies for the game states to be stored in each tree
+node, I modified `PlayerAction.execute()` to create a (shallow) copy of the
+input/parent game state that shares as many fields as possible with it
+([commit](https://github.com/cpatrasciuc/schnapsen-card-game/commit/f263b24c8b7ab8c66b3a0ed8cd4b167d4579ed8)).
+
+Overall, this change allows the MctsPlayer to run ~2x more iterations in the
+same amount of time. The amount of time spent in copying the game state and
+executing a player action decreased from 73% (GameState.deep_copy: 66%,
+PlayerAction.execute: 7%) to 26% (only PlayerAction.execute).
+
+TODO: Look for other things that could be sped up.
+[//]: # (TODO: Look for other things that could be sped up.)
 
 ## Tune the max_iterations and max_permutations params
 
