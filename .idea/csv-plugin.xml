@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\ai\eval\data\iterations_and_time_8perm.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\ai\eval\data\iterations_and_time_i7.csv">
           <value>
             <Attribute>

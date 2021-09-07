@@ -4,20 +4,51 @@
 
 import cProfile
 import logging
+import multiprocessing
 import os
+import pstats
 import time
 from pstats import SortKey
+from typing import Callable
 
 import matplotlib.pyplot as plt
 from cpuinfo import cpuinfo
 from pandas import DataFrame
 
 from ai.mcts_algorithm import MCTS
+from ai.mcts_player import MctsPlayer
+from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 
 
-def iterations_and_time():
+def _get_algorithm_closure(game_state: GameState,
+                           iterations: int) -> Callable[[], None]:
+  mcts = MCTS(game_state.next_player)
+
+  def _run():
+    mcts.build_tree(game_state, iterations)
+
+  return _run
+
+
+def _get_player_closure(game_state: GameState,
+                        iterations: int,
+                        max_permutations: int) -> Callable[[], None]:
+  mcts = MctsPlayer(game_state.next_player, cheater=False,
+                    options=MctsPlayerOptions(
+                      max_permutations=max_permutations,
+                      max_iterations=iterations,
+                      num_processes=multiprocessing.cpu_count()))
+
+  def _run():
+    mcts.request_next_action(game_state.next_player_view())
+
+  return _run
+
+
+def iterations_and_time(max_permutations: int):
+  # pylint: disable=too-many-locals
   data = []
   profiler = cProfile.Profile()
   for seed in range(10):
@@ -25,10 +56,14 @@ def iterations_and_time():
     iterations = 10
     duration_sec = 0
     while duration_sec < 10:
-      mcts = MCTS(game_state.next_player)
+      if max_permutations == 1:
+        closure_to_profile = _get_algorithm_closure(game_state, iterations)
+      else:
+        closure_to_profile = _get_player_closure(game_state, iterations,
+                                                 max_permutations)
       profiler.enable()
       start_time = time.process_time()
-      mcts.build_tree(game_state, iterations)
+      closure_to_profile()
       end_time = time.process_time()
       profiler.disable()
       duration_sec = end_time - start_time
@@ -37,10 +72,12 @@ def iterations_and_time():
       data.append((seed, iterations, duration_sec))
       iterations *= 2
 
+  suffix = "" if max_permutations == 1 else f"_{max_permutations}perm"
+
   # Save the dataframe with the timing info.
   dataframe = DataFrame(data, columns=["seed", "iterations", "duration_sec"])
   folder = os.path.join(os.path.dirname(__file__), "data")
-  csv_path = os.path.join(folder, "iterations_and_time.csv")
+  csv_path = os.path.join(folder, f"iterations_and_time{suffix}.csv")
   # noinspection PyTypeChecker
   dataframe.to_csv(csv_path, index=False)
 
@@ -61,12 +98,16 @@ def iterations_and_time():
   plt.xscale("log")
   plt.yscale("log")
   plt.title(cpuinfo.get_cpu_info()["brand_raw"])
-  plt.savefig(os.path.join(folder, "iterations_and_time.png"))
+  plt.savefig(os.path.join(folder, f"iterations_and_time{suffix}.png"))
 
   # Save and print the profile info.
-  profiler.dump_stats(os.path.join(folder, "iterations_and_time.profile"))
-  profiler.print_stats(SortKey.CUMULATIVE)
+  profiler_path = os.path.join(folder, f"iterations_and_time{suffix}.profile")
+  profiler.dump_stats(profiler_path)
+  with open(profiler_path + ".txt", "w") as output_file:
+    stats = pstats.Stats(profiler, stream=output_file).strip_dirs().sort_stats(
+      SortKey.CUMULATIVE)
+    stats.print_stats()
 
 
 if __name__ == "__main__":
-  main_wrapper(iterations_and_time)
+  main_wrapper(lambda: iterations_and_time(multiprocessing.cpu_count()))
