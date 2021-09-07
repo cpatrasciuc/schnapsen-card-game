@@ -19,8 +19,8 @@ from model.player_action import PlayerAction
 from model.player_id import PlayerId
 
 
-def _run_mcts(permutation: List[Card], game_view: GameState,
-              player_id: PlayerId, max_iterations: int) -> SchnapsenNode:
+def run_mcts(permutation: List[Card], game_view: GameState,
+             player_id: PlayerId, max_iterations: int) -> SchnapsenNode:
   game_state = populate_game_view(game_view, permutation)
   mcts_algorithm = MCTS(player_id)
   return mcts_algorithm.build_tree(game_state, max_iterations)
@@ -73,7 +73,7 @@ class MctsPlayer(Player):
 
     # TODO(optimization): Experiment with imap_unordered as well.
     root_nodes = self._pool.map(
-      functools.partial(_run_mcts, game_view=game_view, player_id=self.id,
+      functools.partial(run_mcts, game_view=game_view, player_id=self.id,
                         max_iterations=self._options.max_iterations),
       permutations)
 
