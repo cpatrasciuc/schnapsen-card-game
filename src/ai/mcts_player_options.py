@@ -51,3 +51,11 @@ class MctsPlayerOptions:
   The function that receives all the trees corresponding to all the processed
   permutations, merges the information and picks the best action to be played.
   """
+
+  first_level_only: bool = True
+  """
+  If True, the workers will only return the first level of each tree (i.e., root
+  node and its children) back to the MctsPlayer for merging, instead of
+  returning the whole tree. This reduces the size of the data that needs to be
+  serialized/deserialized.
+  """
