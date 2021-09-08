@@ -7,7 +7,7 @@ import logging
 import multiprocessing
 import os
 import pstats
-import time
+import timeit
 from pstats import SortKey
 from typing import Callable, Tuple
 
@@ -20,6 +20,13 @@ from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
+
+NUM_SEEDS = 10
+
+
+def _get_file_suffix(max_permutations):
+  return "" if max_permutations == 1 else f"_{max_permutations}perm"
+
 
 Closure = Callable[[], None]
 
@@ -52,8 +59,7 @@ def _get_player_closure(game_state: GameState,
 def iterations_and_time(max_permutations: int):
   # pylint: disable=too-many-locals
   data = []
-  profiler = cProfile.Profile()
-  for seed in range(10):
+  for seed in range(NUM_SEEDS):
     game_state = GameState.new(random_seed=seed)
     iterations = 10
     duration_sec = 0
@@ -65,19 +71,16 @@ def iterations_and_time(max_permutations: int):
         closure_to_profile, cleanup = _get_player_closure(game_state,
                                                           iterations,
                                                           max_permutations)
-      profiler.enable()
-      start_time = time.process_time()
-      closure_to_profile()
-      end_time = time.process_time()
-      profiler.disable()
-      duration_sec = end_time - start_time
+      timer = timeit.Timer(closure_to_profile)
+      number, time_taken = timer.autorange()
+      duration_sec = time_taken / number
       logging.info("Run %s iterations in %.5f seconds (seed=%s)", iterations,
                    duration_sec, seed)
       data.append((seed, iterations, duration_sec))
       cleanup()
       iterations *= 2
 
-  suffix = "" if max_permutations == 1 else f"_{max_permutations}perm"
+  suffix = _get_file_suffix(max_permutations)
 
   # Save the dataframe with the timing info.
   dataframe = DataFrame(data, columns=["seed", "iterations", "duration_sec"])
@@ -105,7 +108,27 @@ def iterations_and_time(max_permutations: int):
   plt.title(cpuinfo.get_cpu_info()["brand_raw"])
   plt.savefig(os.path.join(folder, f"iterations_and_time{suffix}.png"))
 
+
+def profile(max_permutations: int, max_iterations: int = 1000):
+  profiler = cProfile.Profile()
+
+  for seed in range(NUM_SEEDS):
+    game_state = GameState.new(random_seed=seed)
+    if max_permutations == 1:
+      closure_to_profile, cleanup = _get_algorithm_closure(game_state,
+                                                           max_iterations)
+    else:
+      closure_to_profile, cleanup = _get_player_closure(game_state,
+                                                        max_iterations,
+                                                        max_permutations)
+    profiler.enable()
+    closure_to_profile()
+    profiler.disable()
+    cleanup()
+
   # Save and print the profile info.
+  folder = os.path.join(os.path.dirname(__file__), "data")
+  suffix = _get_file_suffix(max_permutations)
   profiler_path = os.path.join(folder, f"iterations_and_time{suffix}.profile")
   profiler.dump_stats(profiler_path)
   with open(profiler_path + ".txt", "w") as output_file:
@@ -114,5 +137,11 @@ def iterations_and_time(max_permutations: int):
     stats.print_stats()
 
 
+def _main():
+  max_permutations = 1
+  iterations_and_time(max_permutations)
+  profile(max_permutations)
+
+
 if __name__ == "__main__":
-  main_wrapper(lambda: iterations_and_time(multiprocessing.cpu_count()))
+  main_wrapper(_main)
