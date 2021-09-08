@@ -27,7 +27,7 @@ _Action = TypeVar("_Action")
 
 
 class Node(abc.ABC, Generic[_State, _Action]):
-  """Generic class representing a node in an MCTS tree."""
+  """Generic class representing a node in an Mcts tree."""
 
   # pylint: disable=too-many-instance-attributes
 
@@ -139,7 +139,7 @@ class Node(abc.ABC, Generic[_State, _Action]):
        for action, child in self.children.items() if child is not None]
     if len(children_with_ucbs) == 0:
       # TODO(mcts): Find out why this happens.
-      logging.error("MCTSAlgorithm: All children are None: %s",
+      logging.error("MctsAlgorithm: All children are None: %s",
                     pprint.pformat(self.children, indent=True))
       return [(child, action) for action, child in self.children.items()]
     best_ucb = max([ucb for ucb, child, action in children_with_ucbs])
@@ -194,7 +194,7 @@ def debug_print(node: Node, indent: int = 1):
     debug_print(child, indent + 1)
 
 
-class MCTS(Generic[_State, _Action]):
+class Mcts(Generic[_State, _Action]):
   def __init__(self, player_id: PlayerId,
                node_class: Type[Node[_State, _Action]] = SchnapsenNode,
                exploration_param: float = 0):
@@ -228,10 +228,10 @@ class MCTS(Generic[_State, _Action]):
 
   def run_one_iteration(self, root_node: Node) -> bool:
     """Returns True if the entire game tree is already constructed."""
-    selected_node = MCTS._selection(root_node)
+    selected_node = Mcts._selection(root_node)
     if selected_node is None:
       return True
-    end_node = MCTS._fully_expand(selected_node)
+    end_node = Mcts._fully_expand(selected_node)
     self._backpropagate(end_node, end_node.ucb)
     return False
 

@@ -28,7 +28,7 @@ def time_algorithm_and_player(options: MctsPlayerOptions) -> Tuple[
                      options.max_iterations, options.first_level_only))
   number, time_taken = timer.autorange()
   algorithm_avg_time = time_taken / number
-  print(f"Run the MCTS algorithm {number} time(s)\n" +
+  print(f"Run the Mcts algorithm {number} time(s)\n" +
         f"Total time: {time_taken} seconds\n" +
         f"Average time: {algorithm_avg_time} seconds\n")
 

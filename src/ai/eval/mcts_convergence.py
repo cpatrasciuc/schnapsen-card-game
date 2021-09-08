@@ -16,7 +16,7 @@ import numpy as np
 import pandas
 from pandas import DataFrame
 
-from ai.mcts_algorithm import MCTS, SchnapsenNode, ucb_for_player
+from ai.mcts_algorithm import Mcts, SchnapsenNode, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.utils import get_unseen_cards, populate_game_view
 from main_wrapper import main_wrapper
@@ -67,7 +67,7 @@ def _run_simulation_out_of_process(game_state: GameState,
                                    max_iterations: Optional[int],
                                    output: Connection):
   player_id = game_state.next_player
-  mcts = MCTS(player_id)
+  mcts = Mcts(player_id)
   root_node = SchnapsenNode(game_state, None)
   iteration = 0
   is_fully_simulated = False
@@ -145,7 +145,7 @@ def _simulate_game_view(game_view: GameState,
 
 def _simulate_game_state(game_state: GameState,
                          options: MctsPlayerOptions) -> DataFrame:
-  mcts = MCTS(game_state.next_player)
+  mcts = Mcts(game_state.next_player)
   root_node = SchnapsenNode(game_state, None)
   iteration = 0
   dataframes = []

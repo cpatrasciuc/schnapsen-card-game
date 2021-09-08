@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from cpuinfo import cpuinfo
 from pandas import DataFrame
 
-from ai.mcts_algorithm import MCTS
+from ai.mcts_algorithm import Mcts
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
@@ -33,7 +33,7 @@ Closure = Callable[[], None]
 
 def _get_algorithm_closure(game_state: GameState,
                            iterations: int) -> Tuple[Closure, Closure]:
-  mcts = MCTS(game_state.next_player)
+  mcts = Mcts(game_state.next_player)
 
   def _run():
     mcts.build_tree(game_state, iterations)

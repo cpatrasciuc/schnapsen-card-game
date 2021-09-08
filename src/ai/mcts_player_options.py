@@ -18,7 +18,7 @@ class MctsPlayerOptions:
   # TODO(mcts): Find a good default value.
   max_iterations: Optional[int] = 1
   """
-  The maximum number of MCTS iterations run for one permutation. The total
+  The maximum number of Mcts iterations run for one permutation. The total
   number of iterations is max_iterations x max_permutations, spread across
   multiple processes (num_processes).
   """

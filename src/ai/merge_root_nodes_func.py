@@ -14,7 +14,7 @@ MergeRootNodesFunc = Callable[
   [List[SchnapsenNode]], List[Tuple[PlayerAction, float]]]
 """
 Function that receives the root nodes for all the permutations processed by an
-MCTSPlayer and returns a list with (action, score) tuples, where the score is
+MctsPlayer and returns a list with (action, score) tuples, where the score is
 some aggregation across all the root nodes for that particular action. Each
 action should only appear once in the output.
 """
@@ -28,7 +28,7 @@ def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> List[
     best_actions.extend(root_node.best_actions())
   counter = Counter(best_actions)
   action_and_scores = counter.most_common(10)
-  logging.info("MCTSPlayer: Best action counts:\n%s",
+  logging.info("MctsPlayer: Best action counts:\n%s",
                pprint.pformat(action_and_scores, indent=True))
   return action_and_scores
 
@@ -118,7 +118,7 @@ def _get_action_scores_for_partially_simulated_trees(
 # ucb (i.e., we never have to merge terminal and non-terminal children for the
 # same action across two different permutations).
 # Leaving this function here in case we can use it when we pick the best child
-# to be expanded in MCTS and/or consider the best node to be the mode visited
+# to be expanded in Mcts and/or consider the best node to be the mode visited
 # one.
 
 def merge_ucbs(root_nodes: List[SchnapsenNode]) -> List[

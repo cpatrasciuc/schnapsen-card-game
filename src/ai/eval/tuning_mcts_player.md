@@ -27,7 +27,7 @@ MctsPlayer's performance.
 ## Initial analysis
 
 I started by measuring how much (process-)time it takes to run a given number of
-MCTS iterations for a perfect information scenario.
+Mcts iterations for a perfect information scenario.
 
 ![iterations_vs_time_plot](https://github.com/cpatrasciuc/schnapsen-card-game/blob/ac6328f5a043ce946fb59c2303a5b32fe7ce224b/src/ai/eval/data/iterations_and_time_i7.png)
 
@@ -80,7 +80,7 @@ As a result of this initial debugging, the ideas to experiment with are:
 > case the performance cannot be compared across different machines.
 > 
 > At this point I decided to limit the maximum number of iterations that the
-> MCTS algorithm is allowed to perform before it must pick a move 
+> Mcts algorithm is allowed to perform before it must pick a move 
 > ([commit](https://github.com/cpatrasciuc/schnapsen-card-game/commit/d267004c089d9d2ba15d4ed6d96de0b98b3d33ca)).
 > This makes the performance of the MctsPlayer comparable across different runs, even
 > across different machines.

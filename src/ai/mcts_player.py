@@ -9,7 +9,7 @@ import multiprocessing
 import random
 from typing import List, Optional
 
-from ai.mcts_algorithm import MCTS, SchnapsenNode
+from ai.mcts_algorithm import Mcts, SchnapsenNode
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
@@ -23,7 +23,7 @@ def run_mcts(permutation: List[Card], game_view: GameState,
              player_id: PlayerId, max_iterations: int,
              first_level_only: bool) -> SchnapsenNode:
   game_state = populate_game_view(game_view, permutation)
-  mcts_algorithm = MCTS(player_id)
+  mcts_algorithm = Mcts(player_id)
   root_node = mcts_algorithm.build_tree(game_state, max_iterations)
   if first_level_only:
     for child in root_node.children.values():
@@ -33,7 +33,7 @@ def run_mcts(permutation: List[Card], game_view: GameState,
 
 
 class MctsPlayer(Player):
-  """Player implementation that uses the MCTS algorithm."""
+  """Player implementation that uses the Mcts algorithm."""
 
   def __init__(self, player_id: PlayerId, cheater: bool = False,
                options: Optional[MctsPlayerOptions] = None):
@@ -71,7 +71,7 @@ class MctsPlayer(Player):
     num_permutations_to_process = min(total_permutations,
                                       self._options.max_permutations)
     assert num_permutations_to_process == 1 or not self.cheater
-    logging.info("MCTSPlayer: Num permutations: %s out of %s",
+    logging.info("MctsPlayer: Num permutations: %s out of %s",
                  num_permutations_to_process, total_permutations)
 
     permutations = self._options.perm_generator(

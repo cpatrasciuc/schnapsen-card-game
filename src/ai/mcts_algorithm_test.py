@@ -8,7 +8,7 @@ import random
 import unittest
 from typing import List
 
-from ai.mcts_algorithm import MCTS, Node
+from ai.mcts_algorithm import Mcts, Node
 from model.card import Card
 from model.card_value import CardValue
 from model.game_state import GameState
@@ -66,9 +66,9 @@ class _TestNode(Node[int, int]):
     return _TestNode._tree[self.state][action]
 
 
-class MCTSAlgorithmTest(unittest.TestCase):
+class MctsAlgorithmTest(unittest.TestCase):
   def test_fully_expanded_tree(self):
-    mcts = MCTS(PlayerId.ONE, _TestNode)
+    mcts = Mcts(PlayerId.ONE, _TestNode)
     root_node = mcts.build_tree(0)
     nodes = [root_node]
     index = 0
@@ -109,13 +109,13 @@ def _get_game_state_with_one_card_left() -> GameState:
   return game_state
 
 
-class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
+class SchnapsenMctsAlgorithmTest(unittest.TestCase):
   def test_leaf_node(self):
     game_state = _get_game_state_with_one_card_left()
     play_jack_clubs = PlayCardAction(PlayerId.ONE,
                                      Card(Suit.CLUBS, CardValue.JACK))
     game_state = play_jack_clubs.execute(game_state)
-    mcts = MCTS(PlayerId.TWO)
+    mcts = Mcts(PlayerId.TWO)
     root_node = mcts.build_tree(game_state)
 
     self.assertIsNone(root_node.parent)
@@ -141,7 +141,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def test_one_card_left_for_each_player(self):
     game_state = _get_game_state_with_one_card_left()
-    mcts = MCTS(PlayerId.ONE)
+    mcts = Mcts(PlayerId.ONE)
     root_node = mcts.build_tree(game_state)
 
     self.assertIsNone(root_node.parent)
@@ -180,7 +180,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     self.assertTrue(leaf.fully_simulated)
 
   def test_max_iterations(self):
-    class TestMcts(MCTS):
+    class TestMcts(Mcts):
       def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.counter = 0
@@ -213,7 +213,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def test_you_first_no_you_first(self):
     game_state = get_game_state_for_you_first_no_you_first_puzzle()
-    mcts = MCTS(PlayerId.ONE)
+    mcts = Mcts(PlayerId.ONE)
     root_node = mcts.build_tree(game_state)
     self.assertIsNone(root_node.parent)
     self.assertEqual(5, len(root_node.children))
@@ -235,7 +235,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def test_elimination_play_player_one(self):
     game_state = get_game_state_for_elimination_play_puzzle()
-    mcts = MCTS(PlayerId.ONE)
+    mcts = Mcts(PlayerId.ONE)
     root_node = mcts.build_tree(game_state)
     for action, child in root_node.children.items():
       print(action, child)
@@ -254,7 +254,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     game_state = action.execute(game_state)
     self.assertEqual(34, game_state.trick_points.one)
     self.assertEqual(40, game_state.trick_points.two)
-    mcts = MCTS(PlayerId.TWO)
+    mcts = Mcts(PlayerId.TWO)
     root_node = mcts.build_tree(game_state)
     for action, child in root_node.children.items():
       print(action, child)
@@ -280,7 +280,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
     # TODO(tests): Maybe do this for more game states that can be fully
     #  simulated.
     game_state = get_game_state_for_elimination_play_puzzle()
-    mcts = MCTS(game_state.next_player)
+    mcts = Mcts(game_state.next_player)
     root_node = mcts.build_tree(game_state)
     golden_data_file = os.path.join(os.path.dirname(__file__), "test_data",
                                     "elimination_play_tree.pickle")
@@ -293,7 +293,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def _assert_player_one_always_wins(self, game_state: GameState):
     while not game_state.is_game_over:
-      mcts = MCTS(game_state.next_player)
+      mcts = Mcts(game_state.next_player)
       root_node = mcts.build_tree(game_state)
       print()
       for action, child in root_node.children.items():
@@ -318,7 +318,7 @@ class SchnapsenMCTSAlgorithmTest(unittest.TestCase):
 
   def test_who_laughs_last_part_two_player_one_always_wins(self):
     game_state = get_game_state_for_who_laughs_last_puzzle()
-    mcts = MCTS(PlayerId.ONE)
+    mcts = Mcts(PlayerId.ONE)
     root_node = mcts.build_tree(game_state)
     actions = root_node.best_actions()
     self.assertEqual(
