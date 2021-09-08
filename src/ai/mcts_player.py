@@ -77,7 +77,6 @@ class MctsPlayer(Player):
     permutations = self._options.perm_generator(
       cards_set, num_opponent_unknown_cards, num_permutations_to_process)
 
-    # TODO(optimization): Experiment with imap_unordered as well.
     root_nodes = self._pool.map(
       functools.partial(run_mcts, game_view=game_view, player_id=self.id,
                         max_iterations=self._options.max_iterations,
