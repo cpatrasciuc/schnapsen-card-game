@@ -9,7 +9,7 @@ import os
 import pstats
 import time
 from pstats import SortKey
-from typing import Callable
+from typing import Callable, Tuple
 
 import matplotlib.pyplot as plt
 from cpuinfo import cpuinfo
@@ -21,20 +21,22 @@ from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 
+Closure = Callable[[], None]
+
 
 def _get_algorithm_closure(game_state: GameState,
-                           iterations: int) -> Callable[[], None]:
+                           iterations: int) -> Tuple[Closure, Closure]:
   mcts = MCTS(game_state.next_player)
 
   def _run():
     mcts.build_tree(game_state, iterations)
 
-  return _run
+  return _run, lambda: None
 
 
 def _get_player_closure(game_state: GameState,
                         iterations: int,
-                        max_permutations: int) -> Callable[[], None]:
+                        max_permutations: int) -> Tuple[Closure, Closure]:
   mcts = MctsPlayer(game_state.next_player, cheater=False,
                     options=MctsPlayerOptions(
                       max_permutations=max_permutations,
@@ -44,7 +46,7 @@ def _get_player_closure(game_state: GameState,
   def _run():
     mcts.request_next_action(game_state.next_player_view())
 
-  return _run
+  return _run, mcts.cleanup
 
 
 def iterations_and_time(max_permutations: int):
@@ -57,10 +59,12 @@ def iterations_and_time(max_permutations: int):
     duration_sec = 0
     while duration_sec < 10:
       if max_permutations == 1:
-        closure_to_profile = _get_algorithm_closure(game_state, iterations)
+        closure_to_profile, cleanup = _get_algorithm_closure(game_state,
+                                                             iterations)
       else:
-        closure_to_profile = _get_player_closure(game_state, iterations,
-                                                 max_permutations)
+        closure_to_profile, cleanup = _get_player_closure(game_state,
+                                                          iterations,
+                                                          max_permutations)
       profiler.enable()
       start_time = time.process_time()
       closure_to_profile()
@@ -70,6 +74,7 @@ def iterations_and_time(max_permutations: int):
       logging.info("Run %s iterations in %.5f seconds (seed=%s)", iterations,
                    duration_sec, seed)
       data.append((seed, iterations, duration_sec))
+      cleanup()
       iterations *= 2
 
   suffix = "" if max_permutations == 1 else f"_{max_permutations}perm"

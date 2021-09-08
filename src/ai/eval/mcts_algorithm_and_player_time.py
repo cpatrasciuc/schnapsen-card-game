@@ -39,6 +39,7 @@ def time_algorithm_and_player(options: MctsPlayerOptions) -> Tuple[
         f"Total time: {time_taken} seconds\n" +
         f"Average time: {player_avg_time} seconds\n")
 
+  mcts.cleanup()
   return algorithm_avg_time, player_avg_time
 
 
@@ -72,5 +73,12 @@ def measure_time_for_multiple_setups():
   dataframe.to_csv(csv_path, index=False)
 
 
+def run_once():
+  options = MctsPlayerOptions(max_permutations=13,
+                              max_iterations=10000,
+                              num_processes=7)
+  time_algorithm_and_player(options)
+
+
 if __name__ == "__main__":
-  main_wrapper(measure_time_for_multiple_setups)
+  main_wrapper(run_once)
