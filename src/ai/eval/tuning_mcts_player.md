@@ -61,7 +61,7 @@ consider.
 
 As a result of this initial debugging, the ideas to experiment with are:
 
-- [x] Reduce CPU usage, so we can run more iterations within the budget
+- [ ] Reduce CPU usage, so we can run more iterations within the budget
 - [ ] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [ ] Pick the best child during the selection phase and balance exploration versus exploitation
 - [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
@@ -103,7 +103,7 @@ measured its speed in `GameStateCopyTest`. The results as follows:
 | `pickle.loads(pickle.dumps(game_state))` | 0.0806335 |
 | `copy.deepcopy(game_state)` | 0.3028298 |
 
-Overall, this change allows the MctsPlayer to run ~2x more iterations in the
+Overall, this change allows the Mcts algorithm to run ~2x more iterations in the
 same amount of time. However, [the new CPU profile](https://github.com/cpatrasciuc/schnapsen-card-game/blob/95eacb321110269495dbee47d5a8f185acb66c04/src/ai/eval/data/iterations_and_time.profile.txt)
 shows that the new `GameState.deep_copy()` method takes ~66% of the time.
 
@@ -114,14 +114,41 @@ node, I modified `PlayerAction.execute()` to create a (shallow) copy of the
 input/parent game state that shares as many fields as possible with it
 ([commit](https://github.com/cpatrasciuc/schnapsen-card-game/commit/f263b24c8b7ab8c66b3a0ed8cd4b167d4579ed8)).
 
-Overall, this change allows the MctsPlayer to run ~2x more iterations in the
+Overall, this change allows the Mcts algorithm to run ~2x more iterations in the
 same amount of time. The amount of time spent in copying the game state and
 executing a player action decreased from 73% (GameState.deep_copy: 66%,
 PlayerAction.execute: 7%) to 26% (only PlayerAction.execute).
 
-TODO: Look for other things that could be sped up.
+#### Step 3: multiprocessing.Pool overhead
 
-[//]: # (TODO: Look for other things that could be sped up.)
+Even if I managed to reduce the CPU usage of the Mcts algorithm (i.e., the
+single threaded construction of one tree for a perfect information game state),
+it was surprisingly slow in the `SchnapsenApp` for `max_iterations=1000-2000`
+and `max_permutations=8-16`.
+
+I measured how much time it takes the MctsPlayer to run a given number of
+iterations. It seems that the `multiprocessing.Pool` overhead takes a
+significant amount of time, most likely serializing and deserializing the data
+between the parent and child processes. The Mcts algorithm is able to run 10k
+iterations in ~10 seconds, but when the MctsPlayer runs 8 such algorithms in
+parallel using `multiprocessing.Pool` it can only run ~2k iterations in the same
+amount of time.
+
+![iterations_and_time_8perm.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/main/src/ai/eval/data/iterations_and_time_8perm.png)
+
+I experimented with the following ideas hoping they would reduce this overhead,
+but none of them was successful:
+
+* Implement my own MctsWorker and MctsWorkerPool (see the `mcts_worker` branch).
+  This is similar to the `multiprocessing.Pool` but instead of using a
+  single task queue, I split the permutations and directly assign
+  them to specific child processes for processing. I tried using both `Pipe` and
+  `Queue` to communicate with the children.
+* Use the `dill` and `pathos` modules to see if they speed up the pickling.
+* Use `ray`. It didn't work out of the box with `venv`. I did not debug further.
+* Use `multiprocessing.dummy` just to make sure that threads don't work either.
+
+TODO: Write this component in Cython and use threads.
 
 ## Tune the max_iterations and max_permutations params
 
