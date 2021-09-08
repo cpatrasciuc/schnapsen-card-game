@@ -36,7 +36,8 @@ class SchnapsenApp(App):
     human_player: Player = self._game_widget
     computer_player: Player = OutOfProcessComputerPlayer(
       # TODO(mcts): Tune the number of max_iterations.
-      MctsPlayer, (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=1000)))
+      MctsPlayer, (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=2000,
+                                                          max_permutations=16)))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     self._game_controller = GameController(self._game_widget, players)
     return self._game_widget
