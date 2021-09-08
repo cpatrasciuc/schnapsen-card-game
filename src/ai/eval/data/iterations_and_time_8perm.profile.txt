@@ -1,176 +1,175 @@
-         2731448 function calls (2715464 primitive calls) in 461.424 seconds
+         303423 function calls (301647 primitive calls) in 76.480 seconds
 
    Ordered by: cumulative time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-       90    0.002    0.000  461.428    5.127 mcts_iterations_and_time.py:44(_run)
-       90    0.004    0.000  461.410    5.127 mcts_player.py:54(request_next_action)
-       90    0.001    0.000  420.457    4.672 pool.py:359(map)
-       90    0.000    0.000  420.450    4.672 pool.py:764(get)
-       90    0.000    0.000  420.449    4.672 pool.py:761(wait)
-       90    0.001    0.000  420.449    4.672 threading.py:556(wait)
-       90    0.002    0.000  420.448    4.672 threading.py:280(wait)
-      360  420.445    1.168  420.445    1.168 {method 'acquire' of '_thread.lock' objects}
-       90    0.001    0.000   40.850    0.454 permutations.py:268(sims_table_perm_generator)
-       90    0.003    0.000   40.830    0.454 permutations.py:163(__init__)
-       90    0.033    0.000   40.826    0.454 permutations.py:192(_find_best_increment)
-     9090    0.092    0.000   36.136    0.004 permutations.py:197(<genexpr>)
-     9000    0.060    0.000   35.892    0.004 permutations.py:145(_next_relative_prime)
-    35048   35.763    0.001   35.832    0.001 permutations.py:136(_is_relative_prime)
-       90    0.038    0.000    4.634    0.051 permutations.py:207(<listcomp>)
-     9000    0.056    0.000    4.596    0.001 permutations.py:200(dispersion_of_first_6_permutations)
-     9000    0.219    0.000    3.192    0.000 permutations.py:47(dispersion)
-   135000    2.486    0.000    2.971    0.000 permutations.py:19(distance)
-     9000    0.080    0.000    1.305    0.000 permutations.py:202(<listcomp>)
-    54720    0.633    0.000    1.239    0.000 permutations.py:232(generate_permutation)
-    54720    0.420    0.000    0.537    0.000 permutations.py:219(convert_to_mixed_radix)
-  1131126    0.274    0.000    0.274    0.000 {built-in method math.ceil}
-     9090    0.028    0.000    0.152    0.000 random.py:335(randint)
-   135000    0.135    0.000    0.135    0.000 {method 'intersection' of 'set' objects}
-     9090    0.055    0.000    0.124    0.000 random.py:291(randrange)
-   494280    0.117    0.000    0.117    0.000 {method 'append' of 'list' objects}
-   285471    0.079    0.000    0.079    0.000 {built-in method builtins.len}
-    54810    0.071    0.000    0.073    0.000 {built-in method builtins.sorted}
-     9180    0.051    0.000    0.070    0.000 random.py:238(_randbelow_with_getrandbits)
-       90    0.000    0.000    0.047    0.001 merge_root_nodes_func.py:140(max_average_ucb_across_root_nodes)
-       90    0.009    0.000    0.047    0.001 merge_root_nodes_func.py:70(_get_action_scores_for_fully_simulated_trees)
-    35318    0.044    0.000    0.044    0.000 {built-in method builtins.max}
-     9000    0.043    0.000    0.043    0.000 permutations.py:203(<listcomp>)
-      180    0.001    0.000    0.036    0.000 __init__.py:2089(info)
-      180    0.001    0.000    0.035    0.000 __init__.py:1436(info)
-       90    0.001    0.000    0.034    0.000 utils.py:168(get_unseen_cards)
-      180    0.001    0.000    0.034    0.000 __init__.py:1565(_log)
-    35048    0.026    0.000    0.026    0.000 {built-in method math.isqrt}
-       90    0.010    0.000    0.021    0.000 utils.py:180(<setcomp>)
-      810    0.003    0.000    0.017    0.000 permutations.py:251(permutations)
-       90    0.002    0.000    0.016    0.000 game_state.py:256(next_player_view)
-     4752    0.003    0.000    0.015    0.000 {method 'get' of 'dict' objects}
-      180    0.001    0.000    0.015    0.000 __init__.py:1550(makeRecord)
-      180    0.005    0.000    0.014    0.000 __init__.py:282(__init__)
-       90    0.003    0.000    0.013    0.000 game_state.py:272(deep_copy)
-    13769    0.013    0.000    0.013    0.000 {method 'getrandbits' of '_random.Random' objects}
-      180    0.001    0.000    0.013    0.000 __init__.py:1591(handle)
-    39870    0.013    0.000    0.013    0.000 <string>:2(__eq__)
-      180    0.001    0.000    0.012    0.000 __init__.py:1645(callHandlers)
-26028/10044    0.007    0.000    0.012    0.000 {built-in method builtins.hash}
-     6336    0.003    0.000    0.012    0.000 player_action.py:221(__hash__)
-      180    0.001    0.000    0.012    0.000 __init__.py:939(handle)
-     4482    0.003    0.000    0.011    0.000 mcts_algorithm.py:81(player)
-      180    0.002    0.000    0.010    0.000 __init__.py:1071(emit)
-       90    0.003    0.000    0.008    0.000 card.py:44(get_all_cards)
-     1980    0.001    0.000    0.008    0.000 game_state.py:278(copy_card)
-     4482    0.003    0.000    0.007    0.000 mcts_algorithm.py:160(terminal)
-       90    0.001    0.000    0.007    0.000 pool.py:468(_map_async)
-     1800    0.003    0.000    0.006    0.000 card.py:91(copy)
-     5544    0.003    0.000    0.006    0.000 player_action.py:216(__eq__)
-     9180    0.006    0.000    0.006    0.000 {method 'bit_length' of 'int' objects}
-      180    0.000    0.000    0.005    0.000 ntpath.py:214(basename)
-     8460    0.003    0.000    0.005    0.000 <string>:2(__hash__)
-      180    0.002    0.000    0.004    0.000 __init__.py:1514(findCaller)
-      180    0.003    0.000    0.004    0.000 ntpath.py:180(split)
-     4482    0.004    0.000    0.004    0.000 game_state.py:228(is_game_over)
-      180    0.000    0.000    0.004    0.000 __init__.py:916(format)
-       90    0.000    0.000    0.004    0.000 pool.py:793(__init__)
-      180    0.001    0.000    0.004    0.000 __init__.py:650(format)
-     3600    0.003    0.000    0.004    0.000 card.py:30(__post_init__)
-       90    0.001    0.000    0.004    0.000 pool.py:744(__init__)
-       90    0.000    0.000    0.003    0.000 game_state.py:284(<listcomp>)
-       90    0.003    0.000    0.003    0.000 {method 'sort' of 'list' objects}
-     8784    0.002    0.000    0.003    0.000 enum.py:745(__hash__)
-       90    0.000    0.000    0.003    0.000 game_state.py:282(<listcomp>)
-      180    0.001    0.000    0.003    0.000 ntpath.py:203(splitext)
-      180    0.003    0.000    0.003    0.000 {method 'write' of '_io.TextIOWrapper' objects}
-       90    0.001    0.000    0.003    0.000 threading.py:521(__init__)
-       90    0.001    0.000    0.002    0.000 permutations.py:284(<listcomp>)
-    15930    0.002    0.000    0.002    0.000 {built-in method builtins.isinstance}
-      180    0.001    0.000    0.002    0.000 genericpath.py:121(_splitext)
-       90    0.000    0.000    0.002    0.000 game_state.py:283(<listcomp>)
-     3366    0.002    0.000    0.002    0.000 <string>:2(__lt__)
-      360    0.001    0.000    0.002    0.000 ntpath.py:44(normcase)
-       90    0.000    0.000    0.002    0.000 <string>:2(__init__)
-     2880    0.002    0.000    0.002    0.000 enum.py:414(<genexpr>)
-      864    0.000    0.000    0.002    0.000 player_action.py:300(__hash__)
-      180    0.001    0.000    0.002    0.000 __init__.py:1060(flush)
-     1440    0.000    0.000    0.001    0.000 player_action.py:376(__hash__)
-       90    0.001    0.000    0.001    0.000 game_state.py:156(__post_init__)
-       90    0.001    0.000    0.001    0.000 threading.py:228(__init__)
-       90    0.001    0.000    0.001    0.000 {method 'put' of '_queue.SimpleQueue' objects}
-      180    0.001    0.000    0.001    0.000 ntpath.py:124(splitdrive)
-      180    0.000    0.000    0.001    0.000 __init__.py:634(formatMessage)
-      180    0.001    0.000    0.001    0.000 __init__.py:358(getMessage)
-      360    0.001    0.000    0.001    0.000 __init__.py:896(acquire)
-      756    0.001    0.000    0.001    0.000 player_action.py:295(__eq__)
-      180    0.001    0.000    0.001    0.000 {built-in method _thread.allocate_lock}
-      540    0.001    0.000    0.001    0.000 enum.py:410(__iter__)
-      180    0.000    0.000    0.001    0.000 __init__.py:432(format)
-      180    0.000    0.000    0.001    0.000 __init__.py:628(usesTime)
-     4482    0.001    0.000    0.001    0.000 mcts_algorithm.py:175(_player)
-       90    0.000    0.000    0.001    0.000 merge_root_nodes_func.py:82(<listcomp>)
-      180    0.001    0.000    0.001    0.000 {built-in method time.process_time}
-      720    0.001    0.000    0.001    0.000 player_id.py:14(opponent)
-      180    0.001    0.000    0.001    0.000 __init__.py:429(_format)
-     1260    0.000    0.000    0.001    0.000 player_action.py:371(__eq__)
-      180    0.000    0.000    0.001    0.000 __init__.py:160(<lambda>)
-      810    0.001    0.000    0.001    0.000 {built-in method builtins.hasattr}
-       90    0.000    0.000    0.001    0.000 random.py:344(choice)
-      180    0.000    0.000    0.000    0.000 __init__.py:421(usesTime)
-      900    0.000    0.000    0.000    0.000 player_pair.py:28(__getitem__)
-      180    0.000    0.000    0.000    0.000 __init__.py:119(getLevelName)
-      360    0.000    0.000    0.000    0.000 __init__.py:903(release)
-      540    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
-      180    0.000    0.000    0.000    0.000 threading.py:1318(current_thread)
-      549    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
-      180    0.000    0.000    0.000    0.000 __init__.py:1689(isEnabledFor)
-      360    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.RLock' objects}
-      270    0.000    0.000    0.000    0.000 player_action.py:340(__eq__)
-      540    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
-      360    0.000    0.000    0.000    0.000 __init__.py:791(filter)
-      180    0.000    0.000    0.000    0.000 {method 'flush' of '_io.TextIOWrapper' objects}
-      270    0.000    0.000    0.000    0.000 {built-in method builtins.min}
-       90    0.000    0.000    0.000    0.000 threading.py:268(_acquire_restore)
-      180    0.000    0.000    0.000    0.000 ntpath.py:34(_get_bothseps)
-       90    0.000    0.000    0.000    0.000 {built-in method math.comb}
-      900    0.000    0.000    0.000    0.000 {built-in method nt.fspath}
-       90    0.000    0.000    0.000    0.000 threading.py:271(_is_owned)
-       90    0.000    0.000    0.000    0.000 threading.py:256(__enter__)
-      180    0.000    0.000    0.000    0.000 {built-in method math.factorial}
-      180    0.000    0.000    0.000    0.000 {method 'find' of 'str' objects}
-      810    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
-       90    0.000    0.000    0.000    0.000 pool.py:753(ready)
-      180    0.000    0.000    0.000    0.000 threading.py:1053(name)
-      180    0.000    0.000    0.000    0.000 {built-in method sys._getframe}
-      360    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
-      144    0.000    0.000    0.000    0.000 player_action.py:345(__hash__)
-       90    0.000    0.000    0.000    0.000 threading.py:259(__exit__)
-      180    0.000    0.000    0.000    0.000 {built-in method nt.getpid}
-      180    0.000    0.000    0.000    0.000 {built-in method time.time}
-      360    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
-      180    0.000    0.000    0.000    0.000 player.py:30(id)
-      180    0.000    0.000    0.000    0.000 process.py:189(name)
-      639    0.000    0.000    0.000    0.000 mcts_player.py:89(<genexpr>)
-      180    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
-      144    0.000    0.000    0.000    0.000 abc.py:96(__instancecheck__)
-       90    0.000    0.000    0.000    0.000 threading.py:265(_release_save)
-       90    0.000    0.000    0.000    0.000 mcts_player.py:60(<listcomp>)
-      180    0.000    0.000    0.000    0.000 process.py:37(current_process)
-      360    0.000    0.000    0.000    0.000 {method 'release' of '_thread.RLock' objects}
-       90    0.000    0.000    0.000    0.000 {built-in method math.perm}
-       90    0.000    0.000    0.000    0.000 pool.py:348(_check_running)
-       90    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
-       90    0.000    0.000    0.000    0.000 {method '__enter__' of '_thread.lock' objects}
-       90    0.000    0.000    0.000    0.000 mcts_player.py:91(<listcomp>)
-      144    0.000    0.000    0.000    0.000 {built-in method _abc._abc_instancecheck}
-       90    0.000    0.000    0.000    0.000 {built-in method builtins.next}
-       90    0.000    0.000    0.000    0.000 {built-in method builtins.divmod}
-       90    0.000    0.000    0.000    0.000 game_state.py:286(<listcomp>)
-       90    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
-       90    0.000    0.000    0.000    0.000 utils.py:176(<listcomp>)
-       90    0.000    0.000    0.000    0.000 threading.py:529(is_set)
-       90    0.000    0.000    0.000    0.000 game_state.py:288(<listcomp>)
-       90    0.000    0.000    0.000    0.000 utils.py:177(<listcomp>)
-       90    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
-       90    0.000    0.000    0.000    0.000 {method 'release' of '_thread.lock' objects}
-       90    0.000    0.000    0.000    0.000 utils.py:179(<listcomp>)
-       90    0.000    0.000    0.000    0.000 utils.py:178(<listcomp>)
+       10    0.000    0.000   76.481    7.648 mcts_iterations_and_time.py:53(_run)
+       10    0.000    0.000   76.479    7.648 mcts_player.py:54(request_next_action)
+       10    0.000    0.000   73.283    7.328 pool.py:359(map)
+       10    0.000    0.000   73.282    7.328 pool.py:764(get)
+       10    0.000    0.000   73.282    7.328 pool.py:761(wait)
+       10    0.000    0.000   73.282    7.328 threading.py:556(wait)
+       10    0.000    0.000   73.282    7.328 threading.py:280(wait)
+       40   73.282    1.832   73.282    1.832 {method 'acquire' of '_thread.lock' objects}
+       10    0.000    0.000    3.185    0.319 permutations.py:268(sims_table_perm_generator)
+       10    0.000    0.000    3.184    0.318 permutations.py:163(__init__)
+       10    0.002    0.000    3.183    0.318 permutations.py:192(_find_best_increment)
+     1010    0.007    0.000    2.853    0.003 permutations.py:197(<genexpr>)
+     1000    0.005    0.000    2.835    0.003 permutations.py:145(_next_relative_prime)
+     3756    2.826    0.001    2.831    0.001 permutations.py:136(_is_relative_prime)
+       10    0.002    0.000    0.326    0.033 permutations.py:207(<listcomp>)
+     1000    0.004    0.000    0.324    0.000 permutations.py:200(dispersion_of_first_6_permutations)
+     1000    0.017    0.000    0.226    0.000 permutations.py:47(dispersion)
+    15000    0.175    0.000    0.209    0.000 permutations.py:19(distance)
+     1000    0.005    0.000    0.091    0.000 permutations.py:202(<listcomp>)
+     6080    0.044    0.000    0.087    0.000 permutations.py:232(generate_permutation)
+     6080    0.029    0.000    0.038    0.000 permutations.py:219(convert_to_mixed_radix)
+   126042    0.020    0.000    0.020    0.000 {built-in method math.ceil}
+     1010    0.002    0.000    0.011    0.000 random.py:335(randint)
+    15000    0.010    0.000    0.010    0.000 {method 'intersection' of 'set' objects}
+     1010    0.004    0.000    0.009    0.000 random.py:291(randrange)
+    54920    0.009    0.000    0.009    0.000 {method 'append' of 'list' objects}
+       10    0.000    0.000    0.005    0.001 merge_root_nodes_func.py:140(max_average_ucb_across_root_nodes)
+       10    0.001    0.000    0.005    0.001 merge_root_nodes_func.py:70(_get_action_scores_for_fully_simulated_trees)
+     1020    0.004    0.000    0.005    0.000 random.py:238(_randbelow_with_getrandbits)
+    31719    0.005    0.000    0.005    0.000 {built-in method builtins.len}
+     6090    0.005    0.000    0.005    0.000 {built-in method builtins.sorted}
+       10    0.000    0.000    0.004    0.000 utils.py:168(get_unseen_cards)
+       20    0.000    0.000    0.003    0.000 __init__.py:2089(info)
+     1000    0.003    0.000    0.003    0.000 permutations.py:203(<listcomp>)
+       20    0.000    0.000    0.003    0.000 __init__.py:1436(info)
+       20    0.000    0.000    0.003    0.000 __init__.py:1565(_log)
+     3786    0.003    0.000    0.003    0.000 {built-in method builtins.max}
+       10    0.001    0.000    0.002    0.000 utils.py:180(<setcomp>)
+     3756    0.002    0.000    0.002    0.000 {built-in method math.isqrt}
+       10    0.000    0.000    0.002    0.000 game_state.py:256(next_player_view)
+      528    0.000    0.000    0.002    0.000 {method 'get' of 'dict' objects}
+       10    0.000    0.000    0.001    0.000 game_state.py:272(deep_copy)
+     4430    0.001    0.000    0.001    0.000 <string>:2(__eq__)
+      704    0.000    0.000    0.001    0.000 player_action.py:221(__hash__)
+       90    0.000    0.000    0.001    0.000 permutations.py:251(permutations)
+2892/1116    0.001    0.000    0.001    0.000 {built-in method builtins.hash}
+       20    0.000    0.000    0.001    0.000 __init__.py:1550(makeRecord)
+       20    0.000    0.000    0.001    0.000 __init__.py:282(__init__)
+       20    0.000    0.000    0.001    0.000 __init__.py:1591(handle)
+       10    0.001    0.000    0.001    0.000 card.py:44(get_all_cards)
+      498    0.000    0.000    0.001    0.000 mcts_algorithm.py:81(player)
+       20    0.000    0.000    0.001    0.000 __init__.py:1645(callHandlers)
+       20    0.000    0.000    0.001    0.000 __init__.py:939(handle)
+       20    0.000    0.000    0.001    0.000 __init__.py:1071(emit)
+      220    0.000    0.000    0.001    0.000 game_state.py:278(copy_card)
+      498    0.000    0.000    0.001    0.000 mcts_algorithm.py:160(terminal)
+      200    0.000    0.000    0.001    0.000 card.py:91(copy)
+     1532    0.001    0.000    0.001    0.000 {method 'getrandbits' of '_random.Random' objects}
+      616    0.000    0.000    0.001    0.000 player_action.py:216(__eq__)
+       10    0.000    0.000    0.001    0.000 pool.py:468(_map_async)
+      940    0.000    0.000    0.000    0.000 <string>:2(__hash__)
+     1020    0.000    0.000    0.000    0.000 {method 'bit_length' of 'int' objects}
+      498    0.000    0.000    0.000    0.000 game_state.py:228(is_game_over)
+      400    0.000    0.000    0.000    0.000 card.py:30(__post_init__)
+       20    0.000    0.000    0.000    0.000 __init__.py:1514(findCaller)
+       20    0.000    0.000    0.000    0.000 __init__.py:916(format)
+       20    0.000    0.000    0.000    0.000 ntpath.py:214(basename)
+       20    0.000    0.000    0.000    0.000 __init__.py:650(format)
+       10    0.000    0.000    0.000    0.000 game_state.py:284(<listcomp>)
+       20    0.000    0.000    0.000    0.000 ntpath.py:180(split)
+       10    0.000    0.000    0.000    0.000 pool.py:793(__init__)
+       10    0.000    0.000    0.000    0.000 game_state.py:282(<listcomp>)
+      976    0.000    0.000    0.000    0.000 enum.py:745(__hash__)
+       10    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
+       10    0.000    0.000    0.000    0.000 pool.py:744(__init__)
+       20    0.000    0.000    0.000    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+     1770    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+       10    0.000    0.000    0.000    0.000 game_state.py:283(<listcomp>)
+      374    0.000    0.000    0.000    0.000 <string>:2(__lt__)
+       20    0.000    0.000    0.000    0.000 ntpath.py:203(splitext)
+       10    0.000    0.000    0.000    0.000 threading.py:521(__init__)
+       10    0.000    0.000    0.000    0.000 <string>:2(__init__)
+       40    0.000    0.000    0.000    0.000 ntpath.py:44(normcase)
+      320    0.000    0.000    0.000    0.000 enum.py:414(<genexpr>)
+       96    0.000    0.000    0.000    0.000 player_action.py:300(__hash__)
+       10    0.000    0.000    0.000    0.000 permutations.py:284(<listcomp>)
+       20    0.000    0.000    0.000    0.000 __init__.py:1060(flush)
+       10    0.000    0.000    0.000    0.000 game_state.py:156(__post_init__)
+      160    0.000    0.000    0.000    0.000 player_action.py:376(__hash__)
+       20    0.000    0.000    0.000    0.000 genericpath.py:121(_splitext)
+       20    0.000    0.000    0.000    0.000 __init__.py:358(getMessage)
+       20    0.000    0.000    0.000    0.000 __init__.py:634(formatMessage)
+       20    0.000    0.000    0.000    0.000 ntpath.py:124(splitdrive)
+       10    0.000    0.000    0.000    0.000 threading.py:228(__init__)
+       84    0.000    0.000    0.000    0.000 player_action.py:295(__eq__)
+       60    0.000    0.000    0.000    0.000 enum.py:410(__iter__)
+       20    0.000    0.000    0.000    0.000 __init__.py:432(format)
+      498    0.000    0.000    0.000    0.000 mcts_algorithm.py:175(_player)
+       10    0.000    0.000    0.000    0.000 merge_root_nodes_func.py:82(<listcomp>)
+       40    0.000    0.000    0.000    0.000 __init__.py:896(acquire)
+       20    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
+       20    0.000    0.000    0.000    0.000 __init__.py:628(usesTime)
+       80    0.000    0.000    0.000    0.000 player_id.py:14(opponent)
+       90    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+       20    0.000    0.000    0.000    0.000 __init__.py:429(_format)
+      100    0.000    0.000    0.000    0.000 player_pair.py:28(__getitem__)
+      140    0.000    0.000    0.000    0.000 player_action.py:371(__eq__)
+       10    0.000    0.000    0.000    0.000 random.py:344(choice)
+       20    0.000    0.000    0.000    0.000 __init__.py:421(usesTime)
+       20    0.000    0.000    0.000    0.000 __init__.py:160(<lambda>)
+       10    0.000    0.000    0.000    0.000 {method 'put' of '_queue.SimpleQueue' objects}
+       60    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
+       40    0.000    0.000    0.000    0.000 __init__.py:903(release)
+       20    0.000    0.000    0.000    0.000 __init__.py:119(getLevelName)
+       61    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
+       30    0.000    0.000    0.000    0.000 player_action.py:340(__eq__)
+       20    0.000    0.000    0.000    0.000 threading.py:1318(current_thread)
+       10    0.000    0.000    0.000    0.000 threading.py:268(_acquire_restore)
+       40    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.RLock' objects}
+       60    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
+       30    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+       20    0.000    0.000    0.000    0.000 __init__.py:1689(isEnabledFor)
+      100    0.000    0.000    0.000    0.000 {built-in method nt.fspath}
+       40    0.000    0.000    0.000    0.000 __init__.py:791(filter)
+       20    0.000    0.000    0.000    0.000 {method 'flush' of '_io.TextIOWrapper' objects}
+       20    0.000    0.000    0.000    0.000 {built-in method math.factorial}
+       20    0.000    0.000    0.000    0.000 ntpath.py:34(_get_bothseps)
+       10    0.000    0.000    0.000    0.000 {built-in method math.comb}
+       10    0.000    0.000    0.000    0.000 threading.py:259(__exit__)
+       10    0.000    0.000    0.000    0.000 threading.py:256(__enter__)
+       10    0.000    0.000    0.000    0.000 pool.py:753(ready)
+       20    0.000    0.000    0.000    0.000 {method 'find' of 'str' objects}
+       90    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+       10    0.000    0.000    0.000    0.000 threading.py:271(_is_owned)
+       16    0.000    0.000    0.000    0.000 abc.py:96(__instancecheck__)
+       40    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
+       16    0.000    0.000    0.000    0.000 player_action.py:345(__hash__)
+       20    0.000    0.000    0.000    0.000 {built-in method nt.getpid}
+       10    0.000    0.000    0.000    0.000 threading.py:265(_release_save)
+       40    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
+       20    0.000    0.000    0.000    0.000 player.py:30(id)
+       20    0.000    0.000    0.000    0.000 threading.py:1053(name)
+       20    0.000    0.000    0.000    0.000 {built-in method time.time}
+       20    0.000    0.000    0.000    0.000 {built-in method sys._getframe}
+       20    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+       10    0.000    0.000    0.000    0.000 mcts_player.py:60(<listcomp>)
+       71    0.000    0.000    0.000    0.000 mcts_player.py:89(<genexpr>)
+       10    0.000    0.000    0.000    0.000 pool.py:348(_check_running)
+       10    0.000    0.000    0.000    0.000 {built-in method math.perm}
+       20    0.000    0.000    0.000    0.000 process.py:189(name)
+       40    0.000    0.000    0.000    0.000 {method 'release' of '_thread.RLock' objects}
+       20    0.000    0.000    0.000    0.000 process.py:37(current_process)
+       10    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+       10    0.000    0.000    0.000    0.000 {method '__enter__' of '_thread.lock' objects}
+       16    0.000    0.000    0.000    0.000 {built-in method _abc._abc_instancecheck}
+       10    0.000    0.000    0.000    0.000 mcts_player.py:91(<listcomp>)
+       10    0.000    0.000    0.000    0.000 {built-in method builtins.next}
+       10    0.000    0.000    0.000    0.000 {built-in method builtins.divmod}
+       10    0.000    0.000    0.000    0.000 utils.py:176(<listcomp>)
+       10    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
+       10    0.000    0.000    0.000    0.000 game_state.py:286(<listcomp>)
+       10    0.000    0.000    0.000    0.000 utils.py:177(<listcomp>)
+       10    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
+       10    0.000    0.000    0.000    0.000 utils.py:179(<listcomp>)
+       10    0.000    0.000    0.000    0.000 threading.py:529(is_set)
+       10    0.000    0.000    0.000    0.000 game_state.py:288(<listcomp>)
+       10    0.000    0.000    0.000    0.000 {method 'release' of '_thread.lock' objects}
+       10    0.000    0.000    0.000    0.000 utils.py:178(<listcomp>)
 
 
