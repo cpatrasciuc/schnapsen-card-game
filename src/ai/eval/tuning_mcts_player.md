@@ -144,6 +144,8 @@ amount of time.
 I experimented with the following ideas hoping they would reduce this overhead,
 but none of them was successful:
 
+* Use `multiprocessing.Pool.imap` or `multiprocessing.Pool.imap_unordered` or
+  setting the `chunksize` argument explicitly in these calls.
 * Implement my own MctsWorker and MctsWorkerPool (see the `mcts_worker` branch).
   This is similar to the `multiprocessing.Pool` but instead of using a
   single task queue, I split the permutations and directly assign
@@ -152,6 +154,25 @@ but none of them was successful:
 * Use the `dill` and `pathos` modules to see if they speed up the pickling.
 * Use `ray`. It didn't work out of the box with `venv`. I did not debug further.
 * Use `multiprocessing.dummy` just to make sure that threads don't work either.
+
+TODO: Maybe retry the options above after MctsPlayerOptions.first_level_only.
+
+##### MctsPlayerOptions.first_level_only
+
+One possible solution to reduce the time spent in serializing/deserializing is
+to reduce the amount of data passed between the MctsPlayer and the workers. 
+There is nothing that can be removed from the data sent to the workers (it's
+just the game view and the permutations that have to be processed). The workers
+send back the whole tree. Currently, we only need the first level of the tree to
+merge the scores across trees and pick the best action. By only sending this
+data back to the MctsPlayer, we reduce the amount of data sent from 12Mb to 2Kb
+(99.98% reduction). This allows the MctsPlayer to run 1.5-2x more iterations in
+the same amount of time ([plot](https://github.com/cpatrasciuc/schnapsen-card-game/blob/7a9a12b607cdbae7e39a62703bc633ef9894c86b/src/ai/eval/data/iterations_and_time_8perm.png)).
+The disadvantage of this solution is that we won't be able to
+[reuse these nodes/trees](#reuse-nodes-from-previous-decisions) later. 
+
+After steps 1-3, the MctsPlayer went from running 800 iterations in 10 seconds
+to running 7k iterations in 10 seconds (8 permutations processed on 8 cores).
 
 TODO: Write this component in Cython and use threads.
 
