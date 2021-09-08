@@ -119,6 +119,11 @@ same amount of time. The amount of time spent in copying the game state and
 executing a player action decreased from 73% (GameState.deep_copy: 66%,
 PlayerAction.execute: 7%) to 26% (only PlayerAction.execute).
 
+After these two steps the number of iterations that could be run in 10 seconds
+increased from ~2k to ~10k.
+
+![iterations_and_time_i7.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/aa539d7591abeedaccfff412e042d769aae45b06/src/ai/eval/data/iterations_and_time_i7.png)
+
 #### Step 3: multiprocessing.Pool overhead
 
 Even if I managed to reduce the CPU usage of the Mcts algorithm (i.e., the
@@ -134,7 +139,7 @@ iterations in ~10 seconds, but when the MctsPlayer runs 8 such algorithms in
 parallel using `multiprocessing.Pool` it can only run ~2k iterations in the same
 amount of time.
 
-![iterations_and_time_8perm.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/main/src/ai/eval/data/iterations_and_time_8perm.png)
+![iterations_and_time_8perm.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/ef10065f5a37ed882359d9a0232675ad78b10810/src/ai/eval/data/iterations_and_time_8perm.png)
 
 I experimented with the following ideas hoping they would reduce this overhead,
 but none of them was successful:
