@@ -74,9 +74,9 @@ def measure_time_for_multiple_setups():
 
 
 def run_once():
-  options = MctsPlayerOptions(max_permutations=13,
+  options = MctsPlayerOptions(max_permutations=16,
                               max_iterations=10000,
-                              num_processes=7)
+                              num_processes=8)
   time_algorithm_and_player(options)
 
 
