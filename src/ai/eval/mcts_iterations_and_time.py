@@ -138,7 +138,7 @@ def profile(max_permutations: int, max_iterations: int = 1000):
 
 
 def _main():
-  max_permutations = 1
+  max_permutations = multiprocessing.cpu_count()
   iterations_and_time(max_permutations)
   profile(max_permutations)
 
