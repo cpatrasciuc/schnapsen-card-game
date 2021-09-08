@@ -103,7 +103,7 @@ measured its speed in `GameStateCopyTest`. The results as follows:
 | `pickle.loads(pickle.dumps(game_state))` | 0.0806335 |
 | `copy.deepcopy(game_state)` | 0.3028298 |
 
-Overall, this change allows the Mcts algorithm to run ~2x more iterations in the
+Overall, this change allows the Mcts algorithm to run ~5x more iterations in the
 same amount of time. However, [the new CPU profile](https://github.com/cpatrasciuc/schnapsen-card-game/blob/95eacb321110269495dbee47d5a8f185acb66c04/src/ai/eval/data/iterations_and_time.profile.txt)
 shows that the new `GameState.deep_copy()` method takes ~66% of the time.
 
@@ -120,9 +120,9 @@ executing a player action decreased from 73% (GameState.deep_copy: 66%,
 PlayerAction.execute: 7%) to 26% (only PlayerAction.execute).
 
 After these two steps the number of iterations that could be run in 10 seconds
-increased from ~2k to ~10k.
+increased from ~2k to ~20k.
 
-![iterations_and_time_i7.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/aa539d7591abeedaccfff412e042d769aae45b06/src/ai/eval/data/iterations_and_time_i7.png)
+![iterations_and_time_i7.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/d0337e7e31ce813ffb58c011ecd7e45a1d20a253/src/ai/eval/data/iterations_and_time_i7.png)
 
 #### Step 3: multiprocessing.Pool overhead
 
@@ -134,12 +134,12 @@ and `max_permutations=8-16`.
 I measured how much time it takes the MctsPlayer to run a given number of
 iterations. It seems that the `multiprocessing.Pool` overhead takes a
 significant amount of time, most likely serializing and deserializing the data
-between the parent and child processes. The Mcts algorithm is able to run 10k
+between the parent and child processes. The Mcts algorithm is able to run 20k
 iterations in ~10 seconds, but when the MctsPlayer runs 8 such algorithms in
-parallel using `multiprocessing.Pool` it can only run ~2k iterations in the same
+parallel using `multiprocessing.Pool` it can only run ~4k iterations in the same
 amount of time.
 
-![iterations_and_time_8perm.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/ef10065f5a37ed882359d9a0232675ad78b10810/src/ai/eval/data/iterations_and_time_8perm.png)
+![iterations_and_time_8perm.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/7257ad01d7d4bd92aa25bea5dd1c19fc0ed4ff42/src/ai/eval/data/iterations_and_time_8perm.png)
 
 I experimented with the following ideas hoping they would reduce this overhead,
 but none of them was successful:
