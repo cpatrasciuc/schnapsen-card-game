@@ -155,8 +155,6 @@ but none of them was successful:
 * Use `ray`. It didn't work out of the box with `venv`. I did not debug further.
 * Use `multiprocessing.dummy` just to make sure that threads don't work either.
 
-TODO: Maybe retry the options above after MctsPlayerOptions.first_level_only.
-
 ##### MctsPlayerOptions.first_level_only
 
 One possible solution to reduce the time spent in serializing/deserializing is
