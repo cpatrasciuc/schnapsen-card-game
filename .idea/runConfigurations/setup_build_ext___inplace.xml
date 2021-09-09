@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="setup build_ext --inplace" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="setup build_ext --inplace" type="PythonConfigurationType" factoryName="Python" singleton="false">
     <module name="schnapsen-card-game" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
