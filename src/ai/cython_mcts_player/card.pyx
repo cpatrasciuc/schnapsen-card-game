@@ -7,7 +7,6 @@ cdef bint wins(Card this, Card other, Suit trump_suit):
     return this.card_value > other.card_value
   return this.suit == trump_suit
 
-
 cdef Card marriage_pair(Card self):
   cdef Card result
   result.suit = self.suit

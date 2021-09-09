@@ -37,7 +37,7 @@ class CardTest(unittest.TestCase):
 
   def test_marriage_pair(self):
     for suit in range(4):
-      king = Card(<Suit>(suit), CardValue.KING)
-      queen = Card(<Suit>(suit), CardValue.QUEEN)
+      king = Card(<Suit> suit, CardValue.KING)
+      queen = Card(<Suit> suit, CardValue.QUEEN)
       self.assertEqual(king, marriage_pair(queen))
       self.assertEqual(queen, marriage_pair(king))
