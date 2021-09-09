@@ -17,3 +17,7 @@ mcts~=1.0.4
 
 # For printing CPU details when profiling.
 py-cpuinfo~=8.0.0
+
+# Requirement for CythonMctsPlayer
+setuptools~=56.0.0
+Cython~=0.29.24
