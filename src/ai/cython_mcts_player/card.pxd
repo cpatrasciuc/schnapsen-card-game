@@ -3,12 +3,14 @@
 #  found in the LICENSE file.
 
 cdef enum Suit:
+  NOSUIT = 0
   HEARTS = 1
   SPADES = 2
   DIAMONDS = 3
   CLUBS = 4
 
 cdef enum CardValue:
+  NOVALUE = 0
   JACK = 2
   QUEEN = 3
   KING = 4
@@ -18,6 +20,8 @@ cdef enum CardValue:
 cdef struct Card:
   Suit suit
   CardValue card_value
+
+cdef bint is_null(Card this)
 
 cdef bint wins(Card this, Card other, Suit trump_suit)
 cdef Card marriage_pair(Card card)
