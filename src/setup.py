@@ -6,6 +6,7 @@ import os
 
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
+from Cython.Compiler import Options
 
 
 def _get_all_pyx_files():
@@ -17,13 +18,22 @@ def _get_all_pyx_files():
   return pyx_files
 
 
-# TODO(cython): Read the doc and maybe add more compiler directives.
+Options.fast_fail = True
+Options.warning_errors = True
+Options.error_on_unknown_names = True
+Options.error_on_uninitialized = True
+
 setup(
   packages=find_packages(),
   package_data={r"ai\cython_mcts_player": ["*.pxd"]},
   ext_modules=cythonize(_get_all_pyx_files(),
                         compiler_directives={"embedsignature": True,
-                                             "language_level": 3},
+                                             "language_level": 3,
+                                             "warn.maybe_uninitialized": True,
+                                             "warn.unused": True,
+                                             "warn.unused_arg": True,
+                                             "warn.unused_result": True,
+                                             "always_allow_keywords": False},
                         annotate=True),
   zip_safe=False,
   include_package_data=True
