@@ -4,7 +4,6 @@
 
 from ai.cython_mcts_player.card cimport is_null
 from libc.string cimport memset
-from model.game_state import GameState as PyGameState
 from model.player_id import PlayerId as PyPlayerId
 
 cdef PlayerId opponent(PlayerId id):
@@ -12,7 +11,7 @@ cdef PlayerId opponent(PlayerId id):
     return 1
   return 0
 
-cdef PlayerId from_py_player_id(player_id: PyPlayerId):
+cdef PlayerId from_py_player_id(player_id):
   return 0 if player_id == PyPlayerId.ONE else 1
 
 cdef bint is_to_lead(GameState *this, PlayerId player_id):
@@ -43,9 +42,9 @@ cdef Points _get_game_points_won(Points opponent_points):
   return 3
 
 cdef (Points, Points) game_points(GameState *this):
-  cdef PlayerId winner = -1
+  cdef PlayerId winner
   cdef PlayerId closed_the_talon = this.player_that_closed_the_talon
-  cdef int points = -1
+  cdef int points
   if closed_the_talon != -1:
     if this.trick_points[closed_the_talon] >= 66:
       winner = closed_the_talon
@@ -69,7 +68,7 @@ cdef (Points, Points) game_points(GameState *this):
     return points, 0
   return 0, points
 
-cdef GameState from_python_game_state(py_game_state: PyGameState):
+cdef GameState from_python_game_state(py_game_state):
   cdef GameState game_state
   memset(&game_state, 0, sizeof(game_state))
   for i, card in enumerate(py_game_state.cards_in_hand.one):
