@@ -10,13 +10,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\src\ai\eval\data\iterations_and_time.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\src\ai\eval\data\iterations_and_time_8perm.csv">
           <value>
             <Attribute>
@@ -39,13 +32,6 @@
           </value>
         </entry>
         <entry key="\src\ai\eval\data\mcts_algorithm_and_player_time.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\src\ai\eval\data\mcts_convergence.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
