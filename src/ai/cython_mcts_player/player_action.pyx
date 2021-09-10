@@ -2,11 +2,13 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-from libc.string cimport memset
+from libc.string cimport memcpy, memset
 
-from ai.cython_mcts_player.card cimport is_null, CardValue
+from ai.cython_mcts_player.card cimport CardValue, is_null, Suit, wins
 from ai.cython_mcts_player.game_state cimport is_to_lead, must_follow_suit, \
-  opponent, is_talon_closed
+  opponent, is_talon_closed, Points, from_py_player_id
+from model.player_action import PlayCardAction, AnnounceMarriageAction, \
+  ExchangeTrumpCardAction, CloseTheTalonAction
 
 cdef bint _is_following_suit(PlayerAction action, GameState *game_state):
   cdef PlayerId opp_id = opponent(action.player_id)
@@ -85,7 +87,7 @@ cdef bint _can_execute_on(PlayerAction action, GameState *game_state):
 
   return False
 
-cdef void get_available_actions(GameState *game_state, PlayerAction * actions):
+cdef void get_available_actions(GameState *game_state, PlayerAction *actions):
   cdef int max_num_action = 7
   cdef PlayerId player_id = game_state.next_player
   cdef Card *hand = game_state.cards_in_hand[player_id]
@@ -120,3 +122,157 @@ cdef void get_available_actions(GameState *game_state, PlayerAction * actions):
     if _can_execute_on(action, game_state):
       actions[action_index] = action
       action_index += 1
+
+cdef int _remove_card_from_hand(Card *cards_in_hand, Card card):
+  cdef int i, empty_slot
+  for i in range(5):
+    if is_null(cards_in_hand[i]):
+      break
+    if cards_in_hand[i].suit == card.suit \
+        and cards_in_hand[i].card_value == card.card_value:
+      if i < 4:
+        memcpy(&cards_in_hand[i], &cards_in_hand[i + 1],
+               (5 - i - 1) * sizeof(Card))
+      cards_in_hand[4].suit = Suit.NOSUIT
+      cards_in_hand[4].card_value = CardValue.NOVALUE
+      empty_slot = i
+      while i < 5 and not is_null(cards_in_hand[empty_slot]):
+        empty_slot += 1
+      return empty_slot
+  raise ValueError(
+    f"The card {card.suit, card.card_value} was not found in player's hand")
+
+cdef GameState _execute_play_card_action(GameState *game_state,
+                                         PlayerAction action):
+  cdef GameState new_game_state = game_state[0]
+  cdef PlayerId player_id = action.player_id
+  cdef PlayerId opp_id = opponent(player_id)
+
+  new_game_state.current_trick[player_id] = action.card
+  if is_null(new_game_state.current_trick[opp_id]):
+    # The player lead the trick. Wait for the other player to play a card.
+    new_game_state.next_player = opp_id
+    return new_game_state
+
+  # The player completes a trick. Check who won it.
+  cdef int winner
+  if wins(action.card, game_state.current_trick[opp_id], game_state.trump):
+    winner = player_id
+  else:
+    winner = opp_id
+
+  # If it's the first trick won by this player, check if there are any
+  # pending marriage points to be added.
+  if new_game_state.trick_points[winner] == 0:
+    new_game_state.trick_points[winner] = \
+      game_state.pending_trick_points[winner]
+    new_game_state.pending_trick_points[winner] = 0
+
+  # Update trick_points.
+  new_game_state.trick_points[winner] += \
+    new_game_state.current_trick[0].card_value
+  new_game_state.trick_points[winner] += \
+    new_game_state.current_trick[1].card_value
+
+  # Remove the cards from players' hands.
+  cdef int player_one_index = _remove_card_from_hand(
+    new_game_state.cards_in_hand[0],
+    new_game_state.current_trick[0])
+  cdef int player_two_index = _remove_card_from_hand(
+    new_game_state.cards_in_hand[1],
+    new_game_state.current_trick[1])
+
+  # Clear current trick.
+  memset(&new_game_state.current_trick[0], 0, 2 * sizeof(Card))
+
+  # Maybe draw new cards from the talon.
+  cdef Card first_card = new_game_state.talon[0]
+  cdef Card second_card = new_game_state.talon[1]
+  if not is_null(first_card) and \
+      not is_talon_closed(&new_game_state):
+    memcpy(new_game_state.talon, &new_game_state.talon[2], 7 * sizeof(Card))
+    new_game_state.talon[7].suit = Suit.NOSUIT
+    new_game_state.talon[8].suit = Suit.NOSUIT
+    if is_null(second_card):
+      second_card = new_game_state.trump_card
+      new_game_state.trump_card.suit = Suit.NOSUIT
+
+    # TODO(optimization): If we want to reuse the the nodes in the Mcts tree we
+    #  have to sort the card here, so the order won't matter.
+    if winner == 0:
+      new_game_state.cards_in_hand[0][player_one_index] = first_card
+      new_game_state.cards_in_hand[1][player_two_index] = second_card
+    else:
+      new_game_state.cards_in_hand[0][player_one_index] = second_card
+      new_game_state.cards_in_hand[1][player_two_index] = first_card
+
+  # Update the next player
+  new_game_state.next_player = winner
+
+  return new_game_state
+
+cdef GameState _execute_marriage_action(GameState *game_state,
+                                        PlayerAction action):
+  cdef GameState new_game_state = game_state[0]
+  cdef PlayerId player_id = action.player_id
+  cdef Points marriage_points = \
+    40 if action.card.suit == new_game_state.trump else 20
+  new_game_state.current_trick[player_id] = action.card
+  if new_game_state.trick_points[player_id] > 0:
+    new_game_state.trick_points[player_id] += marriage_points
+  else:
+    new_game_state.pending_trick_points[player_id] += marriage_points
+  new_game_state.next_player = opponent(player_id)
+  return new_game_state
+
+cdef GameState _execute_exchange_trump_card_action(GameState *game_state,
+                                                   PlayerAction action):
+  cdef GameState new_game_state = game_state[0]
+  cdef PlayerId player_id = action.player_id
+  cdef Card trump_jack = Card(suit=new_game_state.trump,
+                              card_value=CardValue.JACK)
+  cdef int trump_jack_index = _remove_card_from_hand(
+    new_game_state.cards_in_hand[player_id], trump_jack)
+  new_game_state.cards_in_hand[player_id][trump_jack_index] = \
+    new_game_state.trump_card
+  new_game_state.trump_card = trump_jack
+  return new_game_state
+
+cdef GameState _execute_close_the_talon_action(GameState *game_state,
+                                               PlayerAction action):
+  cdef GameState new_game_state = game_state[0]
+  new_game_state.player_that_closed_the_talon = action.player_id
+  new_game_state.opponent_points_when_talon_was_closed = \
+    new_game_state.trick_points[opponent(action.player_id)]
+  return new_game_state
+
+cdef GameState execute(GameState *game_state, PlayerAction action):
+  if action.action_type == ActionType.PLAY_CARD:
+    return _execute_play_card_action(game_state, action)
+  if action.action_type == ActionType.ANNOUNCE_MARRIAGE:
+    return _execute_marriage_action(game_state, action)
+  if action.action_type == ActionType.EXCHANGE_TRUMP_CARD:
+    return _execute_exchange_trump_card_action(game_state, action)
+  if action.action_type == ActionType.CLOSE_THE_TALON:
+    return _execute_close_the_talon_action(game_state, action)
+  raise ValueError(f"Unrecognized action_type: {action.action_type}")
+
+cdef PlayerAction from_python_player_action(py_player_action):
+  cdef PlayerAction action
+  memset(&action, 0, sizeof(action))
+  action.player_id = from_py_player_id(py_player_action.player_id)
+  if isinstance(py_player_action, PlayCardAction):
+    action.action_type = ActionType.PLAY_CARD
+    action.card.suit = py_player_action.card.suit
+    action.card.card_value = py_player_action.card.card_value
+  elif isinstance(py_player_action, AnnounceMarriageAction):
+    action.action_type = ActionType.ANNOUNCE_MARRIAGE
+    action.card.suit = py_player_action.card.suit
+    action.card.card_value = py_player_action.card.card_value
+  elif isinstance(py_player_action, ExchangeTrumpCardAction):
+    action.action_type = ActionType.EXCHANGE_TRUMP_CARD
+  elif isinstance(py_player_action, CloseTheTalonAction):
+    action.action_type = ActionType.CLOSE_THE_TALON
+  else:
+    raise ValueError(f"Unrecognized player action: {repr(py_player_action)}")
+  return action
