@@ -8,3 +8,4 @@
 
 from ai.cython_mcts_player.card_test import CardTest
 from ai.cython_mcts_player.game_state_test import GameStateTest, PlayerIdTest
+from ai.cython_mcts_player.player_action_test import AvailableActionsTest

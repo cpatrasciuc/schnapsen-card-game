@@ -31,8 +31,6 @@ setup(
                                              "language_level": 3,
                                              "warn.maybe_uninitialized": True,
                                              "warn.unused": True,
-                                             "warn.unused_arg": True,
-                                             "warn.unused_result": True,
                                              "always_allow_keywords": False},
                         annotate=True),
   zip_safe=False,
