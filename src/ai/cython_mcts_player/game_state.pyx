@@ -93,11 +93,11 @@ cdef GameState from_python_game_state(py_game_state):
   else:
     game_state.player_that_closed_the_talon = -1
   if py_game_state.trick_points.one == 0:
-    for suit in py_game_state.marriage_suits:
+    for suit in py_game_state.marriage_suits.one:
       game_state.pending_trick_points[
         0] += 40 if suit == py_game_state.trump else 20
   if py_game_state.trick_points.two == 0:
-    for suit in py_game_state.marriage_suits:
+    for suit in py_game_state.marriage_suits.two:
       game_state.pending_trick_points[
         1] += 40 if suit == py_game_state.trump else 20
   game_state.trick_points[0] = py_game_state.trick_points.one
