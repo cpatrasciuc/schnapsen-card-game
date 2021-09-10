@@ -2,6 +2,9 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+cdef bint is_null(Card this):
+  return this.suit == Suit.NOSUIT or this.card_value == CardValue.NOVALUE
+
 cdef bint wins(Card this, Card other, Suit trump_suit):
   if this.suit == other.suit:
     return this.card_value > other.card_value

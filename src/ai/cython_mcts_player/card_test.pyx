@@ -5,11 +5,10 @@
 import unittest
 
 from ai.cython_mcts_player.card cimport Card, Suit, CardValue, wins, \
-  marriage_pair
+  marriage_pair, is_null
 
 
 class CardTest(unittest.TestCase):
-
   def test_wins(self):
     # Different suits, no trumps. The card played first always wins.
     card1 = Card(Suit.HEARTS, CardValue.KING)
@@ -41,3 +40,9 @@ class CardTest(unittest.TestCase):
       queen = Card(<Suit> suit, CardValue.QUEEN)
       self.assertEqual(king, marriage_pair(queen))
       self.assertEqual(queen, marriage_pair(king))
+
+  def test_is_null(self):
+    self.assertTrue(is_null(Card(Suit.NOSUIT, CardValue.NOVALUE)))
+    self.assertTrue(is_null(Card(Suit.CLUBS, CardValue.NOVALUE)))
+    self.assertTrue(is_null(Card(Suit.NOSUIT, CardValue.KING)))
+    self.assertFalse(is_null(Card(Suit.CLUBS, CardValue.KING)))
