@@ -31,7 +31,9 @@ setup(
                                              "language_level": 3,
                                              "warn.maybe_uninitialized": True,
                                              "warn.unused": True,
-                                             "always_allow_keywords": False},
+                                             "always_allow_keywords": False,
+                                             "cdivision": True,
+                                             "cdivision_warnings": True},
                         annotate=True),
   zip_safe=False,
   include_package_data=True
