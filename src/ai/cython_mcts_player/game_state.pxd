@@ -7,7 +7,7 @@ from ai.cython_mcts_player.card cimport Card, Suit
 ctypedef int PlayerId
 
 cdef PlayerId opponent(PlayerId id)
-cdef PlayerId from_py_player_id(player_id)
+cdef PlayerId from_python_player_id(player_id)
 
 ctypedef int Points
 

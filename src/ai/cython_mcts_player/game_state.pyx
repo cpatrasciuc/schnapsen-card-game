@@ -11,7 +11,7 @@ cdef PlayerId opponent(PlayerId id):
     return 1
   return 0
 
-cdef PlayerId from_py_player_id(player_id):
+cdef PlayerId from_python_player_id(player_id):
   return 0 if player_id == PyPlayerId.ONE else 1
 
 cdef bint is_to_lead(GameState *this, PlayerId player_id):
@@ -84,9 +84,9 @@ cdef GameState from_python_game_state(py_game_state):
   for i, card in enumerate(py_game_state.talon):
     game_state.talon[i].suit = card.suit
     game_state.talon[i].card_value = card.card_value
-  game_state.next_player = from_py_player_id(py_game_state.next_player)
+  game_state.next_player = from_python_player_id(py_game_state.next_player)
   if py_game_state.player_that_closed_the_talon is not None:
-    game_state.player_that_closed_the_talon = from_py_player_id(
+    game_state.player_that_closed_the_talon = from_python_player_id(
       py_game_state.player_that_closed_the_talon)
     game_state.opponent_points_when_talon_was_closed = int(
       py_game_state.opponent_points_when_talon_was_closed)
