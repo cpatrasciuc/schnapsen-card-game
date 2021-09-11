@@ -6,7 +6,7 @@ from libc.string cimport memcpy, memset
 
 from ai.cython_mcts_player.card cimport CardValue, is_null, Suit, wins
 from ai.cython_mcts_player.game_state cimport is_to_lead, must_follow_suit, \
-  opponent, is_talon_closed, Points, from_py_player_id
+  opponent, is_talon_closed, Points, from_python_player_id
 from model.player_action import PlayCardAction, AnnounceMarriageAction, \
   ExchangeTrumpCardAction, CloseTheTalonAction
 
@@ -260,7 +260,7 @@ cdef GameState execute(GameState *game_state, PlayerAction action):
 cdef PlayerAction from_python_player_action(py_player_action):
   cdef PlayerAction action
   memset(&action, 0, sizeof(action))
-  action.player_id = from_py_player_id(py_player_action.player_id)
+  action.player_id = from_python_player_id(py_player_action.player_id)
   if isinstance(py_player_action, PlayCardAction):
     action.action_type = ActionType.PLAY_CARD
     action.card.suit = py_player_action.card.suit
