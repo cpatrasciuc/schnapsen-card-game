@@ -144,7 +144,7 @@ cdef Node *build_tree(GameState *game_state, int max_iterations,
       break
   return root_node
 
-cdef best_actions(Node *node):
+cdef list best_actions_for_tests(Node *node):
   cdef float best_ucb = -100000
   cdef float ucb
   cdef bint has_expanded_children = False

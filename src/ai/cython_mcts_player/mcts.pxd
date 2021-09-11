@@ -25,4 +25,5 @@ cdef struct Node:
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param)
+cdef list best_actions_for_tests(Node *node)
 cdef debug_str(Node *node)
