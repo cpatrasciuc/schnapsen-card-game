@@ -11,7 +11,7 @@ from ai.cython_mcts_player.game_state cimport GameState, is_game_over, \
 from ai.cython_mcts_player.player_action cimport ActionType, PlayerAction, \
   execute, from_python_player_action
 from ai.cython_mcts_player.mcts cimport build_tree, Node, MAX_CHILDREN, \
-  debug_str, best_actions_for_tests
+  debug_str, best_actions_for_tests, delete_tree
 from model.card import Card as PyCard
 from model.card_value import CardValue as PyCardValue
 from model.game_state_test_utils import \
@@ -47,6 +47,7 @@ class MctsTest(unittest.TestCase):
         0.33 if root_node.actions[i].card.suit == Suit.HEARTS else -0.33,
         root_node.children[i].ucb,
         delta=0.01, msg=str(root_node.actions[i]))
+    delete_tree(root_node)
 
   def test_elimination_play_player_one(self):
     cdef GameState game_state = from_python_game_state(
@@ -65,6 +66,7 @@ class MctsTest(unittest.TestCase):
       self.assertAlmostEqual(
         0.33 if root_node.actions[i].card.suit == Suit.HEARTS else -0.33,
         root_node.children[i].ucb, delta=0.01, msg=str(root_node.actions[i]))
+    delete_tree(root_node)
 
   def test_elimination_play_player_two(self):
     cdef GameState game_state = from_python_game_state(
@@ -90,6 +92,7 @@ class MctsTest(unittest.TestCase):
       self.assertEqual(0, root_node.children[i].player)
       self.assertAlmostEqual(0.33, root_node.children[i].ucb, delta=0.01,
                              msg=action)
+    delete_tree(root_node)
 
   def _assert_player_one_always_wins(self, py_game_state):
     cdef GameState game_state = from_python_game_state(py_game_state)
@@ -110,6 +113,7 @@ class MctsTest(unittest.TestCase):
       best_action = random.choice(best_actions_for_tests(root_node))
       print(f"{game_state.next_player}: {best_action}")
       game_state = execute(&game_state, best_action)
+      delete_tree(root_node)
     cdef Points score_p1, score_p2
     score_p1, score_p2 = game_points(&game_state)
     self.assertEqual(0, score_p2)
@@ -147,6 +151,7 @@ class MctsTest(unittest.TestCase):
     self.assertEqual([19, 26], game_state.trick_points)
     py_game_state = py_action.execute(py_game_state)
     self._assert_player_one_always_wins(py_game_state)
+    delete_tree(root_node)
 
   def test_forcing_the_issue_player_one_always_wins(self):
     game_state = get_game_state_for_forcing_the_issue_puzzle()

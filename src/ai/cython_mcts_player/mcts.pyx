@@ -7,7 +7,7 @@
 import logging
 
 from libc.math cimport log, sqrt
-from libc.stdlib cimport malloc, rand
+from libc.stdlib cimport free, malloc, rand
 from libc.string cimport memset
 from libcpp.vector cimport vector
 
@@ -179,3 +179,12 @@ cdef list best_actions_for_tests(Node *node):
 cdef debug_str(Node *node):
   return f"Q:{node.q}, N:{node.n}, UCB({node.player}):{node.ucb} " + \
          f"FullSim:{node.fully_simulated}"
+
+cdef void delete_tree(Node *root_node):
+  if root_node == NULL:
+    return
+  cdef int i
+  for i in range(MAX_CHILDREN):
+    if root_node.children[i] != NULL:
+      delete_tree(root_node.children[i])
+  free(root_node)
