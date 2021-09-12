@@ -2,7 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-from ai.cython_mcts_player.card cimport is_null
+from ai.cython_mcts_player.card cimport CardValue, is_null
 from libc.string cimport memset
 from model.player_id import PlayerId as PyPlayerId
 
@@ -75,18 +75,30 @@ cdef GameState from_python_game_state(py_game_state):
   cdef GameState game_state
   memset(&game_state, 0, sizeof(game_state))
   for i, card in enumerate(py_game_state.cards_in_hand.one):
-    game_state.cards_in_hand[0][i].suit = card.suit
-    game_state.cards_in_hand[0][i].card_value = card.card_value
+    if card is None:
+      game_state.cards_in_hand[0][i].suit = Suit.UNKNOWN_SUIT
+      game_state.cards_in_hand[0][i].card_value = CardValue.UNKNOWN_VALUE
+    else:
+      game_state.cards_in_hand[0][i].suit = card.suit
+      game_state.cards_in_hand[0][i].card_value = card.card_value
   for i, card in enumerate(py_game_state.cards_in_hand.two):
-    game_state.cards_in_hand[1][i].suit = card.suit
-    game_state.cards_in_hand[1][i].card_value = card.card_value
+    if card is None:
+      game_state.cards_in_hand[1][i].suit = Suit.UNKNOWN_SUIT
+      game_state.cards_in_hand[1][i].card_value = CardValue.UNKNOWN_VALUE
+    else:
+      game_state.cards_in_hand[1][i].suit = card.suit
+      game_state.cards_in_hand[1][i].card_value = card.card_value
   game_state.trump = py_game_state.trump
   if py_game_state.trump_card is not None:
     game_state.trump_card.suit = py_game_state.trump_card.suit
     game_state.trump_card.card_value = py_game_state.trump_card.card_value
   for i, card in enumerate(py_game_state.talon):
-    game_state.talon[i].suit = card.suit
-    game_state.talon[i].card_value = card.card_value
+    if card is None:
+      game_state.talon[i].suit = Suit.UNKNOWN_SUIT
+      game_state.talon[i].card_value = CardValue.UNKNOWN_VALUE
+    else:
+      game_state.talon[i].suit = card.suit
+      game_state.talon[i].card_value = card.card_value
   game_state.next_player = from_python_player_id(py_game_state.next_player)
   if py_game_state.player_that_closed_the_talon is not None:
     game_state.player_that_closed_the_talon = from_python_player_id(
