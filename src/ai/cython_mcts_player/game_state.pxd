@@ -8,6 +8,7 @@ ctypedef int PlayerId
 
 cdef PlayerId opponent(PlayerId id)
 cdef PlayerId from_python_player_id(player_id)
+cdef to_python_player_id(PlayerId player_id)
 
 ctypedef int Points
 
