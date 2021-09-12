@@ -13,12 +13,19 @@ from ai.cython_mcts_player.game_state cimport GameState, \
   from_python_game_state, is_to_lead, is_talon_closed, must_follow_suit, \
   is_game_over, game_points
 from ai.cython_mcts_player.player_action cimport ActionType, PlayerAction, \
-  execute, get_available_actions, from_python_player_action
+  execute, get_available_actions, from_python_player_action, \
+  to_python_player_action
+
+from model.card import Card as PyCard
+from model.card_value import CardValue as PyCardValue
 from model.game_state import GameState as PyGameState
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_all_tricks_played, \
   get_game_state_with_empty_talon_for_tests
+from model.player_action import PlayCardAction, AnnounceMarriageAction, \
+  ExchangeTrumpCardAction, CloseTheTalonAction
 from model.player_id import PlayerId as PyPlayerId
+from model.suit import Suit as PySuit
 
 
 class AvailableActionsTest(unittest.TestCase):
@@ -337,3 +344,41 @@ class ExecutePlayerActionsTest(unittest.TestCase):
           py_game_points = py_game_state.game_points
           self.assertEqual((py_game_points.one, py_game_points.two),
                            game_points(&game_state))
+
+
+class ToPythonPlayerActionTest(unittest.TestCase):
+  def test_play_card_action(self):
+    self.assertEqual(
+      PlayCardAction(PyPlayerId.ONE, PyCard(PySuit.HEARTS, PyCardValue.KING)),
+      to_python_player_action(PlayerAction(ActionType.PLAY_CARD, 0,
+                                           Card(Suit.HEARTS, CardValue.KING))))
+
+  def test_announce_marriage_action(self):
+    self.assertEqual(
+      AnnounceMarriageAction(PyPlayerId.TWO,
+                             PyCard(PySuit.HEARTS, PyCardValue.KING)),
+      to_python_player_action(PlayerAction(ActionType.ANNOUNCE_MARRIAGE, 1,
+                                           Card(Suit.HEARTS, CardValue.KING))))
+
+  def test_exchange_trump_card_action(self):
+    self.assertEqual(ExchangeTrumpCardAction(PyPlayerId.ONE),
+                     to_python_player_action(
+                       PlayerAction(ActionType.EXCHANGE_TRUMP_CARD, 0,
+                                    Card(Suit.HEARTS, CardValue.KING))))
+
+  def test_exchange_trump_card_action(self):
+    self.assertEqual(ExchangeTrumpCardAction(PyPlayerId.ONE),
+                     to_python_player_action(
+                       PlayerAction(ActionType.EXCHANGE_TRUMP_CARD, 0,
+                                    Card(Suit.HEARTS, CardValue.KING))))
+
+  def test_close_the_talon_action(self):
+    self.assertEqual(CloseTheTalonAction(PyPlayerId.TWO),
+                     to_python_player_action(
+                       PlayerAction(ActionType.CLOSE_THE_TALON, 1,
+                                    Card(Suit.HEARTS, CardValue.KING))))
+
+  def test_unrecognized_player_action(self):
+    with self.assertRaisesRegexp(ValueError, "Unrecognized player action"):
+      to_python_player_action(PlayerAction(<ActionType> 10, 1,
+                                           Card(Suit.HEARTS, CardValue.KING)))

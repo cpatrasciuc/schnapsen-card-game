@@ -20,3 +20,4 @@ cdef struct PlayerAction:
 cdef void get_available_actions(GameState *game_state, PlayerAction * actions)
 cdef GameState execute(GameState *game_state, PlayerAction action)
 cdef PlayerAction from_python_player_action(py_player_action)
+cdef to_python_player_action(PlayerAction action)
