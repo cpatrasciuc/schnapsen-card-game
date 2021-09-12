@@ -5,6 +5,10 @@
 cdef bint is_null(Card this):
   return this.suit == Suit.NOSUIT or this.card_value == CardValue.NOVALUE
 
+cdef bint is_unknown(Card this):
+  return this.suit == Suit.UNKNOWN_SUIT or \
+         this.card_value == CardValue.UNKNOWN_VALUE
+
 cdef bint wins(Card this, Card other, Suit trump_suit):
   if this.suit == other.suit:
     return this.card_value > other.card_value

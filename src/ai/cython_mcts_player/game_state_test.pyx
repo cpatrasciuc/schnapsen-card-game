@@ -11,7 +11,8 @@ from ai.cython_mcts_player.card cimport Card, Suit, CardValue
 from model.game_state import GameState as PyGameState
 from model.game_state_test_utils import get_game_state_for_tests, \
   get_game_state_with_all_tricks_played
-from model.player_id import PlayerId
+from model.game_state_validation import GameStateValidator
+from model.player_id import PlayerId as PyPlayerId
 
 
 class PlayerIdTest(unittest.TestCase):
@@ -123,7 +124,7 @@ class GameStateTest(unittest.TestCase):
 
   def test_initial_game_state(self):
     cdef GameState game_state = from_python_game_state(
-      PyGameState.new(dealer=PlayerId.ONE, random_seed=123))
+      PyGameState.new(dealer=PyPlayerId.ONE, random_seed=123))
     self.assertEqual([Card(Suit.SPADES, CardValue.KING),
                       Card(Suit.CLUBS, CardValue.KING),
                       Card(Suit.HEARTS, CardValue.TEN),
@@ -152,6 +153,75 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([0, 0], game_state.trick_points)
+    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
+                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                     game_state.current_trick)
+
+    self.assertFalse(is_to_lead(&game_state, 0))
+    self.assertTrue(is_to_lead(&game_state, 1))
+    self.assertFalse(is_talon_closed(&game_state))
+    self.assertFalse(must_follow_suit(&game_state))
+    self.assertFalse(is_game_over(&game_state))
+
+  def test_get_game_state_for_tests_game_view(self):
+    py_game_state = get_game_state_for_tests()
+    cdef GameState game_state = from_python_game_state(
+      py_game_state.next_player_view())
+    self.assertEqual([Card(Suit.HEARTS, CardValue.QUEEN),
+                      Card(Suit.HEARTS, CardValue.KING),
+                      Card(Suit.HEARTS, CardValue.TEN),
+                      Card(Suit.SPADES, CardValue.TEN),
+                      Card(Suit.SPADES, CardValue.ACE)],
+                     game_state.cards_in_hand[0])
+    self.assertEqual([Card(Suit.DIAMONDS, CardValue.QUEEN),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE)],
+                     game_state.cards_in_hand[1])
+    self.assertEqual(Suit.CLUBS, game_state.trump)
+    self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
+    self.assertEqual([Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                     list(game_state.talon)[:2])
+    self.assertEqual(0, game_state.next_player)
+    self.assertEqual(-1, game_state.player_that_closed_the_talon)
+    self.assertEqual([0, 0], game_state.pending_trick_points)
+    self.assertEqual([22, 53], game_state.trick_points)
+    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
+                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                     game_state.current_trick)
+
+    self.assertTrue(is_to_lead(&game_state, 0))
+    self.assertFalse(is_to_lead(&game_state, 1))
+    self.assertFalse(is_talon_closed(&game_state))
+    self.assertFalse(must_follow_suit(&game_state))
+    self.assertFalse(is_game_over(&game_state))
+
+    with GameStateValidator(py_game_state):
+      py_game_state.next_player = PyPlayerId.TWO
+    game_state = from_python_game_state(py_game_state.next_player_view())
+    self.assertEqual([Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE)],
+                     game_state.cards_in_hand[0])
+    self.assertEqual([Card(Suit.DIAMONDS, CardValue.QUEEN),
+                      Card(Suit.CLUBS, CardValue.KING),
+                      Card(Suit.CLUBS, CardValue.JACK),
+                      Card(Suit.SPADES, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.QUEEN)],
+                     game_state.cards_in_hand[1])
+    self.assertEqual(Suit.CLUBS, game_state.trump)
+    self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
+    self.assertEqual([Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
+                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                     list(game_state.talon)[:2])
+    self.assertEqual(1, game_state.next_player)
+    self.assertEqual(-1, game_state.player_that_closed_the_talon)
+    self.assertEqual([0, 0], game_state.pending_trick_points)
+    self.assertEqual([22, 53], game_state.trick_points)
     self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
                       Card(Suit.NOSUIT, CardValue.NOVALUE)],
                      game_state.current_trick)
