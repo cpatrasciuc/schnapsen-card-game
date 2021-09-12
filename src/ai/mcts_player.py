@@ -38,13 +38,12 @@ class MctsPlayer(Player):
   def __init__(self, player_id: PlayerId, cheater: bool = False,
                options: Optional[MctsPlayerOptions] = None):
     """
-    Creates a new LibMctsPlayer.
+    Creates a new MctsPlayer.
     :param player_id: The ID of the player in a game of Schnapsen (ONE or TWO).
     :param cheater: If True, this player will always know the cards in their
     opponent's hand and the order of the cards in the talon.
     :param options: The parameters used to configure the MctsPlayer.
     """
-    # pylint: disable=too-many-arguments
     super().__init__(player_id, cheater)
     self._options = options or MctsPlayerOptions()
     # pylint: disable=consider-using-with
