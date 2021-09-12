@@ -6,9 +6,12 @@ from libc.string cimport memcpy, memset
 
 from ai.cython_mcts_player.card cimport CardValue, is_null, Suit, wins
 from ai.cython_mcts_player.game_state cimport is_to_lead, must_follow_suit, \
-  opponent, is_talon_closed, Points, from_python_player_id
+  opponent, is_talon_closed, Points, from_python_player_id, to_python_player_id
+from model.card import Card as PyCard
+from model.card_value import CardValue as PyCardValue
 from model.player_action import PlayCardAction, AnnounceMarriageAction, \
   ExchangeTrumpCardAction, CloseTheTalonAction
+from model.suit import Suit as PySuit
 
 cdef bint _is_following_suit(PlayerAction action, GameState *game_state):
   cdef PlayerId opp_id = opponent(action.player_id)
@@ -276,3 +279,19 @@ cdef PlayerAction from_python_player_action(py_player_action):
   else:
     raise ValueError(f"Unrecognized player action: {repr(py_player_action)}")
   return action
+
+cdef to_python_player_action(PlayerAction action):
+  py_player_id = to_python_player_id(action.player_id)
+  if action.action_type == ActionType.PLAY_CARD:
+    return PlayCardAction(py_player_id,
+                          PyCard(PySuit(action.card.suit),
+                                 PyCardValue(action.card.card_value)))
+  if action.action_type == ActionType.ANNOUNCE_MARRIAGE:
+    return AnnounceMarriageAction(py_player_id,
+                                  PyCard(PySuit(action.card.suit),
+                                         PyCardValue(action.card.card_value)))
+  if action.action_type == ActionType.EXCHANGE_TRUMP_CARD:
+    return ExchangeTrumpCardAction(py_player_id)
+  if action.action_type == ActionType.CLOSE_THE_TALON:
+    return CloseTheTalonAction(py_player_id)
+  raise ValueError(f"Unrecognized player action: {action}")
