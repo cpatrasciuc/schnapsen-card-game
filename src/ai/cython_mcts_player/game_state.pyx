@@ -14,6 +14,9 @@ cdef PlayerId opponent(PlayerId id):
 cdef PlayerId from_python_player_id(player_id):
   return 0 if player_id == PyPlayerId.ONE else 1
 
+cdef to_python_player_id(PlayerId player_id):
+  return PyPlayerId.ONE if player_id == 0 else PyPlayerId.TWO
+
 cdef bint is_to_lead(GameState *this, PlayerId player_id):
   return this.next_player == player_id and is_null(
     this.current_trick[0]) and is_null(this.current_trick[1])
