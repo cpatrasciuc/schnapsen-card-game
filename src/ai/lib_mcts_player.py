@@ -54,6 +54,7 @@ class _State:
     return points_diff / 3.0
 
 
+# TODO(refactor): Make this a subclass of BaseMctsPlayer.
 class LibMctsPlayer(Player):
   """Player implementation that uses the mcts Python package."""
 
