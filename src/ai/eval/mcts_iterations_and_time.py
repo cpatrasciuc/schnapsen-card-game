@@ -15,8 +15,7 @@ import matplotlib.pyplot as plt
 from cpuinfo import cpuinfo
 from pandas import DataFrame
 
-from ai.mcts_algorithm import Mcts
-from ai.mcts_player import MctsPlayer
+from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -33,22 +32,26 @@ Closure = Callable[[], None]
 
 def _get_algorithm_closure(game_state: GameState,
                            iterations: int) -> Tuple[Closure, Closure]:
-  mcts = Mcts(game_state.next_player)
+  mcts = CythonMctsPlayer(game_state.next_player, cheater=True,
+                          options=MctsPlayerOptions(
+                            max_permutations=10,  # Won't matter if cheater=True
+                            max_iterations=iterations,
+                            num_processes=1))
 
   def _run():
-    mcts.build_tree(game_state, iterations)
+    mcts.request_next_action(game_state)
 
-  return _run, lambda: None
+  return _run, mcts.cleanup
 
 
 def _get_player_closure(game_state: GameState,
                         iterations: int,
                         max_permutations: int) -> Tuple[Closure, Closure]:
-  mcts = MctsPlayer(game_state.next_player, cheater=False,
-                    options=MctsPlayerOptions(
-                      max_permutations=max_permutations,
-                      max_iterations=iterations,
-                      num_processes=multiprocessing.cpu_count()))
+  mcts = CythonMctsPlayer(game_state.next_player, cheater=False,
+                          options=MctsPlayerOptions(
+                            max_permutations=max_permutations,
+                            max_iterations=iterations,
+                            num_processes=multiprocessing.cpu_count()))
 
   def _run():
     mcts.request_next_action(game_state.next_player_view())
@@ -138,7 +141,7 @@ def profile(max_permutations: int, max_iterations: int = 1000):
 
 
 def _main():
-  max_permutations = multiprocessing.cpu_count()
+  max_permutations = 1  # multiprocessing.cpu_count()
   iterations_and_time(max_permutations)
   profile(max_permutations)
 
