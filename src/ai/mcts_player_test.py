@@ -148,6 +148,12 @@ class MctsPlayerMergeUcbsTest(MctsPlayerTest):
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
+class InProcessMctsPlayerTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None, num_processes=1)
+    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
+
+
 class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(
