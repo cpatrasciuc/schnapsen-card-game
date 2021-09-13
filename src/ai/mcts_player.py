@@ -37,8 +37,7 @@ def _find_action_with_max_score(
 
 
 def run_mcts(permutation: List[Card], game_view: GameState,
-             player_id: PlayerId, max_iterations: int,
-             first_level_only: bool) -> ActionsWithScores:
+             player_id: PlayerId, max_iterations: int) -> ActionsWithScores:
   game_state = populate_game_view(game_view, permutation)
   mcts_algorithm = Mcts(player_id)
   root_node = mcts_algorithm.build_tree(game_state, max_iterations)
@@ -145,7 +144,6 @@ class MctsPlayer(BaseMctsPlayer):
     ActionsWithScores]:
     root_nodes = self._pool.map(
       functools.partial(run_mcts, game_view=game_view, player_id=self.id,
-                        max_iterations=self._options.max_iterations,
-                        first_level_only=self._options.first_level_only),
+                        max_iterations=self._options.max_iterations),
       permutations)
     return root_nodes
