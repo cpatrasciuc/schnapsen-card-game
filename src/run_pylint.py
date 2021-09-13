@@ -40,6 +40,7 @@ def run_pylint():
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
     "--good-names=i,j,k,q,n,ex,Run,_,ax",
+    "--extension-pkg-allow-list=ai.cython_mcts_player.player",
   ]
 
   # Call pylint in a subprocess since it's licensed under GPL. Do not import it.

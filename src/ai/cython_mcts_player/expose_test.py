@@ -4,7 +4,7 @@
 
 # Import all Cython tests so they are discovered by unittest.
 
-# pylint: disable=no-name-in-module,unused-import,wildcard-import
+# pylint: disable=unused-import,wildcard-import
 
 from ai.cython_mcts_player.card_test import *
 from ai.cython_mcts_player.game_state_test import *
