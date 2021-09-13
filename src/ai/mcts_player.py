@@ -129,21 +129,31 @@ class MctsPlayer(BaseMctsPlayer):
   def __init__(self, player_id: PlayerId, cheater: bool = False,
                options: Optional[MctsPlayerOptions] = None):
     super().__init__(player_id, cheater, options)
-    # pylint: disable=consider-using-with
-    self._pool = multiprocessing.Pool(processes=self._options.num_processes)
-    # pylint: enable=consider-using-with
-    logging.info("MctsPlayer: Multiprocessing pool using %s processes.",
-                 self._options.num_processes)
+    self._pool = None
+    if options.num_processes != 1:
+      # pylint: disable=consider-using-with
+      self._pool = multiprocessing.Pool(processes=self._options.num_processes)
+      # pylint: enable=consider-using-with
+      logging.info("MctsPlayer: Multiprocessing pool using %s processes.",
+                   self._options.num_processes)
+    else:
+      logging.info("MctsPlayer: Mcts will run in-process.")
 
   def cleanup(self) -> None:
-    self._pool.terminate()
-    self._pool.join()
+    if self._pool is not None:
+      self._pool.terminate()
+      self._pool.join()
 
   def run_mcts_algorithm(self, game_view: GameState,
                          permutations: List[List[Card]]) -> List[
     ActionsWithScores]:
-    root_nodes = self._pool.map(
-      functools.partial(run_mcts, game_view=game_view, player_id=self.id,
-                        max_iterations=self._options.max_iterations),
-      permutations)
+    if self._pool is not None:
+      root_nodes = self._pool.map(
+        functools.partial(run_mcts, game_view=game_view, player_id=self.id,
+                          max_iterations=self._options.max_iterations),
+        permutations)
+    else:
+      root_nodes = [
+        run_mcts(permutation, game_view, self.id, self._options.max_iterations)
+        for permutation in permutations]
     return root_nodes
