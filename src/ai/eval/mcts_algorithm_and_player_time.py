@@ -25,7 +25,7 @@ def time_algorithm_and_player(options: MctsPlayerOptions) -> Tuple[
 
   timer = timeit.Timer(
     lambda: run_mcts(list(permutation), game_view, game_state.next_player,
-                     options.max_iterations, options.first_level_only))
+                     options.max_iterations))
   number, time_taken = timer.autorange()
   algorithm_avg_time = time_taken / number
   print(f"Run the Mcts algorithm {number} time(s)\n" +
