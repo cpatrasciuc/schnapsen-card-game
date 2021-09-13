@@ -6,8 +6,7 @@ import dataclasses
 import multiprocessing
 from typing import Optional
 
-from ai.merge_root_nodes_func import max_average_ucb_across_root_nodes, \
-  MergeRootNodesFunc
+from ai.merge_scoring_infos_func import max_average_ucb, MergeScoringInfosFunc
 from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 
 
@@ -45,9 +44,8 @@ class MctsPlayerOptions:
   be processed when request_next_action() is called.
   """
 
-  merge_root_nodes_func: Optional[
-    MergeRootNodesFunc] = max_average_ucb_across_root_nodes
+  merge_scoring_info_func: Optional[MergeScoringInfosFunc] = max_average_ucb
   """
-  The function that receives all the trees corresponding to all the processed
-  permutations, merges the information and picks the best action to be played.
+  The function that merges all the ScoringInfos across all the processed
+  permutations.
   """

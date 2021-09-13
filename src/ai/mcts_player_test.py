@@ -7,7 +7,7 @@ from typing import Optional
 
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_root_nodes_func import most_frequent_best_action, merge_ucbs
+from ai.merge_scoring_infos_func import most_frequent_best_action, merge_ucbs
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -134,13 +134,13 @@ class MctsPlayerTest(unittest.TestCase):
 
 class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(max_iterations=None,
-                                merge_root_nodes_func=most_frequent_best_action)
+    options = MctsPlayerOptions(
+      max_iterations=None, merge_scoring_info_func=most_frequent_best_action)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
 class MctsPlayerMergeUcbsTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(max_iterations=None,
-                                merge_root_nodes_func=merge_ucbs)
+                                merge_scoring_info_func=merge_ucbs)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)

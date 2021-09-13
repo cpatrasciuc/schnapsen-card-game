@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 
 from ai.mcts_algorithm import Mcts, SchnapsenNode, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_root_nodes_func import ScoringInfo, ActionsWithScores
+from ai.merge_scoring_infos_func import ScoringInfo, ActionsWithScores
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
@@ -99,7 +99,7 @@ class BaseMctsPlayer(Player, abc.ABC):
         for action, score in actions_with_scores.items():
           print(action, "-->", score)
         print()
-    actions_and_scores = self._options.merge_root_nodes_func(
+    actions_and_scores = self._options.merge_scoring_info_func(
       actions_with_scores_list)
     return _find_action_with_max_score(actions_and_scores)
 
