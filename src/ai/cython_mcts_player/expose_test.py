@@ -9,4 +9,5 @@
 from ai.cython_mcts_player.card_test import *
 from ai.cython_mcts_player.game_state_test import *
 from ai.cython_mcts_player.mcts_test import *
+from ai.cython_mcts_player.openmp_test import *
 from ai.cython_mcts_player.player_action_test import *
