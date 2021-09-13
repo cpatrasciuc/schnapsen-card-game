@@ -24,7 +24,7 @@ cdef struct Node:
   PlayerId player
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
-                      float exploration_param)
+                      float exploration_param) nogil
 cdef list best_actions_for_tests(Node *node)
 cdef debug_str(Node *node)
-cdef void delete_tree(Node *root_node)
+cdef void delete_tree(Node *root_node) nogil
