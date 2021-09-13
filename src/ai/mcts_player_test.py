@@ -5,9 +5,11 @@
 import unittest
 from typing import Optional
 
+from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import most_frequent_best_action, merge_ucbs
+from ai.merge_scoring_infos_func import most_frequent_best_action, merge_ucbs, \
+  max_average_ucb
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -47,7 +49,7 @@ class MctsPlayerTest(unittest.TestCase):
     player_two: Optional[MctsPlayer] = None
     try:
       options = MctsPlayerOptions(max_iterations=None)
-      player_two = MctsPlayer(PlayerId.TWO, options=options)
+      player_two = self._mcts_player.__class__(PlayerId.TWO, options=options)
       players = PlayerPair(self._mcts_player, player_two)
       while not game_state.is_game_over:
         player = players[game_state.next_player]
@@ -144,3 +146,24 @@ class MctsPlayerMergeUcbsTest(MctsPlayerTest):
     options = MctsPlayerOptions(max_iterations=None,
                                 merge_scoring_info_func=merge_ucbs)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(
+      max_iterations=None, merge_scoring_info_func=max_average_ucb)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(
+      max_iterations=None, merge_scoring_info_func=most_frequent_best_action)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerMergeUcbsTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(
+      max_iterations=None, merge_scoring_info_func=merge_ucbs)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
