@@ -10,8 +10,9 @@ import multiprocessing
 import random
 from typing import List, Optional, Tuple
 
-from ai.mcts_algorithm import Mcts, SchnapsenNode
+from ai.mcts_algorithm import Mcts, SchnapsenNode, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
+from ai.merge_root_nodes_func import ScoringInfo, ActionsWithScores
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
@@ -37,15 +38,20 @@ def _find_action_with_max_score(
 
 def run_mcts(permutation: List[Card], game_view: GameState,
              player_id: PlayerId, max_iterations: int,
-             first_level_only: bool) -> SchnapsenNode:
+             first_level_only: bool) -> ActionsWithScores:
   game_state = populate_game_view(game_view, permutation)
   mcts_algorithm = Mcts(player_id)
   root_node = mcts_algorithm.build_tree(game_state, max_iterations)
-  if first_level_only:
-    for child in root_node.children.values():
-      if child is not None and not child.terminal:
-        del child.children
-  return root_node
+  actions_with_scores = {}
+  for action, child in root_node.children.items():
+    if child is None:
+      continue
+    actions_with_scores[action] = ScoringInfo(
+      q=(child.q if child.player == root_node.player else -child.q),
+      n=child.n, score=ucb_for_player(child, root_node.player),
+      fully_simulated=child.fully_simulated,
+      terminal=child.terminal)
+  return actions_with_scores
 
 
 class BaseMctsPlayer(Player, abc.ABC):
@@ -88,13 +94,14 @@ class BaseMctsPlayer(Player, abc.ABC):
 
   def request_next_action(self, game_view: GameState) -> PlayerAction:
     permutations = self._generate_permutations(game_view)
-    root_nodes = self.run_mcts_algorithm(game_view, permutations)
+    actions_with_scores_list = self.run_mcts_algorithm(game_view, permutations)
     if __debug__:
-      for root_node in root_nodes:
-        for action, child in root_node.children.items():
-          print(action, "-->", child)
+      for actions_with_scores in actions_with_scores_list:
+        for action, score in actions_with_scores.items():
+          print(action, "-->", score)
         print()
-    actions_and_scores = self._options.merge_root_nodes_func(root_nodes)
+    actions_and_scores = self._options.merge_root_nodes_func(
+      actions_with_scores_list)
     return _find_action_with_max_score(actions_and_scores)
 
   @abc.abstractmethod
@@ -134,7 +141,8 @@ class MctsPlayer(BaseMctsPlayer):
     self._pool.join()
 
   def run_mcts_algorithm(self, game_view: GameState,
-                         permutations: List[List[Card]]) -> List[SchnapsenNode]:
+                         permutations: List[List[Card]]) -> List[
+    ActionsWithScores]:
     root_nodes = self._pool.map(
       functools.partial(run_mcts, game_view=game_view, player_id=self.id,
                         max_iterations=self._options.max_iterations,

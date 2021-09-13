@@ -2,30 +2,53 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import dataclasses
 import logging
 import pprint
 from collections import Counter
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 
-from ai.mcts_algorithm import SchnapsenNode
 from model.player_action import PlayerAction
 
+
+@dataclasses.dataclass
+class ScoringInfo:
+  """
+  A simplified data structure that only has the fields from an Mcts Node that
+  are used in selecting the best action across all the Mcts trees.
+  """
+  q: float
+  """Same as Node.q, but from the player's perspective"""
+  n: int
+  score: float
+  """Same as Node.ucb, but from the player's perspective"""
+  fully_simulated: bool
+  terminal: bool
+
+
+ActionsWithScores = Dict[PlayerAction, ScoringInfo]
+
 MergeRootNodesFunc = Callable[
-  [List[SchnapsenNode]], List[Tuple[PlayerAction, float]]]
+  [List[ActionsWithScores]], List[Tuple[PlayerAction, float]]]
 """
-Function that receives the root nodes for all the permutations processed by an
-MctsPlayer and returns a list with (action, score) tuples, where the score is
-some aggregation across all the root nodes for that particular action. Each
-action should only appear once in the output.
+Function that receives the ActionWithScores dictionaries for all the
+processed permutations (i.e., one dictionary per root node) and returns a list
+with (action, score) tuples, where the score is some aggregation across all the
+root nodes for that particular action. Each action should only appear once in
+the output.
 """
 
 
-def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> List[
+def most_frequent_best_action(
+    actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
   """Returns the most popular action across all root nodes' best actions."""
   best_actions = []
-  for root_node in root_nodes:
-    best_actions.extend(root_node.best_actions())
+  for actions_with_scores in actions_with_scores_list:
+    max_score = max(score.score for _, score in actions_with_scores.items())
+    best_actions.extend(
+      [action for action, score in actions_with_scores.items() if
+       score.score == max_score])
   counter = Counter(best_actions)
   action_and_scores = counter.most_common(10)
   logging.info("MctsPlayer: Best action counts:\n%s",
@@ -35,26 +58,28 @@ def most_frequent_best_action(root_nodes: List[SchnapsenNode]) -> List[
 
 if __debug__:
   def _assert_action_is_terminal_across_root_nodes(
-      root_nodes: List[SchnapsenNode], action: PlayerAction) -> None:
-    for root_node in root_nodes:
-      child = root_node.children[action]
+      actions_with_scores_list: List[ActionsWithScores],
+      action: PlayerAction) -> None:
+    for actions_with_scores in actions_with_scores_list:
+      score = actions_with_scores.get(action, None)
       # TODO(tests): Double check this is not a bug. This means this action was
       #  not even visited for this root node.
-      if child is None:
+      if score is None:
         continue
-      assert child.terminal
+      assert score.terminal
 
 
-def _all_nodes_are_fully_simulated(root_nodes: List[SchnapsenNode]) -> bool:
-  is_fully_expanded = True
-  for root_node in root_nodes:
-    for child in root_node.children.values():
-      if child is None or not child.fully_simulated:
-        is_fully_expanded = False
+def _all_nodes_are_fully_simulated(
+    actions_with_scores_list: List[ActionsWithScores]) -> bool:
+  is_fully_simulated = True
+  for actions_with_scores in actions_with_scores_list:
+    for score in actions_with_scores.values():
+      if not score.fully_simulated:
+        is_fully_simulated = False
         break
-    if not is_fully_expanded:
+    if not is_fully_simulated:
       break
-  return is_fully_expanded
+  return is_fully_simulated
 
 
 # TODO(mcts): Can we aggregate better across permutations? Here we weight each
@@ -68,15 +93,12 @@ def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
 
 
 def _get_action_scores_for_fully_simulated_trees(
-    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
-  player_id = root_nodes[0].player
+    actions_with_scores_list: List[ActionsWithScores]) -> List[
+  Tuple[PlayerAction, float]]:
   stats = {}
-  for root_node in root_nodes:
-    for action, child in root_node.children.items():
-      if child is None:
-        continue
-      stats[action] = stats.get(action, []) + [
-        child.ucb if child.player == player_id else -child.ucb]
+  for actions_with_scores in actions_with_scores_list:
+    for action, score in actions_with_scores.items():
+      stats[action] = stats.get(action, []) + [score.score]
   if __debug__:
     pprint.pprint(stats)
   actions_and_scores = [(action, sum(ucb) / len(ucb)) for action, ucb in
@@ -85,21 +107,21 @@ def _get_action_scores_for_fully_simulated_trees(
 
 
 def _get_action_scores_for_partially_simulated_trees(
-    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
-  player_id = root_nodes[0].player
+    actions_with_scores_list: List[ActionsWithScores]) -> List[
+  Tuple[PlayerAction, float]]:
   stats = {}
-  for root_node in root_nodes:
-    for action, child in root_node.children.items():
-      if child is None:
-        continue
-      if child.terminal:
+  for actions_with_scores in actions_with_scores_list:
+    for action, score in actions_with_scores.items():
+      if score.terminal:
         if __debug__:
-          _assert_action_is_terminal_across_root_nodes(root_nodes, action)
-        q = child.ucb if child.player == player_id else -child.ucb
+          _assert_action_is_terminal_across_root_nodes(actions_with_scores,
+                                                       action)
+        q = score.score
+        # TODO(mcts): We could us the real value of score.n here.
         n = 1
       else:
-        q = child.q if child.player == player_id else -child.q
-        n = child.n
+        q = score.q
+        n = score.n
       stats[action] = stats.get(action, []) + [(q, n)]
   if __debug__:
     pprint.pprint(stats)
@@ -121,16 +143,15 @@ def _get_action_scores_for_partially_simulated_trees(
 # to be expanded in Mcts and/or consider the best node to be the mode visited
 # one.
 
-def merge_ucbs(root_nodes: List[SchnapsenNode]) -> List[
+def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
-  assert len(set(root_node.player for root_node in root_nodes)) == 1
-  is_fully_simulated = _all_nodes_are_fully_simulated(root_nodes)
+  is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     actions_and_scores = _get_action_scores_for_fully_simulated_trees(
-      root_nodes)
+      actions_with_scores_list)
   else:
     actions_and_scores = _get_action_scores_for_partially_simulated_trees(
-      root_nodes)
+      actions_with_scores_list)
   if __debug__:
     pprint.pprint(sorted(actions_and_scores, key=lambda x: x[1], reverse=True))
   return actions_and_scores
@@ -138,6 +159,6 @@ def merge_ucbs(root_nodes: List[SchnapsenNode]) -> List[
 
 # TODO(tests): Add tests for this function.
 def max_average_ucb_across_root_nodes(
-    root_nodes: List[SchnapsenNode]) -> List[Tuple[PlayerAction, float]]:
-  assert len(set(root_node.player for root_node in root_nodes)) == 1
-  return _get_action_scores_for_fully_simulated_trees(root_nodes)
+    actions_with_scores_list: List[ActionsWithScores]) -> List[
+  Tuple[PlayerAction, float]]:
+  return _get_action_scores_for_fully_simulated_trees(actions_with_scores_list)
