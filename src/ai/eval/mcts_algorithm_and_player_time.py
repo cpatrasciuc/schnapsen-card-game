@@ -2,83 +2,77 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import multiprocessing
 import os
 import timeit
-from typing import Tuple
 
 from pandas import DataFrame
 
-from ai.mcts_player import MctsPlayer, run_mcts
+from ai.mcts_algorithm import Mcts
+from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.utils import get_unseen_cards
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 
 
-def time_algorithm_and_player(options: MctsPlayerOptions) -> Tuple[
-  float, float]:
+def time_algorithm(max_iterations: int) -> float:
+  # Run the Mcts algorithm, no player
   game_state = GameState.new(random_seed=0)
-  mcts = MctsPlayer(game_state.next_player, cheater=False, options=options)
-  game_view = game_state.next_player_view()
-  permutation = options.perm_generator(get_unseen_cards(game_view), 5, 1)[0]
-
-  timer = timeit.Timer(
-    lambda: run_mcts(list(permutation), game_view, game_state.next_player,
-                     options.max_iterations))
+  mcts = Mcts(game_state.next_player)
+  timer = timeit.Timer(lambda: mcts.build_tree(game_state, max_iterations))
   number, time_taken = timer.autorange()
-  algorithm_avg_time = time_taken / number
+  avg_time = time_taken / number
   print(f"Run the Mcts algorithm {number} time(s)\n" +
         f"Total time: {time_taken} seconds\n" +
-        f"Average time: {algorithm_avg_time} seconds\n")
+        f"Average time: {avg_time} seconds\n")
+  return avg_time
 
-  timer = timeit.Timer(lambda: mcts.request_next_action(game_view))
+
+def time_player(player_class, cheater: bool,
+                options: MctsPlayerOptions) -> float:
+  game_state = GameState.new(random_seed=0)
+  if not cheater:
+    game_state = game_state.next_player_view()
+  mcts = player_class(game_state.next_player, cheater=cheater, options=options)
+  timer = timeit.Timer(lambda: mcts.request_next_action(game_state))
   number, time_taken = timer.autorange()
-  player_avg_time = time_taken / number
-  print(f"Run the MctsPlayer {number} time(s)\n" +
+  avg_time = time_taken / number
+  print(f"Run player {number} time(s)\n" +
         f"Total time: {time_taken} seconds\n" +
-        f"Average time: {player_avg_time} seconds\n")
-
+        f"Average time: {avg_time} seconds\n")
   mcts.cleanup()
-  return algorithm_avg_time, player_avg_time
+  return avg_time
 
 
-def measure_time_for_multiple_setups():
-  cpu_count = multiprocessing.cpu_count()
-  num_processes_scenarios = [1, cpu_count - 1, cpu_count]
-  max_permutations_multiplier_scenarios = [1, 2]
-  max_iterations_scenarios = [100, 1000, 10000]
+def run_timing_progression(player_class, max_iterations: int):
+  data = [("Mcts algorithm", time_algorithm(max_iterations))]
 
-  data = []
+  scenarios = {
+    "Cheater player w/o parallelism": (True, 1, 1),
+    "Cheater player w/ parallelism": (True, 1, 8),
+    "1 permutation, w/o parallelism": (False, 1, 1),
+    "1 permutation, w/ parallelism": (False, 1, 8),
+    "8 permutations, w/o parallelism": (False, 8, 1),
+    "8 permutations, w/ parallelism": (False, 8, 8),
+    "16 permutations, w/o parallelism": (False, 16, 1),
+    "16 permutations, w/ parallelism": (False, 16, 8),
+  }
 
-  for num_processes in num_processes_scenarios:
-    for max_permutations_multiplier in max_permutations_multiplier_scenarios:
-      max_permutations = num_processes * max_permutations_multiplier
-      for max_iterations in max_iterations_scenarios:
-        print(f"Measuring time for: max_permutations={max_permutations}, " +
-              f"max_iterations={max_iterations}, num_processes={num_processes}")
-        options = MctsPlayerOptions(max_permutations=max_permutations,
-                                    max_iterations=max_iterations,
-                                    num_processes=num_processes)
-        algorithm_time, player_time = time_algorithm_and_player(options)
-        data.append((num_processes, max_permutations, max_iterations,
-                     algorithm_time, player_time))
+  for scenario, params in scenarios.items():
+    cheater, max_permutations, num_processes = params
+    options = MctsPlayerOptions(max_iterations=max_iterations,
+                                max_permutations=max_permutations,
+                                num_processes=num_processes)
+    print(f"Runing scenario: {scenario}")
+    avg_time = time_player(player_class, cheater, options)
+    data.append((scenario, avg_time))
 
-  dataframe = DataFrame(data, columns=["num_processes", "max_permutation",
-                                       "max_iterations", "algorithm_time",
-                                       "player_time"])
+  dataframe = DataFrame(data, columns=[
+    "scenario", f"{player_class.__name__} ({max_iterations} iterations)"])
   folder = os.path.join(os.path.dirname(__file__), "data")
   csv_path = os.path.join(folder, "mcts_algorithm_and_player_time.csv")
   # noinspection PyTypeChecker
   dataframe.to_csv(csv_path, index=False)
 
 
-def run_once():
-  options = MctsPlayerOptions(max_permutations=8,
-                              max_iterations=5000,
-                              num_processes=8)
-  time_algorithm_and_player(options)
-
-
 if __name__ == "__main__":
-  main_wrapper(run_once)
+  main_wrapper(lambda: run_timing_progression(MctsPlayer, 4000))
