@@ -32,8 +32,8 @@ cdef struct Card:
 # unknown cards (UNKNOWN_SUIT and/or UNKNOWN_VALUE) in game views, to represent
 # the fact that there is a card in such a slot, but the current player cannot
 # see it.
-cdef bint is_null(Card this)
-cdef bint is_unknown(Card this)
+cdef bint is_null(Card this) nogil
+cdef bint is_unknown(Card this) nogil
 
-cdef bint wins(Card this, Card other, Suit trump_suit)
-cdef Card marriage_pair(Card card)
+cdef bint wins(Card this, Card other, Suit trump_suit) nogil
+cdef Card marriage_pair(Card card) nogil

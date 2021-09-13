@@ -6,7 +6,7 @@ from ai.cython_mcts_player.card cimport Card, Suit
 
 ctypedef int PlayerId
 
-cdef PlayerId opponent(PlayerId id)
+cdef PlayerId opponent(PlayerId id) nogil
 cdef PlayerId from_python_player_id(player_id)
 cdef to_python_player_id(PlayerId player_id)
 
@@ -26,10 +26,10 @@ cdef struct GameState:
   Points[2] trick_points
   Card[2] current_trick
 
-cdef bint is_to_lead(GameState *this, PlayerId player_id)
-cdef bint is_talon_closed(GameState *this)
-cdef bint must_follow_suit(GameState *this)
-cdef bint is_game_over(GameState *this)
-cdef (Points, Points) game_points(GameState *this)
+cdef bint is_to_lead(GameState *this, PlayerId player_id) nogil
+cdef bint is_talon_closed(GameState *this) nogil
+cdef bint must_follow_suit(GameState *this) nogil
+cdef bint is_game_over(GameState *this) nogil
+cdef (Points, Points) game_points(GameState *this) nogil
 
 cdef GameState from_python_game_state(py_game_state)

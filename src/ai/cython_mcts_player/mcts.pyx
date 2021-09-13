@@ -19,7 +19,7 @@ cdef int MAX_CHILDREN = 7
 
 cdef PlayerId _PLAYER_FOR_TERMINAL_NODES = 0
 
-cdef Node *_selection(Node *root_node):
+cdef Node *_selection(Node *root_node) nogil:
   cdef Node *node = root_node
   cdef vector[Node *] not_fully_simulated_children
   cdef int index
@@ -39,7 +39,7 @@ cdef Node *_selection(Node *root_node):
     index = rand() % not_fully_simulated_children.size()
     node = not_fully_simulated_children[index]
 
-cdef Node *_init_node(GameState *game_state, Node *parent):
+cdef Node *_init_node(GameState *game_state, Node *parent) nogil:
   cdef Node *node = <Node *> malloc(sizeof(Node))
   cdef float score_p1, score_p2
   memset(node, 0, sizeof(Node))
@@ -62,7 +62,7 @@ cdef Node *_init_node(GameState *game_state, Node *parent):
     get_available_actions(&node.game_state, node.actions)
   return node
 
-cdef Node *_expand(Node * node):
+cdef Node *_expand(Node * node) nogil:
   cdef vector[int] untried_indices
   cdef int i
   for i in range(MAX_CHILDREN):
@@ -76,16 +76,16 @@ cdef Node *_expand(Node * node):
   node.children[index] = _init_node(&game_state, node)
   return node.children[index]
 
-cdef Node *_fully_expand(Node *start_node):
+cdef Node *_fully_expand(Node *start_node) nogil:
   cdef Node *node = start_node
   while not node.terminal:
     node = _expand(node)
   return node
 
-cdef inline float _ucb_for_player(Node *node, PlayerId player_id):
+cdef inline float _ucb_for_player(Node *node, PlayerId player_id) nogil:
   return node.ucb if node.player == player_id else -node.ucb
 
-cdef void _update_ucb(Node *node, float exploration_param):
+cdef void _update_ucb(Node *node, float exploration_param) nogil:
   cdef bint fully_simulated = True
   cdef float max_children_score = -100.0
   cdef float child_score = -100.0
@@ -107,7 +107,7 @@ cdef void _update_ucb(Node *node, float exploration_param):
     node.ucb = node.q / node.n + exploration_param * sqrt(
       2 * log(node.parent.n) / node.n)
 
-cdef void _update_children_ucb(Node *node, float exploration_param):
+cdef void _update_children_ucb(Node *node, float exploration_param) nogil:
   cdef int i
   for i in range(MAX_CHILDREN):
     if node.actions[i].action_type == ActionType.NO_ACTION:
@@ -115,7 +115,8 @@ cdef void _update_children_ucb(Node *node, float exploration_param):
     if node.children[i] != NULL:
       _update_ucb(node.children[i], exploration_param)
 
-cdef void _backpropagate(Node *end_node, float score, float exploration_param):
+cdef void _backpropagate(Node *end_node, float score,
+                         float exploration_param) nogil:
   cdef Node *node = end_node
   while node != NULL:
     if not node.terminal:
@@ -124,7 +125,7 @@ cdef void _backpropagate(Node *end_node, float score, float exploration_param):
       _update_children_ucb(node, exploration_param)
     node = node.parent
 
-cdef bint run_one_iteration(Node *root_node, float exploration_param):
+cdef bint run_one_iteration(Node *root_node, float exploration_param) nogil:
   cdef Node *selected_node = _selection(root_node)
   if selected_node is NULL:
     return True
@@ -133,7 +134,7 @@ cdef bint run_one_iteration(Node *root_node, float exploration_param):
   return False
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
-                      float exploration_param):
+                      float exploration_param) nogil:
   cdef Node *root_node = _init_node(game_state, NULL)
   cdef int iterations = 0
   while True:
@@ -180,7 +181,7 @@ cdef debug_str(Node *node):
   return f"Q:{node.q}, N:{node.n}, UCB({node.player}):{node.ucb} " + \
          f"FullSim:{node.fully_simulated}"
 
-cdef void delete_tree(Node *root_node):
+cdef void delete_tree(Node *root_node) nogil:
   if root_node == NULL:
     return
   cdef int i

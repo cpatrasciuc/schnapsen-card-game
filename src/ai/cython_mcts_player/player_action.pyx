@@ -13,7 +13,7 @@ from model.player_action import PlayCardAction, AnnounceMarriageAction, \
   ExchangeTrumpCardAction, CloseTheTalonAction
 from model.suit import Suit as PySuit
 
-cdef bint _is_following_suit(PlayerAction action, GameState *game_state):
+cdef bint _is_following_suit(PlayerAction action, GameState *game_state) nogil:
   cdef PlayerId opp_id = opponent(action.player_id)
   cdef Card other = game_state.current_trick[opp_id]
   cdef Card *hand = game_state.cards_in_hand[action.player_id]
@@ -41,7 +41,7 @@ cdef bint _is_following_suit(PlayerAction action, GameState *game_state):
 
 # Assumes action.card is in game_state.cards_in_hand[action.player_id] and that
 # action.player_id == game_state.next_player.
-cdef bint _can_execute_on(PlayerAction action, GameState *game_state):
+cdef bint _can_execute_on(PlayerAction action, GameState *game_state) nogil:
   cdef Card *hand = game_state.cards_in_hand[action.player_id]
   cdef CardValue marriage_pair = CardValue.QUEEN \
     if action.card.card_value == CardValue.KING else CardValue.KING
@@ -90,7 +90,8 @@ cdef bint _can_execute_on(PlayerAction action, GameState *game_state):
 
   return False
 
-cdef void get_available_actions(GameState *game_state, PlayerAction *actions):
+cdef void get_available_actions(GameState *game_state,
+                                PlayerAction *actions) nogil:
   cdef int max_num_action = 7
   cdef PlayerId player_id = game_state.next_player
   cdef Card *hand = game_state.cards_in_hand[player_id]
@@ -126,7 +127,7 @@ cdef void get_available_actions(GameState *game_state, PlayerAction *actions):
       actions[action_index] = action
       action_index += 1
 
-cdef int _remove_card_from_hand(Card *cards_in_hand, Card card):
+cdef int _remove_card_from_hand(Card *cards_in_hand, Card card) nogil:
   cdef int i, empty_slot
   for i in range(5):
     if is_null(cards_in_hand[i]):
@@ -146,7 +147,7 @@ cdef int _remove_card_from_hand(Card *cards_in_hand, Card card):
     f"The card {card.suit, card.card_value} was not found in player's hand")
 
 cdef GameState _execute_play_card_action(GameState *game_state,
-                                         PlayerAction action):
+                                         PlayerAction action) nogil:
   cdef GameState new_game_state = game_state[0]
   cdef PlayerId player_id = action.player_id
   cdef PlayerId opp_id = opponent(player_id)
@@ -215,7 +216,7 @@ cdef GameState _execute_play_card_action(GameState *game_state,
   return new_game_state
 
 cdef GameState _execute_marriage_action(GameState *game_state,
-                                        PlayerAction action):
+                                        PlayerAction action) nogil:
   cdef GameState new_game_state = game_state[0]
   cdef PlayerId player_id = action.player_id
   cdef Points marriage_points = \
@@ -229,11 +230,12 @@ cdef GameState _execute_marriage_action(GameState *game_state,
   return new_game_state
 
 cdef GameState _execute_exchange_trump_card_action(GameState *game_state,
-                                                   PlayerAction action):
+                                                   PlayerAction action) nogil:
   cdef GameState new_game_state = game_state[0]
   cdef PlayerId player_id = action.player_id
-  cdef Card trump_jack = Card(suit=new_game_state.trump,
-                              card_value=CardValue.JACK)
+  cdef Card trump_jack
+  trump_jack.suit = new_game_state.trump
+  trump_jack.card_value = CardValue.JACK
   cdef int trump_jack_index = _remove_card_from_hand(
     new_game_state.cards_in_hand[player_id], trump_jack)
   new_game_state.cards_in_hand[player_id][trump_jack_index] = \
@@ -242,14 +244,14 @@ cdef GameState _execute_exchange_trump_card_action(GameState *game_state,
   return new_game_state
 
 cdef GameState _execute_close_the_talon_action(GameState *game_state,
-                                               PlayerAction action):
+                                               PlayerAction action) nogil:
   cdef GameState new_game_state = game_state[0]
   new_game_state.player_that_closed_the_talon = action.player_id
   new_game_state.opponent_points_when_talon_was_closed = \
     new_game_state.trick_points[opponent(action.player_id)]
   return new_game_state
 
-cdef GameState execute(GameState *game_state, PlayerAction action):
+cdef GameState execute(GameState *game_state, PlayerAction action) nogil:
   if action.action_type == ActionType.PLAY_CARD:
     return _execute_play_card_action(game_state, action)
   if action.action_type == ActionType.ANNOUNCE_MARRIAGE:

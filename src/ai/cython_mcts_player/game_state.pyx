@@ -6,7 +6,7 @@ from ai.cython_mcts_player.card cimport CardValue, is_null
 from libc.string cimport memset
 from model.player_id import PlayerId as PyPlayerId
 
-cdef PlayerId opponent(PlayerId id):
+cdef PlayerId opponent(PlayerId id) nogil:
   if id == 0:
     return 1
   return 0
@@ -17,17 +17,17 @@ cdef PlayerId from_python_player_id(player_id):
 cdef to_python_player_id(PlayerId player_id):
   return PyPlayerId.ONE if player_id == 0 else PyPlayerId.TWO
 
-cdef bint is_to_lead(GameState *this, PlayerId player_id):
+cdef bint is_to_lead(GameState *this, PlayerId player_id) nogil:
   return this.next_player == player_id and is_null(
     this.current_trick[0]) and is_null(this.current_trick[1])
 
-cdef bint is_talon_closed(GameState *this):
+cdef bint is_talon_closed(GameState *this) nogil:
   return this.player_that_closed_the_talon != -1
 
-cdef bint must_follow_suit(GameState *this):
+cdef bint must_follow_suit(GameState *this) nogil:
   return is_talon_closed(this) or is_null(this.talon[0])
 
-cdef bint is_game_over(GameState *this):
+cdef bint is_game_over(GameState *this) nogil:
   cdef int target_score = 66
   if this.trick_points[0] >= target_score:
     return True
@@ -37,14 +37,14 @@ cdef bint is_game_over(GameState *this):
     return True
   return False
 
-cdef Points _get_game_points_won(Points opponent_points):
+cdef Points _get_game_points_won(Points opponent_points) nogil:
   if opponent_points >= 33:
     return 1
   if opponent_points > 0:
     return 2
   return 3
 
-cdef (Points, Points) game_points(GameState *this):
+cdef (Points, Points) game_points(GameState *this) nogil:
   cdef PlayerId winner
   cdef PlayerId closed_the_talon = this.player_that_closed_the_talon
   cdef int points
