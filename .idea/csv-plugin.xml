@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\ai\eval\data\iterations_and_time_100perm.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\ai\eval\data\iterations_and_time_8perm.csv">
           <value>
             <Attribute>
@@ -60,6 +67,13 @@
           </value>
         </entry>
         <entry key="\src\ai\eval\data\min_iterations_to_find_the_best_action_cheater.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\src\ai\eval\data\num_threads_and_time.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
