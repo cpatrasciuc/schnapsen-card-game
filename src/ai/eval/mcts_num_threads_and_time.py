@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from cpuinfo import cpuinfo
 from pandas import DataFrame
 
-from ai.mcts_player import MctsPlayer
+from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -65,11 +65,8 @@ def num_threads_and_time(class_under_test, options: MctsPlayerOptions):
 
 
 def _main():
-  # options = MctsPlayerOptions(max_iterations=4000, max_permutations=100)
-  # num_threads_and_time(CythonMctsPlayer, options)
-
-  options = MctsPlayerOptions(max_iterations=2000, max_permutations=8)
-  num_threads_and_time(MctsPlayer, options)
+  options = MctsPlayerOptions(max_iterations=4000, max_permutations=100)
+  num_threads_and_time(CythonMctsPlayer, options)
 
 
 if __name__ == "__main__":
