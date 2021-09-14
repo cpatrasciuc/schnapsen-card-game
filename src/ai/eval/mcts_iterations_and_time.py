@@ -51,7 +51,7 @@ def _get_player_closure(game_state: GameState,
                           options=MctsPlayerOptions(
                             max_permutations=max_permutations,
                             max_iterations=iterations,
-                            num_processes=multiprocessing.cpu_count()))
+                            num_processes=1))
 
   def _run():
     mcts.request_next_action(game_state.next_player_view())
@@ -142,7 +142,7 @@ def profile(max_permutations: int, max_iterations: int = 1000):
 
 def _main():
   max_permutations = 1  # multiprocessing.cpu_count()
-  iterations_and_time(max_permutations)
+  # iterations_and_time(max_permutations)
   profile(max_permutations)
 
 
