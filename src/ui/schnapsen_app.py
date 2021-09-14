@@ -6,7 +6,7 @@ from typing import Optional
 
 from kivy.app import App
 
-from ai.mcts_player import MctsPlayer
+from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
@@ -29,15 +29,17 @@ class SchnapsenApp(App):
     # TODO(ui): Set self.icon.
 
   def build(self):
-    self._game_options = GameOptions()
+    self._game_options = GameOptions(computer_cards_visible=True)
     self._game_widget = GameWidget(game_options=self._game_options)
     self._game_widget.padding_pct = 0.01
     self._game_widget.size_hint = 1, 1
     human_player: Player = self._game_widget
     computer_player: Player = OutOfProcessComputerPlayer(
       # TODO(mcts): Tune the number of max_iterations.
-      MctsPlayer, (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=2000,
-                                                          max_permutations=16)))
+      CythonMctsPlayer,
+      (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=4000,
+                                              max_permutations=100,
+                                              num_processes=1)))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     self._game_controller = GameController(self._game_widget, players)
     return self._game_widget
