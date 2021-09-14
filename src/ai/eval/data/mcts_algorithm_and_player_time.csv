@@ -1,10 +1,12 @@
-scenario,MctsPlayer (4000 iterations)
-Mcts algorithm,2.4344323429999997
-Cheater player w/o parallelism,2.373524576
-Cheater player w/ parallelism,3.790188313
-"1 permutation, w/o parallelism",2.5609485890000006
-"1 permutation, w/ parallelism",4.012735786
-"8 permutations, w/o parallelism",18.074286459000003
-"8 permutations, w/ parallelism",7.873756636000003
-"16 permutations, w/o parallelism",38.822892919999994
-"16 permutations, w/ parallelism",13.659341933999997
+scenario,MctsPlayer (4000 iterations),CythonMctsPlayer (4000 iterations),CythonMctsPlayer (40000 iterations)
+Mcts algorithm,2.434432343,,
+Cheater player w/o parallelism,2.373524576,0.0390912194999999,0.39453577099999926
+Cheater player w/ parallelism,3.790188313,0.0684429833999999,0.5161631440000001
+"1 permutation, w/o parallelism",2.560948589000001,0.2260573620000001,0.5936965340000011
+"1 permutation, w/ parallelism",4.012735786,0.2294769689999998,0.5650749089999998
+"8 permutations, w/o parallelism",18.074286459000003,0.4693951370000002,3.1534092830000002
+"8 permutations, w/ parallelism",7.873756636000003,1.2690495790000005,9.913365466999998
+"16 permutations, w/o parallelism",38.82289292,0.7970473939999998,6.331260055999998
+"16 permutations, w/ parallelism",13.659341933999997,2.425102718,20.167817236
+"100 permutations, w/o parallelism",,3.925034913000001,
+"100 permutations, w/ parallelism",,14.006204885,

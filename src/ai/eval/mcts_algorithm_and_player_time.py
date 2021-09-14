@@ -5,10 +5,11 @@
 import os
 import timeit
 
+import pandas
 from pandas import DataFrame
 
+from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_algorithm import Mcts
-from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -43,8 +44,19 @@ def time_player(player_class, cheater: bool,
   return avg_time
 
 
+def _merge_with_existing(csv_path: str, dataframe: DataFrame) -> DataFrame:
+  existing = pandas.read_csv(csv_path)
+  columns = [c for c in existing.columns if
+             c == "scenario" or c not in dataframe.columns]
+  merged = pandas.merge(existing[columns], dataframe, on=["scenario"],
+                        how="outer")
+  return merged
+
+
 def run_timing_progression(player_class, max_iterations: int):
-  data = [("Mcts algorithm", time_algorithm(max_iterations))]
+  data = [
+    # ("Mcts algorithm", time_algorithm(max_iterations))
+  ]
 
   scenarios = {
     "Cheater player w/o parallelism": (True, 1, 1),
@@ -70,9 +82,10 @@ def run_timing_progression(player_class, max_iterations: int):
     "scenario", f"{player_class.__name__} ({max_iterations} iterations)"])
   folder = os.path.join(os.path.dirname(__file__), "data")
   csv_path = os.path.join(folder, "mcts_algorithm_and_player_time.csv")
+  dataframe = _merge_with_existing(csv_path, dataframe)
   # noinspection PyTypeChecker
   dataframe.to_csv(csv_path, index=False)
 
 
 if __name__ == "__main__":
-  main_wrapper(lambda: run_timing_progression(MctsPlayer, 4000))
+  main_wrapper(lambda: run_timing_progression(CythonMctsPlayer, 4000))
