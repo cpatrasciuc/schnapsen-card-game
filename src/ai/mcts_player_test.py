@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import multiprocessing
 import unittest
 from typing import Optional
 
@@ -156,20 +157,30 @@ class InProcessMctsPlayerTest(MctsPlayerTest):
 
 class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(
-      max_iterations=None, merge_scoring_info_func=max_average_ucb)
+    options = MctsPlayerOptions(max_iterations=None,
+                                merge_scoring_info_func=max_average_ucb,
+                                num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 
 class CythonMctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(
-      max_iterations=None, merge_scoring_info_func=most_frequent_best_action)
+      max_iterations=None, merge_scoring_info_func=most_frequent_best_action,
+      num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 
 class CythonMctsPlayerMergeUcbsTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(
-      max_iterations=None, merge_scoring_info_func=merge_ucbs)
+    options = MctsPlayerOptions(max_iterations=None,
+                                merge_scoring_info_func=merge_ucbs,
+                                num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerWithParallelismTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None,
+                                num_processes=multiprocessing.cpu_count())
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
