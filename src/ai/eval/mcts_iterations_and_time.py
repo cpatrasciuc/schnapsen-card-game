@@ -4,7 +4,6 @@
 
 import cProfile
 import logging
-import multiprocessing
 import os
 import pstats
 import timeit
@@ -141,8 +140,8 @@ def profile(max_permutations: int, max_iterations: int = 1000):
 
 
 def _main():
-  max_permutations = 1  # multiprocessing.cpu_count()
-  # iterations_and_time(max_permutations)
+  max_permutations = 1
+  iterations_and_time(max_permutations)
   profile(max_permutations)
 
 
