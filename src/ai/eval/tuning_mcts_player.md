@@ -61,7 +61,7 @@ consider.
 
 As a result of this initial debugging, the ideas to experiment with are:
 
-- [ ] Reduce CPU usage, so we can run more iterations within the budget
+- [x] Reduce CPU usage, so we can run more iterations within the budget
 - [ ] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [ ] Pick the best child during the selection phase and balance exploration versus exploitation
 - [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
