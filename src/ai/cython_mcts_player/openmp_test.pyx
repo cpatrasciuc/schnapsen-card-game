@@ -4,6 +4,7 @@
 
 # cython: warn.maybe_uninitialized=False, warn.unused=False
 
+import platform
 import unittest
 
 cimport openmp
@@ -21,6 +22,8 @@ cdef (int, int) _test_openmp():
 
 
 class OpenMPTest(unittest.TestCase):
+  @unittest.skipIf(platform.system() == "Darwin",
+                   "OpenMP is not supported on macOS")
   def test_openmp_support(self):
     cdef int num_threads, sum_thread_ids
     num_threads, sum_thread_ids = _test_openmp()
