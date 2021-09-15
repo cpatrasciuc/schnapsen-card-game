@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import os
 import platform
 
 from Cython.Build import cythonize
@@ -19,7 +20,7 @@ OPENMP_FLAG = "/openmp" if platform.system() == "Windows" else "-fopenmp"
 ext_modules = [
   Extension(
     name="*",
-    sources=[r"ai/cython_mcts_player/*.pyx"],
+    sources=[os.path.join("ai", "cython_mcts_player", "*.pyx")],
     extra_compile_args=[OPENMP_FLAG],
     define_macros=[("CYTHON_TRACE_NOGIL", "1")] if ENABLE_PROFILING else []
   )
@@ -27,7 +28,7 @@ ext_modules = [
 
 setup(
   packages=find_packages(),
-  package_data={r"ai/cython_mcts_player": ["*.pxd"]},
+  package_data={os.path.join("ai", "cython_mcts_player"): ["*.pxd"]},
   ext_modules=cythonize(ext_modules,
                         compiler_directives={
                           "embedsignature": True,
