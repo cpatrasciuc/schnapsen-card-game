@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 
+from ai.cython_mcts_player.player import CythonMctsPlayer
 
 def get_all_python_files():
   py_files = []
@@ -45,12 +46,7 @@ def run_pylint():
 
   # Call pylint in a subprocess since it's licensed under GPL. Do not import it.
   cmd = [sys.executable, "-m", "pylint"] + pylint_opts + get_all_python_files()
-  pythonpath = os.pathsep.join(sys.path + [os.path.dirname(__file__)])
-  print(f"Running pylint with PYTHONPATH={pythonpath}")
-  environment = os.environ.copy()
-  environment.update({"PYTHONPATH": pythonpath})
-  print(os.environ)
-  subprocess.run(cmd, env=environment, check=True)
+  subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":
