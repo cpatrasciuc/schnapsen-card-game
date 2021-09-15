@@ -21,19 +21,21 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        cd src && python setup.py build_ext --inplace --force
-    - name: Run all tests on ${{ matrix.os }}
-      run: |
-        cd src && python run_test_coverage.py ./ai ./model
-      env:
-        PYTHONIOENCODING: utf-8:backslashreplace
+      - name: Checkout source code
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build Cython modules
+        run: |
+          cd src && python setup.py build_ext --inplace --force
+      - name: Run all tests on ${{ matrix.os }}
+        run: |
+          cd src && python run_test_coverage.py ./ai ./model
+        env:
+          PYTHONIOENCODING: utf-8:backslashreplace
