@@ -24,4 +24,4 @@ jobs:
           ls -lh ai/cython_mcts_player
       - name: Analysing the code with pylint
         run: |
-          cd src && PYTHONPATH=`pwd`:$PYTHONPATH python run_pylint.py
+          cd src && LD_LIBRARY_PATH=`pwd`/ai/cython_mcts_player/:$LD_LIBRARY_PATH python run_pylint.py
