@@ -20,7 +20,8 @@ jobs:
       - name: Build Cython modules
         run: |
           cd src && python setup.py build_ext --inplace --force
-          ls -lh src/ai/cython_mcts_player
+          pwd
+          ls -lh ai/cython_mcts_player
       - name: Analysing the code with pylint
         run: |
           cd src && PYTHONPATH=`pwd`:$PYTHONPATH python run_pylint.py
