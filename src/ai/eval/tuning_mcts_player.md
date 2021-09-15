@@ -172,7 +172,60 @@ The disadvantage of this solution is that we won't be able to
 After steps 1-3, the MctsPlayer went from running 800 iterations in 10 seconds
 to running 7k iterations in 10 seconds (8 permutations processed on 8 cores).
 
-TODO: Write this component in Cython and use threads.
+### Step 4: Use Cython
+
+Even if steps 1-3 made the player ~10x faster, it was still far from being
+usable. Based on the initial plots, we require at least 2000 iterations for the
+scores to stabilize. In 5 seconds, using 2000 iterations, the player can process
+only 8 permutations. I expect this is not enough for the early stages of the
+game (no data to prove this, though). At this point I had no ideas on how to
+make it even faster in Python, so I decided to write the Mcts algorithm in C/C++
+using Cython.
+
+The Cython version of the MctsPlayer can run ~50x more iterations than the
+MctsPlayer from step 3 in single-threaded mode. The number of iterations that
+could be run in 10 seconds went from ~20k to 1 million. 
+
+![iterations_and_time_i7.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/1d3ad8f6f77059cd30780c657f861fcec6888be9/src/ai/eval/data/iterations_and_time_i7.png)
+
+**Parallelism:** Since the new implementation is in pure C/C++ and there is
+no interaction with Python objects, we could release the GIL and use threads to
+process permutations in parallel on multiple cores. Cython has support for
+parallelism/threads using OpenMP
+([link](https://cython.readthedocs.io/en/latest/src/userguide/parallelism.html)).
+I added multi-threading support to the CythonMctsPlayer, but it is slower than
+the single threaded-version. While the MctsPlayer becomes faster as we increase
+the number of processes in the multiprocessing.Pool, the CythonMctsPlayer
+appears to become slower as we increase the number of threads:
+
+| ![mcts_player](https://github.com/cpatrasciuc/schnapsen-card-game/blob/d715610cdebface033f3917ed9a1939d8db2fda1/src/ai/eval/data/num_threads_and_time.png) | ![cython_mcts_player](https://github.com/cpatrasciuc/schnapsen-card-game/blob/36b94e4e25af5e39029e62073768c9d133771157/src/ai/eval/data/num_threads_and_time.png) |
+| :------: | :--------: |
+
+I had to stop here because I have no experience with OpenMP debugging/profiling.
+However, the single-threaded version of the CythonMctsPlayer is still ~17x
+faster than the MctsPlayer that uses 8 processes. The table below shows the time
+(seconds) required by each player to run in different scenarios:
+
+|Scenario|MctsPlayer (4k iterations)|CythonMctsPlayer (4k iterations)|CythonMctsPlayer (40k iterations)|
+| :---: | :---: | :---: | :---: |
+|Mcts algorithm (Python only)|2.43|-|-|
+|Cheater player, w/o parallelism|2.37|0.04|0.39|
+|Cheater player, w/ parallelism|3.79|0.07|0.51|
+|1 permutation, w/o parallelism|2.56|0.23|0.59|
+|1 permutation, w/ parallelism|4.01|0.23|0.57|
+|8 permutations, w/o parallelism|18.07|0.47|3.15|
+|8 permutations, w/ parallelism|7.87|1.27|9.91|
+|16 permutations, w/o parallelism|38.82|0.80|6.33|
+|16 permutations, w/ parallelism|13.66|2.43|20.17|
+|100 permutations, w/o parallelism|-|3.93|-|
+|100 permutations, w/ parallelism|-|14.00|-|
+
+### Conclusion and results
+
+I will move forward with using the CythonMctsPlayer in single-threaded mode.
+Overall, after steps 1-4, the player went from running 8 permutations x 800
+iterations in 10 seconds (using 8 cores) to running 250 permutations x 
+4000 iterations in the same amount of time (i.e., 156 times faster).
 
 ## Tune the max_iterations and max_permutations params
 
