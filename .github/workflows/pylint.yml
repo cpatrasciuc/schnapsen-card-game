@@ -8,16 +8,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        cd src && python setup.py build_ext --inplace --force
-    - name: Analysing the code with pylint
-      run: |
-        cd src && python run_pylint.py
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Build Cython modules
+        run: |
+          cd src && python setup.py build_ext --inplace --force
+          ls -lh src/ai/cython_mcts_player
+      - name: Analysing the code with pylint
+        run: |
+          cd src && PYTHONPATH=`pwd`:$PYTHONPATH python run_pylint.py
