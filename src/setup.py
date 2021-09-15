@@ -3,7 +3,6 @@
 #  found in the LICENSE file.
 
 import os
-import platform
 
 from Cython.Build import cythonize
 from Cython.Compiler import Options
@@ -16,32 +15,10 @@ Options.error_on_uninitialized = True
 
 ENABLE_PROFILING = False
 
-system = platform.system()
-print(f"Configuring compiler and linker flags for: {system}")
-
-if system == "Windows":
-  COMPILE_FLAGS = ["/openmp"]
-  LINK_FLAGS = []
-elif system == "Linux":
-  COMPILE_FLAGS = ["-fopenmp"]
-  LINK_FLAGS = ["-fopenmp"]
-elif system == "Darwin":
-  print("OpenMP not supported on MacOS. Building without OpenMP support.")
-  COMPILE_FLAGS = []
-  LINK_FLAGS = []
-else:
-  print(f"WARNING: Unrecognized platform: "
-        f"{platform.system()}, {platform.release()}, {platform.version()}.\n"
-        "Building without OpenMP support.")
-  COMPILE_FLAGS = []
-  LINK_FLAGS = []
-
 ext_modules = [
   Extension(
     name="*",
     sources=[os.path.join("ai", "cython_mcts_player", "*.pyx")],
-    extra_compile_args=COMPILE_FLAGS,
-    extra_link_args=LINK_FLAGS,
     define_macros=[("CYTHON_TRACE_NOGIL", "1")] if ENABLE_PROFILING else []
   )
 ]

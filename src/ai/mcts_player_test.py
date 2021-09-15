@@ -2,7 +2,6 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import multiprocessing
 import unittest
 from typing import Optional
 
@@ -50,7 +49,10 @@ class MctsPlayerTest(unittest.TestCase):
     player_two: Optional[MctsPlayer] = None
     try:
       options = MctsPlayerOptions(max_iterations=None)
-      player_two = self._mcts_player.__class__(PlayerId.TWO, options=options)
+      player_class = self._mcts_player.__class__
+      if player_class == CythonMctsPlayer:
+        options.num_processes = 1
+      player_two = player_class(PlayerId.TWO, options=options)
       players = PlayerPair(self._mcts_player, player_two)
       while not game_state.is_game_over:
         player = players[game_state.next_player]
@@ -179,8 +181,9 @@ class CythonMctsPlayerMergeUcbsTest(MctsPlayerTest):
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 
-class CythonMctsPlayerWithParallelismTest(MctsPlayerTest):
-  def setUp(self) -> None:
+class CythonMctsPlayerWithParallelismTest(unittest.TestCase):
+  def test_cannot_instantiate_with_multi_threading(self) -> None:
     options = MctsPlayerOptions(max_iterations=None,
-                                num_processes=multiprocessing.cpu_count())
-    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+                                num_processes=10)
+    with self.assertRaisesRegex(ValueError, "10 threads"):
+      CythonMctsPlayer(PlayerId.ONE, options=options)

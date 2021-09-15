@@ -7,14 +7,9 @@
 # cython: warn.unused=False
 
 import logging
-import math
-
-cimport openmp
 
 from typing import List, Optional
 
-from cython.parallel import prange
-from libc.stdlib cimport free, malloc
 from libcpp.vector cimport vector
 
 from ai.cython_mcts_player.card cimport Card, is_unknown
@@ -62,31 +57,6 @@ cdef _build_scoring_info(Node *root_node):
     actions_with_scores[py_action] = scoring_info
   return actions_with_scores
 
-cdef list _run_mcts_multi_threaded(GameState *game_view,
-                                   vector[vector[Card]] *permutations,
-                                   PlayerId opponent_id,
-                                   int max_iterations,
-                                   int num_threads):
-  cdef Py_ssize_t i
-  cdef Py_ssize_t n = permutations.size()
-  cdef GameState game_state
-  cdef Node ** root_nodes = <Node **> malloc(n * sizeof(Node *))
-  cdef int chunksize = math.floor(n / num_threads)
-  if num_threads > 1:
-    openmp.omp_set_num_threads(num_threads)
-  for i in prange(n, nogil=True, schedule="static", chunksize=chunksize):
-    game_state = game_view[0]
-    _populate_game_view(&game_state, &permutations[0][i], opponent_id)
-    root_nodes[i] = build_tree(&game_state, max_iterations,
-                               exploration_param=0)
-  cdef list py_root_nodes = []
-  for i in range(n):
-    py_root_nodes.append(_build_scoring_info(root_nodes[i]))
-  for i in prange(n, nogil=True, schedule="static", chunksize=chunksize):
-    delete_tree(root_nodes[i])
-  free(root_nodes)
-  return py_root_nodes
-
 cdef list _run_mcts_single_threaded(GameState *game_view,
                                     vector[vector[Card]] *permutations,
                                     PlayerId opponent_id,
@@ -111,10 +81,9 @@ class CythonMctsPlayer(BaseMctsPlayer):
                options: Optional[MctsPlayerOptions] = None):
     super().__init__(player_id, cheater, options)
     if options.num_processes != 1:
-      logging.warning(
-        f"CythonMctsPlayer: Using {options.num_processes} threads")
-    else:
-      logging.info("CythonMctsPlayer: Running in single-threaded mode")
+      raise ValueError(
+        f"CythonMctsPlayer: Options specify {options.num_processes} threads, "
+        "but multi-threading is not supported. Running in single-threaded mode")
 
   def run_mcts_algorithm(self, py_game_view: PyGameState,
                          py_permutations: List[List[PyCard]]) -> List[
@@ -127,11 +96,6 @@ class CythonMctsPlayer(BaseMctsPlayer):
         permutation.push_back(Card(suit=card.suit, card_value=card.card_value))
       permutations.push_back(permutation)
     cdef GameState game_view = from_python_game_state(py_game_view)
-    if self._options.num_processes == 1:
-      return _run_mcts_single_threaded(
-        &game_view, &permutations, from_python_player_id(self.id.opponent()),
-        self._options.max_iterations or -1)
-    return _run_mcts_multi_threaded(&game_view, &permutations,
-                                    from_python_player_id(self.id.opponent()),
-                                    self._options.max_iterations or -1,
-                                    self._options.num_processes)
+    return _run_mcts_single_threaded(
+      &game_view, &permutations, from_python_player_id(self.id.opponent()),
+      self._options.max_iterations or -1)
