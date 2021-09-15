@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 
-from ai.cython_mcts_player.player import CythonMctsPlayer
 
 def get_all_python_files():
   py_files = []
