@@ -91,7 +91,8 @@ class BaseMctsPlayer(Player, abc.ABC):
     return self._options.perm_generator(
       cards_set, num_opponent_unknown_cards, num_permutations_to_process)
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def get_actions_and_scores(self, game_view: GameState) -> List[
+    Tuple[PlayerAction, float]]:
     permutations = self._generate_permutations(game_view)
     actions_with_scores_list = self.run_mcts_algorithm(game_view, permutations)
     if __debug__:
@@ -101,6 +102,10 @@ class BaseMctsPlayer(Player, abc.ABC):
         print()
     actions_and_scores = self._options.merge_scoring_info_func(
       actions_with_scores_list)
+    return actions_and_scores
+
+  def request_next_action(self, game_view: GameState) -> PlayerAction:
+    actions_and_scores = self.get_actions_and_scores(game_view)
     return _find_action_with_max_score(actions_and_scores)
 
   @abc.abstractmethod
