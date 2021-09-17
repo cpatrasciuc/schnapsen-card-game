@@ -19,13 +19,15 @@ cdef int MAX_CHILDREN = 7
 
 cdef PlayerId _PLAYER_FOR_TERMINAL_NODES = 0
 
-cdef Node *_selection(Node *root_node) nogil:
+cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
   cdef Node *node = root_node
   cdef vector[Node *] not_fully_simulated_children
+  cdef vector[Node *] best_children
   cdef int index
   cdef int i
   while not node.terminal:
     not_fully_simulated_children.clear()
+    best_children.clear()
     for i in range(MAX_CHILDREN):
       if node.actions[i].action_type == ActionType.NO_ACTION:
         break
@@ -33,9 +35,16 @@ cdef Node *_selection(Node *root_node) nogil:
         return node
       if not node.children[i].fully_simulated:
         not_fully_simulated_children.push_back(node.children[i])
+      if node.best_children[i]:
+        best_children.push_back(node.children[i])
     if not_fully_simulated_children.empty():
       return NULL
     # TODO(mcts): Maybe call srand() to initialize the RNG?
+    if select_best_child and best_children.size() > 0:
+      index = rand() % best_children.size()
+      best_child = best_children[index]
+      node = best_child
+      continue
     index = rand() % not_fully_simulated_children.size()
     node = not_fully_simulated_children[index]
 
@@ -107,39 +116,51 @@ cdef void _update_ucb(Node *node, float exploration_param) nogil:
     node.ucb = node.q / node.n + exploration_param * sqrt(
       2 * log(node.parent.n) / node.n)
 
-cdef void _update_children_ucb(Node *node, float exploration_param) nogil:
+cdef void _update_children_ucb(Node *node, float exploration_param,
+                               bint select_best_child) nogil:
   cdef int i
+  cdef float max_ucb = -10000
   for i in range(MAX_CHILDREN):
     if node.actions[i].action_type == ActionType.NO_ACTION:
       break
     if node.children[i] != NULL:
       _update_ucb(node.children[i], exploration_param)
+      if not node.children[i].fully_simulated:
+        max_ucb = max(max_ucb, _ucb_for_player(node.children[i], node.player))
+  if select_best_child:
+    for i in range(MAX_CHILDREN):
+      if node.actions[i].action_type == ActionType.NO_ACTION:
+        break
+      if node.children[i] != NULL:
+        node.best_children[i] = (not node.children[i].fully_simulated) and (
+            _ucb_for_player(node.children[i], node.player) == max_ucb)
 
 cdef void _backpropagate(Node *end_node, float score,
-                         float exploration_param) nogil:
+                         float exploration_param, bint select_best_child) nogil:
   cdef Node *node = end_node
   while node != NULL:
     if not node.terminal:
       node.n += 1
       node.q += score if node.player == _PLAYER_FOR_TERMINAL_NODES else -score
-      _update_children_ucb(node, exploration_param)
+      _update_children_ucb(node, exploration_param, select_best_child)
     node = node.parent
 
-cdef bint run_one_iteration(Node *root_node, float exploration_param) nogil:
-  cdef Node *selected_node = _selection(root_node)
+cdef bint _run_one_iteration(Node *root_node, float exploration_param,
+                             bint select_best_child) nogil:
+  cdef Node *selected_node = _selection(root_node, select_best_child)
   if selected_node is NULL:
     return True
   cdef Node *end_node = _fully_expand(selected_node)
-  _backpropagate(end_node, end_node.ucb, exploration_param)
+  _backpropagate(end_node, end_node.ucb, exploration_param, select_best_child)
   return False
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
-                      float exploration_param) nogil:
+                      float exploration_param, bint select_best_child) nogil:
   cdef Node *root_node = _init_node(game_state, NULL)
   cdef int iterations = 0
   while True:
     iterations += 1
-    if run_one_iteration(root_node, exploration_param):
+    if _run_one_iteration(root_node, exploration_param, select_best_child):
       break
     if 0 < max_iterations <= iterations:
       break

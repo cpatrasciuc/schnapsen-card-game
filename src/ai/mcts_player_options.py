@@ -19,7 +19,8 @@ class MctsPlayerOptions:
   """
   The maximum number of Mcts iterations run for one permutation. The total
   number of iterations is max_iterations x max_permutations, spread across
-  multiple processes (num_processes).
+  multiple processes (num_processes). If None, the Mcts algorithm will run until
+  the entire game tree is expanded.
   """
 
   max_permutations: int = multiprocessing.cpu_count()
@@ -48,4 +49,12 @@ class MctsPlayerOptions:
   """
   The function that merges all the ScoringInfos across all the processed
   permutations.
+  """
+
+  select_best_child: bool = False
+  """
+  If True, during the selection step, the Mcts algorithm will always select the
+  child with the highest UCB among the not-fully-simulated children. If there
+  are more such children, one of them is selected randomly. If this field is
+  False, during the selection step, the Mcts algorithm will pick a random child.
   """

@@ -16,6 +16,8 @@ cdef struct Node:
   Node *parent
   PlayerAction[7] actions
   PNode[7] children
+  # TODO(optimization): Could be converted to a bitmask if needed.
+  bint[7] best_children  # Only set for not fully simulated children.
   float q
   int n
   float ucb
@@ -24,7 +26,7 @@ cdef struct Node:
   PlayerId player
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
-                      float exploration_param) nogil
+                      float exploration_param, bint select_best_child) nogil
 cdef list best_actions_for_tests(Node *node)
 cdef debug_str(Node *node)
 cdef void delete_tree(Node *root_node) nogil

@@ -161,6 +161,14 @@ class InProcessMctsPlayerTest(MctsPlayerTest):
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
+class MctsPlayerSelectBestChildTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    # Run in-process so that code coverage sees this code-path.
+    options = MctsPlayerOptions(max_iterations=None, select_best_child=True,
+                                num_processes=1)
+    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
+
+
 class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(max_iterations=None,
@@ -191,3 +199,11 @@ class CythonMctsPlayerWithParallelismTest(unittest.TestCase):
                                 num_processes=10)
     with self.assertRaisesRegex(ValueError, "10 threads"):
       CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerSelectBestChildTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None,
+                                select_best_child=True,
+                                num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)

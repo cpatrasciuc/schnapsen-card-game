@@ -29,7 +29,9 @@ class MctsTest(unittest.TestCase):
   def test_you_first_no_you_first(self):
     cdef GameState game_state = from_python_game_state(
       get_game_state_for_you_first_no_you_first_puzzle())
-    cdef Node *root_node = build_tree(&game_state, -1, 0)
+    cdef Node *root_node = build_tree(&game_state, max_iterations=-1,
+                                      exploration_param=0,
+                                      select_best_child=False)
     self.assertTrue(root_node.parent == NULL)
     self.assertFalse(root_node.terminal)
     self.assertEqual(0, root_node.player)
@@ -53,7 +55,8 @@ class MctsTest(unittest.TestCase):
     cdef GameState game_state = from_python_game_state(
       get_game_state_for_elimination_play_puzzle())
     cdef Node *root_node = build_tree(&game_state, max_iterations=-1,
-                                      exploration_param=0)
+                                      exploration_param=0,
+                                      select_best_child=False)
     cdef int i
     for i in range(MAX_CHILDREN):
       if root_node.actions[i].action_type == ActionType.NO_ACTION:
@@ -80,7 +83,8 @@ class MctsTest(unittest.TestCase):
     self.assertEqual(34, game_state.trick_points[0])
     self.assertEqual(40, game_state.trick_points[1])
     cdef Node *root_node = build_tree(&game_state, max_iterations=-1,
-                                      exploration_param=0)
+                                      exploration_param=0,
+                                      select_best_child=False)
     cdef int i
     for i in range(MAX_CHILDREN):
       if root_node.actions[i].action_type == ActionType.NO_ACTION:
@@ -100,7 +104,7 @@ class MctsTest(unittest.TestCase):
     cdef int i
     while not is_game_over(&game_state):
       root_node = build_tree(&game_state, max_iterations=-1,
-                             exploration_param=0)
+                             exploration_param=0, select_best_child=False)
       print()
       for i in range(MAX_CHILDREN):
         if root_node.actions[i].action_type == ActionType.NO_ACTION:
@@ -135,7 +139,8 @@ class MctsTest(unittest.TestCase):
     py_game_state = get_game_state_for_who_laughs_last_puzzle()
     cdef GameState game_state = from_python_game_state(py_game_state)
     cdef Node *root_node = build_tree(&game_state, max_iterations=-1,
-                                      exploration_param=0)
+                                      exploration_param=0,
+                                      select_best_child=False)
     cdef list actions = best_actions_for_tests(root_node)
     cdef int i
     for i in range(MAX_CHILDREN):
