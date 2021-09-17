@@ -101,6 +101,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\ai\eval\eval_results_same_perm_different_iter.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
