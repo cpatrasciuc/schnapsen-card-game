@@ -2,7 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,duplicate-code
 
 import logging
 import os
@@ -13,7 +13,8 @@ import pandas
 from pandas import DataFrame
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
-from ai.eval.utils import get_dataframe_from_actions_and_scores, play_one_trick
+from ai.eval.utils import get_dataframe_from_actions_and_scores, \
+  same_game_state_after_each_trick_scenarios
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -54,8 +55,7 @@ def _run_mcts_step_by_step(game_state: GameState,
       break
     if actions_and_scores == prev_actions_and_scores:
       break
-    else:
-      prev_actions_and_scores = actions_and_scores
+    prev_actions_and_scores = actions_and_scores
   options.max_iterations = max_iterations
   return pandas.concat(dataframes, ignore_index=True)
 
@@ -93,15 +93,9 @@ def _generate_data(cheater: bool, options: MctsPlayerOptions):
       GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   dataframes.extend(
     _run_simulations(partially_simulated_game_states, cheater, options))
-  seed = 20
-  game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
-  same_game_state_after_each_trick = {}
-  for i in range(5):
-    game_state = play_one_trick(game_state)
-    same_game_state_after_each_trick[
-      f"GameState (seed={seed}), after {i + 1} trick(s) played"] = game_state
   dataframes.extend(
-    _run_simulations(same_game_state_after_each_trick, cheater, options))
+    _run_simulations(same_game_state_after_each_trick_scenarios(20), cheater,
+                     options))
   dataframe = pandas.concat(dataframes, ignore_index=True)
   # noinspection PyTypeChecker
   dataframe.to_csv(_get_csv_path(cheater), index=False)

@@ -6,7 +6,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,duplicate-code
 
 import logging
 import os
@@ -17,7 +17,8 @@ import pandas
 from pandas import DataFrame
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
-from ai.eval.utils import play_one_trick, get_dataframe_from_actions_and_scores
+from ai.eval.utils import get_dataframe_from_actions_and_scores, \
+  same_game_state_after_each_trick_scenarios
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -69,14 +70,8 @@ def _generate_data(options: MctsPlayerOptions):
     partially_simulated_game_states[f"Random GameState (seed={seed})"] = \
       GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   dataframes = _run_simulations(partially_simulated_game_states, options)
-  seed = 20
-  game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
-  same_game_state_after_each_trick = {}
-  for i in range(5):
-    game_state = play_one_trick(game_state)
-    same_game_state_after_each_trick[
-      f"GameState (seed=0), after {i + 1} trick(s) played"] = game_state
-  dataframes.extend(_run_simulations(same_game_state_after_each_trick, options))
+  dataframes.extend(
+    _run_simulations(same_game_state_after_each_trick_scenarios(20), options))
   dataframe = pandas.concat(dataframes, ignore_index=True)
   # noinspection PyTypeChecker
   dataframe.to_csv(_get_csv_path(options), index=False)
