@@ -1,0 +1,101 @@
+seed,sample_index,action,iteration
+0,0,"PlayCardAction(TWO, Q♦)",20480
+1,0,"PlayCardAction(TWO, J♥)",20480
+2,0,"PlayCardAction(TWO, J♣)",80
+3,0,"AnnounceMarriageAction(TWO, K♥)",2560
+4,0,"PlayCardAction(TWO, X♣)",40
+5,0,"PlayCardAction(TWO, X♣)",20480
+6,0,"PlayCardAction(TWO, A♦)",1280
+7,0,"PlayCardAction(TWO, X♥)",20480
+8,0,"PlayCardAction(TWO, J♦)",10240
+9,0,"AnnounceMarriageAction(TWO, K♠)",2560
+10,0,"PlayCardAction(TWO, X♠)",20480
+11,0,"PlayCardAction(TWO, X♥)",10240
+12,0,"PlayCardAction(TWO, X♦)",2560
+13,0,"PlayCardAction(TWO, X♣)",0
+14,0,"PlayCardAction(TWO, J♥)",40
+15,0,"PlayCardAction(TWO, J♣)",40
+16,0,"PlayCardAction(TWO, X♠)",40
+17,0,"PlayCardAction(TWO, A♥)",160
+18,0,"AnnounceMarriageAction(TWO, K♦)",1280
+19,0,"PlayCardAction(TWO, J♦)",320
+20,0,"PlayCardAction(TWO, J♣)",40
+21,0,"PlayCardAction(TWO, J♦)",80
+22,0,"PlayCardAction(TWO, X♥)",20480
+23,0,"AnnounceMarriageAction(TWO, K♣)",40
+24,0,"PlayCardAction(TWO, A♦)",2560
+25,0,ExchangeTrumpCardAction(TWO),20480
+26,0,"PlayCardAction(TWO, X♥)",20480
+27,0,CloseTheTalonAction(TWO),5120
+28,0,"AnnounceMarriageAction(TWO, K♦)",10240
+29,0,"PlayCardAction(TWO, A♦)",20480
+30,0,"PlayCardAction(TWO, X♣)",80
+31,0,ExchangeTrumpCardAction(TWO),10240
+32,0,"PlayCardAction(TWO, J♠)",10240
+33,0,"PlayCardAction(TWO, A♣)",10240
+34,0,"PlayCardAction(TWO, X♣)",40
+35,0,"PlayCardAction(TWO, X♠)",640
+36,0,"PlayCardAction(TWO, J♠)",10240
+37,0,"PlayCardAction(TWO, J♠)",20480
+38,0,"PlayCardAction(TWO, X♣)",10240
+39,0,"PlayCardAction(TWO, J♠)",10240
+40,0,"PlayCardAction(TWO, J♠)",5120
+41,0,"PlayCardAction(TWO, J♥)",160
+42,0,"PlayCardAction(TWO, X♦)",20480
+43,0,"AnnounceMarriageAction(TWO, K♣)",320
+44,0,"AnnounceMarriageAction(TWO, K♦)",20
+45,0,CloseTheTalonAction(TWO),2560
+46,0,"AnnounceMarriageAction(TWO, K♣)",640
+47,0,"PlayCardAction(TWO, J♥)",1280
+48,0,"PlayCardAction(TWO, X♥)",160
+49,0,"PlayCardAction(TWO, J♠)",0
+50,0,"AnnounceMarriageAction(TWO, K♣)",40
+51,0,"AnnounceMarriageAction(TWO, K♦)",640
+52,0,"PlayCardAction(TWO, J♠)",1280
+53,0,"PlayCardAction(TWO, J♥)",20480
+54,0,"AnnounceMarriageAction(TWO, Q♦)",5120
+55,0,"PlayCardAction(TWO, X♣)",20480
+56,0,CloseTheTalonAction(TWO),20480
+57,0,"PlayCardAction(TWO, J♠)",20480
+58,0,"PlayCardAction(TWO, X♦)",0
+59,0,"PlayCardAction(TWO, X♥)",80
+60,0,"AnnounceMarriageAction(TWO, Q♥)",5120
+61,0,"PlayCardAction(TWO, X♠)",640
+62,0,"AnnounceMarriageAction(TWO, K♦)",1280
+63,0,"PlayCardAction(TWO, A♥)",10240
+64,0,"AnnounceMarriageAction(TWO, K♥)",1280
+65,0,"PlayCardAction(TWO, A♥)",1280
+66,0,"AnnounceMarriageAction(TWO, K♣)",5120
+67,0,"PlayCardAction(TWO, J♠)",20
+68,0,"PlayCardAction(TWO, J♣)",80
+69,0,"PlayCardAction(TWO, J♣)",20480
+70,0,"AnnounceMarriageAction(TWO, K♠)",640
+71,0,"PlayCardAction(TWO, A♣)",10240
+72,0,"PlayCardAction(TWO, X♥)",10240
+73,0,ExchangeTrumpCardAction(TWO),20480
+74,0,"PlayCardAction(TWO, A♦)",10240
+75,0,ExchangeTrumpCardAction(TWO),0
+76,0,"PlayCardAction(TWO, K♥)",10240
+77,0,"PlayCardAction(TWO, X♥)",20480
+78,0,"PlayCardAction(TWO, A♣)",10240
+79,0,ExchangeTrumpCardAction(TWO),0
+80,0,"PlayCardAction(TWO, J♦)",80
+81,0,"PlayCardAction(TWO, X♣)",1280
+82,0,"AnnounceMarriageAction(TWO, K♠)",10240
+83,0,"AnnounceMarriageAction(TWO, K♣)",80
+84,0,ExchangeTrumpCardAction(TWO),20480
+85,0,"AnnounceMarriageAction(TWO, K♣)",640
+86,0,"PlayCardAction(TWO, X♦)",0
+87,0,"AnnounceMarriageAction(TWO, K♥)",640
+88,0,"PlayCardAction(TWO, X♥)",40
+89,0,"AnnounceMarriageAction(TWO, K♣)",80
+90,0,"PlayCardAction(TWO, J♦)",20480
+91,0,ExchangeTrumpCardAction(TWO),20480
+92,0,"PlayCardAction(TWO, J♠)",80
+93,0,"PlayCardAction(TWO, J♦)",40
+94,0,"PlayCardAction(TWO, X♣)",80
+95,0,"PlayCardAction(TWO, X♥)",10240
+96,0,"PlayCardAction(TWO, K♥)",5120
+97,0,"AnnounceMarriageAction(TWO, K♣)",0
+98,0,"PlayCardAction(TWO, J♣)",20480
+99,0,"PlayCardAction(TWO, J♦)",20480
