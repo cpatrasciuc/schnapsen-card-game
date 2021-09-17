@@ -205,7 +205,8 @@ class Mcts(Generic[_State, _Action]):
     # TODO(mcts): Cache the tree(s) from previous calls.
 
   def build_tree(self, state: _State,
-                 max_iterations: Optional[int] = None) -> Node[
+                 max_iterations: Optional[int] = None,
+                 select_best_child: bool = False) -> Node[
     _State, _Action]:
     assert max_iterations is None or max_iterations > 0, \
       "max_iterations must be positive"
@@ -217,7 +218,7 @@ class Mcts(Generic[_State, _Action]):
     iterations = 0
     while True:
       iterations += 1
-      if self.run_one_iteration(root_node):
+      if self.run_one_iteration(root_node, select_best_child):
         break
       if max_iterations is not None and iterations >= max_iterations:
         break
@@ -226,9 +227,10 @@ class Mcts(Generic[_State, _Action]):
     #   debug_print(root_node, 0)
     return root_node
 
-  def run_one_iteration(self, root_node: Node) -> bool:
+  def run_one_iteration(self, root_node: Node,
+                        select_best_child: bool = False) -> bool:
     """Returns True if the entire game tree is already constructed."""
-    selected_node = Mcts._selection(root_node)
+    selected_node = Mcts._selection(root_node, select_best_child)
     if selected_node is None:
       return True
     end_node = Mcts._fully_expand(selected_node)
@@ -236,7 +238,7 @@ class Mcts(Generic[_State, _Action]):
     return False
 
   @staticmethod
-  def _selection(node: Node) -> Optional[Node]:
+  def _selection(node: Node, select_best_child: bool) -> Optional[Node]:
     while not node.terminal:
       if not node.fully_expanded:
         return node
@@ -248,13 +250,16 @@ class Mcts(Generic[_State, _Action]):
       if len(not_fully_simulated_children) == 0:
         # This can only happen once we expanded the whole game tree.
         return None
-      # TODO(mcts): Check if it's better to select the best_child instead of a
-      #  random child.
-      # best_child = node.best_child()
-      # if best_child in not_fully_simulated_children:
-      #   node = best_child
-      # else:
-      node = random.choice(not_fully_simulated_children)
+      if select_best_child:
+        children_with_ucb = \
+          [(child, ucb_for_player(child, node.player))
+           for child in not_fully_simulated_children]
+        max_ucb = max(ucb for _, ucb in children_with_ucb)
+        best_children = [child for child, ucb in children_with_ucb if
+                         ucb == max_ucb]
+        node = random.choice(best_children)
+      else:
+        node = random.choice(not_fully_simulated_children)
     raise Exception("Should not reach this code")  # pragma: no cover
 
   @staticmethod

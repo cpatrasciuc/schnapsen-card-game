@@ -185,7 +185,8 @@ class SchnapsenMctsAlgorithmTest(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.counter = 0
 
-      def run_one_iteration(self, root_node: Node) -> bool:
+      def run_one_iteration(self, root_node: Node,
+                            select_best_child: bool = False) -> bool:
         self.counter += 1
         return False
 
