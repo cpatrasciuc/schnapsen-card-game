@@ -10,18 +10,17 @@
 
 import logging
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import pandas
 from pandas import DataFrame
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
+from ai.eval.utils import play_one_trick, get_dataframe_from_actions_and_scores
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
-from model.player_action import PlayerAction, get_available_actions, \
-  AnnounceMarriageAction, PlayCardAction
 from model.player_id import PlayerId
 
 _folder = os.path.join(os.path.dirname(__file__), "data")
@@ -30,25 +29,6 @@ _folder = os.path.join(os.path.dirname(__file__), "data")
 def _get_csv_path(options: MctsPlayerOptions):
   return os.path.join(_folder,
                       f"mcts_permutations_{options.max_iterations}iter.csv")
-
-
-def _play_one_trick(game_state: GameState) -> GameState:
-  for _ in range(2):
-    actions = get_available_actions(game_state)
-    actions = [action for action in actions if
-               isinstance(action, (PlayCardAction, AnnounceMarriageAction))]
-    game_state = actions[0].execute(game_state)
-  return game_state
-
-
-def _get_dataframe_from_actions_and_scores(
-    actions_and_scores: List[Tuple[PlayerAction, float]]) -> DataFrame:
-  dataframe = DataFrame(
-    [(score, str(action)) for action, score in actions_and_scores],
-    columns=["score", "action"])
-  dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
-                                                            ascending=False)
-  return dataframe
 
 
 def _run_mcts_step_by_step(game_state: GameState,
@@ -62,7 +42,7 @@ def _run_mcts_step_by_step(game_state: GameState,
     mcts_player = CythonMctsPlayer(game_state.next_player, False, options)
     actions_and_scores = mcts_player.get_actions_and_scores(
       game_state.next_player_view())
-    dataframe = _get_dataframe_from_actions_and_scores(actions_and_scores)
+    dataframe = get_dataframe_from_actions_and_scores(actions_and_scores)
     dataframe["permutations"] = permutations
     dataframes.append(dataframe)
     if max_permutations is not None and permutations >= max_permutations:
@@ -93,7 +73,7 @@ def _generate_data(options: MctsPlayerOptions):
   game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   same_game_state_after_each_trick = {}
   for i in range(5):
-    game_state = _play_one_trick(game_state)
+    game_state = play_one_trick(game_state)
     same_game_state_after_each_trick[
       f"GameState (seed=0), after {i + 1} trick(s) played"] = game_state
   dataframes.extend(_run_simulations(same_game_state_after_each_trick, options))

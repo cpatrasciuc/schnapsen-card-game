@@ -5,20 +5,16 @@
 # pylint: disable=too-many-locals
 
 import logging
-import math
-import multiprocessing
 import os
-from multiprocessing.connection import Connection, Pipe
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas
 from pandas import DataFrame
 
-from ai.mcts_algorithm import Mcts, SchnapsenNode, ucb_for_player
+from ai.cython_mcts_player.player import CythonMctsPlayer
+from ai.eval.utils import get_dataframe_from_actions_and_scores, play_one_trick
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.utils import get_unseen_cards, populate_game_view
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 from model.game_state_test_utils import \
@@ -27,10 +23,7 @@ from model.game_state_test_utils import \
   get_game_state_for_playing_to_win_the_last_trick_puzzle, \
   get_game_state_for_tempo_puzzle, get_game_state_for_who_laughs_last_puzzle, \
   get_game_state_for_forcing_the_issue_puzzle, get_game_state_for_tests
-from model.player_action import PlayerAction
 from model.player_id import PlayerId
-
-STEP = 100
 
 _folder = os.path.join(os.path.dirname(__file__), "data")
 
@@ -40,126 +33,30 @@ def _get_csv_path(cheater: bool):
   return os.path.join(_folder, f"mcts_convergence{suffix}.csv")
 
 
-def _add_action_rank_column(dataframe: DataFrame):
-  dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
-                                                            ascending=False)
-
-
-def _get_children_data(node: SchnapsenNode) -> DataFrame:
-  children_and_scores = \
-    [(ucb_for_player(child, node.player), str(action))
-     for action, child in node.children.items() if child is not None]
-  dataframe = DataFrame(children_and_scores, columns=["score", "action"])
-  _add_action_rank_column(dataframe)
-  return dataframe
-
-
-def _get_dataframe_from_actions_and_scores(
-    actions_and_scores: List[Tuple[PlayerAction, float]]) -> DataFrame:
-  dataframe = DataFrame(
-    [(score, str(action)) for action, score in actions_and_scores],
-    columns=["score", "action"])
-  _add_action_rank_column(dataframe)
-  return dataframe
-
-
-def _run_simulation_out_of_process(game_state: GameState,
-                                   max_iterations: Optional[int],
-                                   output: Connection):
-  player_id = game_state.next_player
-  mcts = Mcts(player_id)
-  root_node = SchnapsenNode(game_state, None)
-  iteration = 0
-  is_fully_simulated = False
-  while True:
-    iteration += STEP
-    for _ in range(STEP):
-      is_fully_simulated = mcts.run_one_iteration(root_node)
-      if is_fully_simulated:
-        break
-    actions_and_scores = [
-      (action, child.ucb if child.player == player_id else -child.ucb)
-      for action, child in root_node.children.items() if child is not None]
-    output.send(actions_and_scores)
-    output.send(is_fully_simulated)
-    if is_fully_simulated:
-      break
-    if max_iterations is not None and iteration >= max_iterations:
-      break
-  output.close()
-
-
-def _simulate_game_view(game_view: GameState,
-                        options: MctsPlayerOptions) -> DataFrame:
-  batch_size = multiprocessing.cpu_count() - 1
-  num_batches = math.ceil(options.max_permutations // batch_size)
+def _run_mcts_step_by_step(game_state: GameState,
+                           cheater: bool,
+                           options: MctsPlayerOptions) -> DataFrame:
+  options.num_processes = 1
   max_iterations = options.max_iterations
-  cards_set = get_unseen_cards(game_view)
-  player_id = game_view.next_player
-  num_opponent_unknown_cards = len(
-    [card for card in game_view.cards_in_hand[player_id.opponent()] if
-     card is None])
-  permutations = options.perm_generator(cards_set,
-                                        num_opponent_unknown_cards,
-                                        options.max_permutations)
-  game_states = [populate_game_view(game_view, permutation) for permutation in
-                 permutations]
-  pipes = [Pipe(duplex=False) for _ in range(len(permutations))]
-  processes = [multiprocessing.Process(target=_run_simulation_out_of_process,
-                                       args=(
-                                         game_state, max_iterations, pipe[1]))
-               for game_state, pipe in zip(game_states, pipes)]
-  for process in processes:
-    process.start()
-  iteration = 0
+  game_view = game_state if cheater else game_state.next_player_view()
+  iterations = 10
   dataframes = []
-  actions_and_scores_for_each_permutation = [[] for _ in game_states]
-  is_fully_simulated = [False for _ in game_states]
+  prev_actions_and_scores = None
   while True:
-    iteration += STEP
-    for batch in range(num_batches):
-      start = batch * batch_size
-      for i, pipe in enumerate(pipes[start:start + batch_size]):
-        if is_fully_simulated[start + i]:
-          continue
-        actions_and_scores_for_each_permutation[start + i] = pipe[0].recv()
-        is_fully_simulated[start + i] = pipe[0].recv()
-    stats: Dict[PlayerAction, List[float]] = {}
-    for actions_and_scores in actions_and_scores_for_each_permutation:
-      for action, score in actions_and_scores:
-        stats[action] = stats.get(action, []) + [score]
-    merged_actions_and_scores = \
-      [(action, float(np.mean(scores))) for action, scores in stats.items()]
-    dataframe = _get_dataframe_from_actions_and_scores(
-      merged_actions_and_scores)
-    dataframe["iteration"] = iteration
+    iterations *= 2
+    options.max_iterations = iterations
+    mcts_player = CythonMctsPlayer(game_view.next_player, cheater, options)
+    actions_and_scores = mcts_player.get_actions_and_scores(game_view)
+    dataframe = get_dataframe_from_actions_and_scores(actions_and_scores)
+    dataframe["iteration"] = iterations
     dataframes.append(dataframe)
-    if np.all(is_fully_simulated):
+    if max_iterations is not None and iterations >= max_iterations:
       break
-    if max_iterations is not None and iteration >= max_iterations:
+    if actions_and_scores == prev_actions_and_scores:
       break
-  for process in processes:
-    process.join()
-  return pandas.concat(dataframes, ignore_index=True)
-
-
-def _simulate_game_state(game_state: GameState,
-                         options: MctsPlayerOptions) -> DataFrame:
-  mcts = Mcts(game_state.next_player)
-  root_node = SchnapsenNode(game_state, None)
-  iteration = 0
-  dataframes = []
-  max_iterations = options.max_iterations
-  while True:
-    iteration += 1
-    is_fully_simulated = mcts.run_one_iteration(root_node)
-    dataframe = _get_children_data(root_node)
-    dataframe["iteration"] = iteration
-    dataframes.append(dataframe)
-    if is_fully_simulated:
-      break
-    if max_iterations is not None and iteration >= max_iterations:
-      break
+    else:
+      prev_actions_and_scores = actions_and_scores
+  options.max_iterations = max_iterations
   return pandas.concat(dataframes, ignore_index=True)
 
 
@@ -169,16 +66,14 @@ def _run_simulations(game_states: Dict[str, GameState],
   dataframes = []
   for name, game_state in game_states.items():
     logging.info("Scenario: %s", name)
-    if cheater:
-      dataframe = _simulate_game_state(game_state, options)
-    else:
-      dataframe = _simulate_game_view(game_state.next_player_view(), options)
+    dataframe = _run_mcts_step_by_step(game_state, cheater, options)
     dataframe["scenario"] = name
     dataframes.append(dataframe)
   return dataframes
 
 
 def _generate_data(cheater: bool, options: MctsPlayerOptions):
+  dataframes = []
   fully_simulated_game_states = {
     "You first. No, you first":
       get_game_state_for_you_first_no_you_first_puzzle(),
@@ -190,13 +85,23 @@ def _generate_data(cheater: bool, options: MctsPlayerOptions):
     "Forcing the issue": get_game_state_for_forcing_the_issue_puzzle(),
     "Game state for tests": get_game_state_for_tests(),
   }
-  dataframes = _run_simulations(fully_simulated_game_states, cheater, options)
+  dataframes.extend(
+    _run_simulations(fully_simulated_game_states, cheater, options))
   partially_simulated_game_states = {}
   for seed in [0, 20, 40, 60, 100]:
     partially_simulated_game_states[f"Random GameState (seed={seed})"] = \
       GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   dataframes.extend(
     _run_simulations(partially_simulated_game_states, cheater, options))
+  seed = 20
+  game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
+  same_game_state_after_each_trick = {}
+  for i in range(5):
+    game_state = play_one_trick(game_state)
+    same_game_state_after_each_trick[
+      f"GameState (seed={seed}), after {i + 1} trick(s) played"] = game_state
+  dataframes.extend(
+    _run_simulations(same_game_state_after_each_trick, cheater, options))
   dataframe = pandas.concat(dataframes, ignore_index=True)
   # noinspection PyTypeChecker
   dataframe.to_csv(_get_csv_path(cheater), index=False)
@@ -226,7 +131,11 @@ def _plot_results(cheater: bool):
     axes[i, 0].set_ylim(min(scenario_df.score) - 0.05,
                         max(scenario_df.score) + 0.05)
     axes[i, 1].set_title(scenario)
+    if max(scenario_df.iteration) > 10000:
+      axes[i, 0].set_xscale("log")
+      axes[i, 1].set_xscale("log")
   suffix = "_cheater" if cheater else ""
+  plt.tight_layout()
   plt.savefig(os.path.join(_folder, f"mcts_convergence{suffix}.png"))
 
 
@@ -247,10 +156,7 @@ def _min_iterations_to_find_the_best_action(
   for seed in range(num_game_states):
     for sample_index in range(num_samples_per_game_state):
       game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
-      if cheater:
-        dataframe = _simulate_game_state(game_state, options)
-      else:
-        dataframe = _simulate_game_view(game_state.next_player_view(), options)
+      dataframe = _run_mcts_step_by_step(game_state, cheater, options)
       last_iteration = dataframe.iteration.max()
       best_actions = dataframe[
         dataframe.iteration.eq(last_iteration) & dataframe["rank"].eq(
@@ -276,31 +182,32 @@ def _min_iterations_to_find_the_best_action(
   # noinspection PyTypeChecker
   dataframe.to_csv(csv_path, index=False)
   # dataframe = pandas.read_csv(csv_path)
-  dataframe.iteration.plot(kind="kde", label="Overall", color="r", linewidth=3)
-  for seed in dataframe.seed.drop_duplicates():
-    filtered_dataframe = dataframe[dataframe.seed.eq(seed)]
-    filtered_dataframe.iteration.plot(kind="kde", alpha=0.5,
-                                      label=f"GameState.new(seed={seed})")
+  fig, ax = plt.subplots()
+  ax2 = ax.twinx()
+  dataframe.iteration.hist(color="b", linewidth=3, ax=ax)
+  dataframe.iteration.plot(kind="kde", label="Overall", color="r", linewidth=3,
+                           ax=ax2)
   plt.legend(loc=0)
   plt.xlabel("Iterations")
   title_suffix = \
     "" if cheater else f" ({options.max_permutations} permutations)"
   plt.title(
     f"Number of iterations until the best action is found{title_suffix}")
-  plt.gcf().set_size_inches(10, 5)
-  plt.savefig(
+  fig.set_size_inches(10, 5)
+  fig.savefig(
     os.path.join(_folder,
                  f"min_iterations_to_find_the_best_action{suffix}.png"))
   logging.info("Overall results: %s", dataframe.iteration.describe())
+  logging.info("Value counts: %s", dataframe.iteration.value_counts())
 
 
 def main():
   cheater = False
-  options = MctsPlayerOptions(max_iterations=10000, max_permutations=7)
+  options = MctsPlayerOptions(max_iterations=25000, max_permutations=40)
   _generate_data(cheater, options)
   _plot_results(cheater)
-  _min_iterations_to_find_the_best_action(num_game_states=10, cheater=cheater,
-                                          num_samples_per_game_state=50,
+  _min_iterations_to_find_the_best_action(num_game_states=100, cheater=cheater,
+                                          num_samples_per_game_state=1,
                                           options=options)
 
 
