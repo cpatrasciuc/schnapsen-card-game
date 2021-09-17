@@ -229,7 +229,43 @@ iterations in 10 seconds (using 8 cores) to running 250 permutations x
 
 ## Tune the max_iterations and max_permutations params
 
-TODO
+It seems the permutations stabilize after 30-40 permutation. For iterations it's
+not that clear. I will fix the total_iterations budget and permutations;
+max_iterations will be budget / max_permutations.
+
+For total_time ~ 1 sec:
+Total iterations budget: ~100k iterations
+Combinations to try out: 
+- 10 perms, 10k iterations
+- 30 perms, 3333 iterations
+- 50 perms, 2000 iterations
+Starting with 100 bummerls, no significat difference and each player won once and lost once.
+
+Spreading a bit the number of permutations:
+- 10 perms, 10k iterations
+- 40 perms, 2500 iterations
+- 70 perms, 1428 iterations
+Using 100 bummerls, no significant difference. 10 perm has won against both, 70 has lost against both.
+
+Try out the hypothesis: for a fixed num of permutations 30, the more iterations the better.
+- 30 perm, 10000 iter
+- 30 perm, 5000 iter
+- 30 perm, 2500 iter
+- 30 perm, 1000 iter
+
+Try out the hypothesis: for a fixed num of iterations, the more permutations the better.
+- 10 perm, 2500 iter
+- 40 perm, 2500 iter
+- 80 perm, 2500 iter
+- 150 perm, 2500 iter
+
+
+For total_time ~ 5 sec:
+Total iterations budget: ~500k iterations
+Combinations to try out:
+- 10 perms, 50k iterations
+- 30 perms, 16666 iterations
+- 50 perms, 10000 iterations
 
 ## Select the best child and balance exploration vs exploitation
 
