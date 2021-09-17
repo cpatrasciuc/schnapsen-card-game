@@ -2,7 +2,8 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-import datetime
+import functools
+import multiprocessing
 import os.path
 import random
 import time
@@ -14,10 +15,13 @@ from statsmodels.stats.proportion import proportion_confint
 
 from ai.eval.players import PLAYER_NAMES
 from ai.player import Player
+from main_wrapper import main_wrapper
 from model.bummerl import Bummerl
 from model.game_state import GameState
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
+
+MetricsDict = Dict[str, PlayerPair]
 
 _DATAFRAME_METRICS = ["bummerls", "games", "game_points", "trick_points"]
 
@@ -65,12 +69,18 @@ def _print_pair(label: str, pair: PlayerPair, compute_ci: bool = True):
   print(f"{label}: {pair.one}:{pair.two} {ci_text}")
 
 
-def _print_metrics(metrics: Dict[str, PlayerPair]):
+def _print_metrics(metrics: MetricsDict):
   for metric_name, metric_value in metrics.items():
     compute_ci = metric_name in ["bummerls", "games", "bummerls_of_interest",
                                  "games_of_interest"]
     _print_pair(metric_name, metric_value, compute_ci)
   print()
+
+
+def accumulate_metrics(acc_metrics: MetricsDict, metrics: MetricsDict):
+  for metric_name in acc_metrics.keys():
+    acc_metrics[metric_name].one += metrics[metric_name].one
+    acc_metrics[metric_name].two += metrics[metric_name].two
 
 
 def _request_next_action_and_time_it(game_view: GameState, player: Player):
@@ -82,9 +92,12 @@ def _request_next_action_and_time_it(game_view: GameState, player: Player):
   return action, end_perf - start_perf, end_process - start_process
 
 
-def evaluate_player_pair(players: PlayerPair[Player],
-                         num_bummerls: int = 100) -> Dict[str, PlayerPair]:
+def evaluate_player_pair_in_process(num_bummerls: int,
+                                    players: PlayerPair[str]) -> MetricsDict:
   # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+
+  players = PlayerPair(PLAYER_NAMES[players.one](PlayerId.ONE),
+                       PLAYER_NAMES[players.two](PlayerId.TWO))
 
   # Initialize the metrics.
   bummerls = PlayerPair(0, 0)
@@ -159,14 +172,33 @@ def evaluate_player_pair(players: PlayerPair[Player],
           "num_actions_requested": num_actions_requested}
 
 
+def evaluate_player_pair_in_parallel(players: PlayerPair[str],
+                                     num_bummerls: int = 100,
+                                     num_processes: int = 4) -> MetricsDict:
+  num_bummerls_per_process = num_bummerls // num_processes
+  num_bummerls_to_run = [num_bummerls_per_process] * num_processes
+  for i in range(num_bummerls % num_processes):
+    num_bummerls_to_run[i] += 1
+  print(f"Number of bummerls for each worker: {num_bummerls_to_run}")
+
+  with multiprocessing.Pool(processes=num_processes) as pool:
+    metrics_dicts = pool.map(
+      functools.partial(evaluate_player_pair_in_process, players=players),
+      num_bummerls_to_run)
+
+  merged_metrics = metrics_dicts[0]
+  for metric_dict in metrics_dicts[1:]:
+    accumulate_metrics(merged_metrics, metric_dict)
+  return merged_metrics
+
+
 def evaluate_one_player_vs_opponent_list(player: str,
                                          opponents: List[str]) -> DataFrame:
   rows = []
   for opponent in opponents:
     print(f"Simulating {player} vs {opponent}")
-    players = PlayerPair(PLAYER_NAMES[player](PlayerId.ONE),
-                         PLAYER_NAMES[opponent](PlayerId.TWO))
-    metrics = evaluate_player_pair(players)
+    players = PlayerPair(player, opponent)
+    metrics = evaluate_player_pair_in_parallel(players)
     _print_metrics(metrics)
     rows.append([player, opponent] + _get_results_row(metrics))
   columns = ["player_one", "player_two"] + _get_metrics_column_names()
@@ -182,10 +214,12 @@ def evaluate_all_player_pairs(player_names: List[str] = None) -> DataFrame:
   return pandas.concat(dataframes)
 
 
-if __name__ == "__main__":
-  start_time = time.time()
+def main():
   dataframe = evaluate_all_player_pairs()
+  # noinspection PyTypeChecker
   dataframe.to_csv(os.path.join(os.path.dirname(__file__), "eval_results.csv"),
                    index=False)
-  end_time = time.time()
-  print(f"Duration: {datetime.timedelta(seconds=end_time - start_time)}")
+
+
+if __name__ == "__main__":
+  main_wrapper(main)
