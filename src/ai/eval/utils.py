@@ -9,9 +9,10 @@ from pandas import DataFrame
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayCardAction, \
   AnnounceMarriageAction, PlayerAction
+from model.player_id import PlayerId
 
 
-def play_one_trick(game_state: GameState) -> GameState:
+def _play_one_trick(game_state: GameState) -> GameState:
   for _ in range(2):
     actions = get_available_actions(game_state)
     actions = [action for action in actions if
@@ -28,3 +29,13 @@ def get_dataframe_from_actions_and_scores(
   dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
                                                             ascending=False)
   return dataframe
+
+
+def same_game_state_after_each_trick_scenarios(seed):
+  game_state = GameState.new(dealer=PlayerId.ONE, random_seed=seed)
+  same_game_state_after_each_trick = {}
+  for i in range(5):
+    game_state = _play_one_trick(game_state)
+    same_game_state_after_each_trick[
+      f"GameState (seed=0), after {i + 1} trick(s) played"] = game_state
+  return same_game_state_after_each_trick
