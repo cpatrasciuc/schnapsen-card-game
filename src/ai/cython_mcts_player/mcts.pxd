@@ -21,12 +21,17 @@ cdef struct Node:
   float q
   int n
   float ucb
+  float exploration_score
   bint fully_simulated
   bint terminal
   PlayerId player
 
+cdef Node *init_node(GameState *game_state, Node *parent) nogil
+cdef bint run_one_iteration(Node *root_node, float exploration_param,
+                            bint select_best_child) nogil
 cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param, bint select_best_child) nogil
+cdef void delete_tree(Node *root_node) nogil
+
 cdef list best_actions_for_tests(Node *node)
 cdef debug_str(Node *node)
-cdef void delete_tree(Node *root_node) nogil
