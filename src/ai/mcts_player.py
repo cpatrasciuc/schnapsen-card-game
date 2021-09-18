@@ -36,6 +36,31 @@ def _find_action_with_max_score(
   return random.choice(actions_with_max_score)
 
 
+def generate_permutations(game_view: GameState,
+                          options: MctsPlayerOptions) -> List[List[Card]]:
+  """
+  Given a game view that represents an imperfect information game, this function
+  returns the card permutations that should be used by the Mcts algorithm to
+  generate a list of perfect information games and process them.
+  """
+  cards_set = get_unseen_cards(game_view)
+  num_unknown_cards = len(cards_set)
+  num_opponent_unknown_cards = len(
+    [card for card in
+     game_view.cards_in_hand[game_view.next_player.opponent()] if
+     card is None])
+  total_permutations = \
+    math.comb(num_unknown_cards, num_opponent_unknown_cards) * \
+    math.perm(num_unknown_cards - num_opponent_unknown_cards)
+  num_permutations_to_process = min(total_permutations,
+                                    options.max_permutations)
+  logging.info("MctsPlayer: Num permutations: %s out of %s",
+               num_permutations_to_process, total_permutations)
+  permutations = options.perm_generator(
+    cards_set, num_opponent_unknown_cards, num_permutations_to_process)
+  return permutations
+
+
 def run_mcts(permutation: List[Card], game_view: GameState,
              player_id: PlayerId,
              options: MctsPlayerOptions) -> ActionsWithScores:
@@ -71,27 +96,9 @@ class BaseMctsPlayer(Player, abc.ABC):
     self._options = options or MctsPlayerOptions()
 
   def _generate_permutations(self, game_view: GameState) -> List[List[Card]]:
-    """
-    Given a game view that represents an imperfect information game, this method
-    returns the card permutations that should be used by the Mcts algorithm to
-    generate a list of perfect information games and process them.
-    """
-    cards_set = get_unseen_cards(game_view)
-    assert len(cards_set) == 0 or not self.cheater, cards_set
-    num_unknown_cards = len(cards_set)
-    num_opponent_unknown_cards = len(
-      [card for card in game_view.cards_in_hand[self.id.opponent()] if
-       card is None])
-    total_permutations = \
-      math.comb(num_unknown_cards, num_opponent_unknown_cards) * \
-      math.perm(num_unknown_cards - num_opponent_unknown_cards)
-    num_permutations_to_process = min(total_permutations,
-                                      self._options.max_permutations)
-    assert num_permutations_to_process == 1 or not self.cheater
-    logging.info("MctsPlayer: Num permutations: %s out of %s",
-                 num_permutations_to_process, total_permutations)
-    return self._options.perm_generator(
-      cards_set, num_opponent_unknown_cards, num_permutations_to_process)
+    permutations = generate_permutations(game_view, self._options)
+    assert len(permutations) == 1 or not self.cheater
+    return permutations
 
   def get_actions_and_scores(self, game_view: GameState) -> List[
     Tuple[PlayerAction, float]]:
