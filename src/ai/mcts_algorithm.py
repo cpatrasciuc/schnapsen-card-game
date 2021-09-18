@@ -40,6 +40,7 @@ class Node(abc.ABC, Generic[_State, _Action]):
     self.q = 0
     self.n = 0
     self.ucb = None
+    self.exploration_score = 0
     self.fully_simulated = False
     if not self.terminal:
       actions = self._get_available_actions()
@@ -125,7 +126,8 @@ class Node(abc.ABC, Generic[_State, _Action]):
       [child for child in self.children.values() if
        child is None or not child.fully_simulated])
     if num_not_fully_simulated_children > 0:
-      self.ucb = self.q / self.n + exploration_param * math.sqrt(
+      self.ucb = self.q / self.n
+      self.exploration_score = exploration_param * math.sqrt(
         2 * math.log(self.parent.n) / self.n)
     else:
       children_scores = [ucb_for_player(child, self.player) for child in
@@ -251,12 +253,13 @@ class Mcts(Generic[_State, _Action]):
         # This can only happen once we expanded the whole game tree.
         return None
       if select_best_child:
-        children_with_ucb = \
-          [(child, ucb_for_player(child, node.player))
+        children_with_selection_score = \
+          [(child, ucb_for_player(child, node.player) + child.exploration_score)
            for child in not_fully_simulated_children]
-        max_ucb = max(ucb for _, ucb in children_with_ucb)
-        best_children = [child for child, ucb in children_with_ucb if
-                         ucb == max_ucb]
+        max_selection_score = max(
+          score for _, score in children_with_selection_score)
+        best_children = [child for child, score in children_with_selection_score
+                         if score == max_selection_score]
         node = random.choice(best_children)
       else:
         node = random.choice(not_fully_simulated_children)
