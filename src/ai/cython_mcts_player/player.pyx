@@ -25,8 +25,17 @@ from model.card import Card as PyCard
 from model.game_state import GameState as PyGameState
 from model.player_id import PlayerId as PyPlayerId
 
-cdef void _populate_game_view(GameState *game_view, vector[Card] *permutation,
-                              PlayerId opponent_id) nogil:
+cdef void from_python_permutations(py_permutations,
+                                   vector[vector[Card]] *permutations):
+  cdef vector[Card] permutation
+  for py_permutation in py_permutations:
+    permutation.clear()
+    for card in py_permutation:
+      permutation.push_back(Card(suit=card.suit, card_value=card.card_value))
+    permutations.push_back(permutation)
+
+cdef void populate_game_view(GameState *game_view, vector[Card] *permutation,
+                             PlayerId opponent_id) nogil:
   cdef int i
   cdef int perm_index = 0
   for i in range(5):
@@ -38,7 +47,7 @@ cdef void _populate_game_view(GameState *game_view, vector[Card] *permutation,
       game_view.talon[i] = permutation[0][perm_index]
       perm_index += 1
 
-cdef _build_scoring_info(Node *root_node):
+cdef build_scoring_info(Node *root_node):
   actions_with_scores = {}
   cdef int i
   cdef Node *node
@@ -69,11 +78,11 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   cdef list py_root_nodes = []
   for i in range(permutations.size()):
     game_state = game_view[0]
-    _populate_game_view(&game_state, &permutations[0][i], opponent_id)
+    populate_game_view(&game_state, &permutations[0][i], opponent_id)
     root_node = build_tree(&game_state, max_iterations,
                            exploration_param=exploration_param,
                            select_best_child=select_best_child)
-    py_root_nodes.append(_build_scoring_info(root_node))
+    py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes
 
@@ -92,14 +101,9 @@ class CythonMctsPlayer(BaseMctsPlayer):
   def run_mcts_algorithm(self, py_game_view: PyGameState,
                          py_permutations: List[List[PyCard]]) -> List[
     ActionsWithScores]:
-    cdef vector[vector[Card]] permutations
-    cdef vector[Card] permutation
-    for py_permutation in py_permutations:
-      permutation.clear()
-      for card in py_permutation:
-        permutation.push_back(Card(suit=card.suit, card_value=card.card_value))
-      permutations.push_back(permutation)
     cdef GameState game_view = from_python_game_state(py_game_view)
+    cdef vector[vector[Card]] permutations
+    from_python_permutations(py_permutations, &permutations)
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
       self._options.max_iterations or -1, self._options.select_best_child,
