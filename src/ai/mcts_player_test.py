@@ -207,3 +207,14 @@ class CythonMctsPlayerSelectBestChildTest(MctsPlayerTest):
                                 select_best_child=True,
                                 num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerTest(unittest.TestCase):
+  @staticmethod
+  def test_max_iterations_less_than_available_actions():
+    # Here not all of the root node's children will be expanded.
+    options = MctsPlayerOptions(max_iterations=1, max_permutations=10,
+                                num_processes=1)
+    game_state = GameState.new(random_seed=0)
+    mcts_player = CythonMctsPlayer(game_state.next_player, False, options)
+    mcts_player.request_next_action(game_state.next_player_view())

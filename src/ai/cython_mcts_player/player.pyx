@@ -6,8 +6,6 @@
 
 # cython: warn.unused=False
 
-import logging
-
 from typing import List, Optional
 
 from libcpp.vector cimport vector
@@ -47,6 +45,8 @@ cdef _build_scoring_info(Node *root_node):
   for i in range(MAX_CHILDREN):
     if root_node.actions[i].action_type == ActionType.NO_ACTION:
       break
+    if root_node.children[i] == NULL:
+      continue
     py_action = to_python_player_action(root_node.actions[i])
     node = root_node.children[i]
     scoring_info = ScoringInfo(
@@ -61,7 +61,8 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
                                     vector[vector[Card]] *permutations,
                                     PlayerId opponent_id,
                                     int max_iterations,
-                                    bint select_best_child):
+                                    bint select_best_child,
+                                    float exploration_param):
   cdef int i
   cdef GameState game_state
   cdef Node *root_node
@@ -69,7 +70,8 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     _populate_game_view(&game_state, &permutations[0][i], opponent_id)
-    root_node = build_tree(&game_state, max_iterations, exploration_param=0,
+    root_node = build_tree(&game_state, max_iterations,
+                           exploration_param=exploration_param,
                            select_best_child=select_best_child)
     py_root_nodes.append(_build_scoring_info(root_node))
     delete_tree(root_node)
@@ -100,4 +102,5 @@ class CythonMctsPlayer(BaseMctsPlayer):
     cdef GameState game_view = from_python_game_state(py_game_view)
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
-      self._options.max_iterations or -1, self._options.select_best_child)
+      self._options.max_iterations or -1, self._options.select_best_child,
+      self._options.exploration_param)
