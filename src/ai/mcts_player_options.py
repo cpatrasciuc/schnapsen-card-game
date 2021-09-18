@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import dataclasses
+import math
 import multiprocessing
 from typing import Optional
 
@@ -57,4 +58,14 @@ class MctsPlayerOptions:
   child with the highest UCB among the not-fully-simulated children. If there
   are more such children, one of them is selected randomly. If this field is
   False, during the selection step, the Mcts algorithm will pick a random child.
+  """
+
+  # TODO(mcts): Find out which one is better: sqrt(2) or 1/sqrt(2).
+  exploration_param: float = 1 / math.sqrt(2)
+  """
+  Parameter that balances exploration vs exploitation. It is used only if
+  select_best_child is True. If exploration_param is zero, during the selection
+  phase of the Mcts algorithm, one of the best children will always be selected.
+  Higher values of exploration_param will increase the probability that one of
+  the least selected children will be preferred.
   """

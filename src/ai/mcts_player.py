@@ -37,12 +37,12 @@ def _find_action_with_max_score(
 
 
 def run_mcts(permutation: List[Card], game_view: GameState,
-             player_id: PlayerId, max_iterations: int,
-             select_best_child: bool) -> ActionsWithScores:
+             player_id: PlayerId,
+             options: MctsPlayerOptions) -> ActionsWithScores:
   game_state = populate_game_view(game_view, permutation)
-  mcts_algorithm = Mcts(player_id)
-  root_node = mcts_algorithm.build_tree(game_state, max_iterations,
-                                        select_best_child)
+  mcts_algorithm = Mcts(player_id, exploration_param=options.exploration_param)
+  root_node = mcts_algorithm.build_tree(game_state, options.max_iterations,
+                                        options.select_best_child)
   actions_with_scores = {}
   for action, child in root_node.children.items():
     if child is None:
@@ -157,12 +157,9 @@ class MctsPlayer(BaseMctsPlayer):
     if self._pool is not None:
       root_nodes = self._pool.map(
         functools.partial(run_mcts, game_view=game_view, player_id=self.id,
-                          max_iterations=self._options.max_iterations,
-                          select_best_child=self._options.select_best_child),
+                          options=self._options),
         permutations)
     else:
-      root_nodes = [
-        run_mcts(permutation, game_view, self.id, self._options.max_iterations,
-                 self._options.select_best_child)
-        for permutation in permutations]
+      root_nodes = [run_mcts(permutation, game_view, self.id, self._options)
+                    for permutation in permutations]
     return root_nodes
