@@ -5,6 +5,7 @@
 from typing import Dict, Callable
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
+
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
@@ -83,4 +84,29 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          num_processes=1,
                                          max_permutations=30,
                                          max_iterations=1000)),
+
+  "MctsPlayer10perm2500iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=10,
+                                         max_iterations=2500)),
+  "MctsPlayer40perm2500iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=40,
+                                         max_iterations=2500)),
+  "MctsPlayer80perm2500iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=80,
+                                         max_iterations=2500)),
+  "MctsPlayer150perm2500iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=2500)),
 }
