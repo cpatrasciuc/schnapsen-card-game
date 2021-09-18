@@ -33,6 +33,10 @@ def run_pylint():
     r"ui\..*(Widget|Layout)\.setter",
     r"ui\.game_options\.GameOptions\..*",
   ]
+  extension_pkgs = [
+    "ai.cython_mcts_player.mcts_debug",
+    "ai.cython_mcts_player.player",
+  ]
   pylint_opts = [
     "--indent-string='  '",
     "--ignore-imports=yes",
@@ -40,7 +44,7 @@ def run_pylint():
     "-j 0",  # Run in parallel on all available processors
     "--disable=" + ",".join(disabled_checks),
     "--good-names=i,j,k,q,n,ex,Run,_,ax",
-    "--extension-pkg-allow-list=ai.cython_mcts_player.player",
+    "--extension-pkg-allow-list=" + ",".join(extension_pkgs)
   ]
 
   # Call pylint in a subprocess since it's licensed under GPL. Do not import it.
