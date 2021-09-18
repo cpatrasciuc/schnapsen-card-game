@@ -160,3 +160,17 @@ def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
 def max_average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
   return _get_action_scores_for_fully_simulated_trees(actions_with_scores_list)
+
+
+# TODO(tests): Add tests for this function.
+def most_visited_node(actions_with_scores_list: List[ActionsWithScores]) -> \
+    List[Tuple[PlayerAction, float]]:
+  is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
+  if is_fully_simulated:
+    return _get_action_scores_for_fully_simulated_trees(
+      actions_with_scores_list)
+  stats: Dict[PlayerAction, float] = {}
+  for action_with_scores in actions_with_scores_list:
+    for action, scoring_info in action_with_scores.items():
+      stats[action] = stats.get(action, 0) + scoring_info.n
+  return list(stats.items())
