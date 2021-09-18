@@ -25,6 +25,10 @@ from ai.mcts_player import generate_permutations
 from ai.mcts_player_options import MctsPlayerOptions
 from model.game_state import GameState as PyGameState
 
+def _add_rank_column(dataframe: DataFrame) -> None:
+  dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
+                                                            ascending=False)
+
 cdef _get_children_data(Node *root_node):
   cdef int i
   cdef Node *node
@@ -45,8 +49,7 @@ cdef _get_children_data(Node *root_node):
       node.exploration_score))
 
   dataframe = DataFrame(data, columns=["action", "q", "n", "score", "exp_comp"])
-  dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
-                                                            ascending=False)
+  _add_rank_column(dataframe)
   return dataframe
 
 def run_mcts_and_collect_data(py_game_state: PyGameState,
@@ -71,8 +74,8 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
   delete_tree(root_node)
   return pandas.concat(dataframes, ignore_index=True)
 
-def run_mcts_permutations_step_by_step(py_game_view: PyGameState,
-                                       options: MctsPlayerOptions):
+def run_mcts_player_step_by_step(py_game_view: PyGameState,
+                                 options: MctsPlayerOptions):
   cdef GameState game_view = from_python_game_state(py_game_view)
   cdef GameState game_state
   cdef vector[Node *] root_nodes
@@ -107,6 +110,7 @@ def run_mcts_permutations_step_by_step(py_game_view: PyGameState,
       data=[(str(action), score) for action, score in actions_and_scores],
       columns=["action", "score"])
     dataframe["iteration"] = iteration
+    _add_rank_column(dataframe)
     dataframes.append(dataframe)
 
     if is_fully_simulated:
