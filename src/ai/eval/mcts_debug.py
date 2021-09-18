@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from pandas import DataFrame
 
 from ai.cython_mcts_player.mcts_debug import run_mcts_and_collect_data, \
-  run_mcts_permutations_step_by_step
+  run_mcts_player_step_by_step
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -54,7 +54,7 @@ def mcts_debug(game_state: GameState, options: MctsPlayerOptions):
 
 def mcts_player_debug(game_state: GameState, options: MctsPlayerOptions):
   print("Collecting data...")
-  dataframe = run_mcts_permutations_step_by_step(game_state, options)
+  dataframe = run_mcts_player_step_by_step(game_state, options)
   csv_path = "mcts_player_debug.csv"
   dataframe.to_csv(csv_path, index=False)
 
