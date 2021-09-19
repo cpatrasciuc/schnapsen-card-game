@@ -91,6 +91,12 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          num_processes=1,
                                          max_permutations=1,
                                          max_iterations=2500)),
+  "MctsPlayer5perm2500iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=5,
+                                         max_iterations=2500)),
   "MctsPlayer10perm2500iter":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
