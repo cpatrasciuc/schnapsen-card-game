@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import math
 from typing import Dict, Callable
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
@@ -60,6 +61,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
 
   "LibMctsPlayer": LibMctsPlayer,
 
+  # Same permutations, different iterations
   "MctsPlayer30perm10000iter":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
@@ -85,6 +87,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=30,
                                          max_iterations=1000)),
 
+  # Same iterations, different permutations
   "MctsPlayer1perm2500iter":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
@@ -121,4 +124,53 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          num_processes=1,
                                          max_permutations=150,
                                          max_iterations=2500)),
+
+  # Tune exploration_param
+  "MctsPlayer20perm5000iterRandomSelection":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=False)),
+  "MctsPlayer20perm5000iter0exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=0)),
+  "MctsPlayer20perm5000iter1/Sqrt(2)exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=1.0 / math.sqrt(2))),
+  "MctsPlayer20perm5000iterSqrt(2)exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=math.sqrt(2))),
+  "MctsPlayer20perm5000iter20exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=20)),
+  "MctsPlayer20perm5000iter5000exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=5000))
 }
