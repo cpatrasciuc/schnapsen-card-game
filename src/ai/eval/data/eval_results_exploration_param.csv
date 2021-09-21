@@ -1,0 +1,14 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+MctsPlayer20perm5000iter0exp,MctsPlayer20perm5000iterRandomSelection,400,600,2683,3262,4778,5818,296090,319091
+MctsPlayer20perm5000iter1/Sqrt(2)exp,MctsPlayer20perm5000iterRandomSelection,520,480,2877,2909,5518,5292,303402,290818
+MctsPlayer20perm5000iter1/Sqrt(2)exp,MctsPlayer20perm5000iter0exp,629,371,3343,2787,6063,4727,337216,300503
+MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iterRandomSelection,533,467,2899,2920,5590,5236,304538,293017
+MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter0exp,599,401,3325,2824,5980,4812,335761,305652
+MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,469,531,2886,3032,5221,5567,300663,307378
+MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter20exp,542,458,2959,2916,5605,5172,308847,295313
+MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iterRandomSelection,523,477,2904,2828,5504,5239,295824,289094
+MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iter0exp,570,430,3232,2847,5787,4950,326794,304628
+MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,483,517,2882,2838,5210,5398,289775,295702
+MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iterSqrt(2)exp,49,51,290,270,511,499,29225,28995
+MctsPlayer20perm5000iter5000exp,MctsPlayer20perm5000iter20exp,45,55,266,301,495,571,27884,29970
+MctsPlayer20perm5000iter5000exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,48,52,300,299,538,562,30214,31705
