@@ -13,8 +13,8 @@ from main_wrapper import main_wrapper
 from model.game_state import GameState
 
 
-def mcts_variance(game_state: GameState, cheater: bool,
-                  options: MctsPlayerOptions, num_samples: int):
+def _get_dataframe(game_state: GameState, cheater: bool,
+                   options: MctsPlayerOptions, num_samples: int) -> DataFrame:
   data = []
   game_view = game_state if cheater else game_state.next_player_view()
   for _ in range(num_samples):
@@ -25,6 +25,12 @@ def mcts_variance(game_state: GameState, cheater: bool,
   dataframe = DataFrame(data, columns=["action", "score"])
   dataframe = dataframe.pivot(columns=["action"], values=["score"])
   dataframe.columns = dataframe.columns.droplevel()
+  return dataframe
+
+
+def mcts_variance(game_state: GameState, cheater: bool,
+                  options: MctsPlayerOptions, num_samples: int):
+  dataframe = _get_dataframe(game_state, cheater, options, num_samples)
   print(dataframe.describe())
   dataframe.boxplot()
   details = dataframe.describe()
@@ -37,12 +43,44 @@ def mcts_variance(game_state: GameState, cheater: bool,
   plt.savefig("mcts_variance.png")
 
 
+def mcts_variance_across_multiple_game_states(cheater: bool,
+                                              options: MctsPlayerOptions,
+                                              num_samples: int,
+                                              num_game_states: int):
+  data = []
+  for seed in range(num_game_states):
+    print(f"Evaluating on GameState.new(random_seed={seed})")
+    dataframe = _get_dataframe(GameState.new(random_seed=seed),
+                               cheater, options, num_samples)
+    details = dataframe.describe().T.sort_values(by="mean", ascending=False)
+    std_dev = list(details["std"].values)
+    while len(std_dev) < 7:
+      std_dev.append(np.nan)
+    data.append(tuple(std_dev))
+  dataframe = DataFrame(
+    data, columns=["BestAction"] + [f"Action #{i}" for i in range(2, 8)])
+  csv_path = "mcts_variance_across_game_states.csv"
+  # noinspection PyTypeChecker
+  dataframe.to_csv(csv_path, index=False)
+  # dataframe = pandas.read_csv(csv_path)
+  dataframe.boxplot()
+  plt.xticks(rotation=45, ha='right')
+  plt.gcf().set_size_inches((5, 5))
+  plt.tight_layout()
+  plt.savefig("mcts_variance_across_game_states.png")
+
+
+def main():
+  cheater = False
+  options = MctsPlayerOptions(num_processes=1,
+                              max_iterations=500,
+                              max_permutations=20,
+                              select_best_child=True)
+  num_samples = 100
+  # mcts_variance(GameState.new(random_seed=0), cheater, options, num_samples)
+  mcts_variance_across_multiple_game_states(cheater, options, num_samples,
+                                            num_game_states=30)
+
+
 if __name__ == "__main__":
-  main_wrapper(lambda: mcts_variance(GameState.new(random_seed=0),
-                                     False,
-                                     MctsPlayerOptions(num_processes=1,
-                                                       max_iterations=5000,
-                                                       max_permutations=20,
-                                                       select_best_child=True,
-                                                       exploration_param=5000),
-                                     100))
+  main_wrapper(main)
