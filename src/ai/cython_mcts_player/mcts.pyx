@@ -146,11 +146,22 @@ cdef void _update_children_ucb(Node *node, float exploration_param,
 cdef void _backpropagate(Node *end_node, float score,
                          float exploration_param, bint select_best_child) nogil:
   cdef Node *node = end_node
+  cdef float score_for_player
   while node != NULL:
+    score_for_player = \
+      score if node.player == _PLAYER_FOR_TERMINAL_NODES else -score
     if not node.terminal:
       node.n += 1
-      node.q += score if node.player == _PLAYER_FOR_TERMINAL_NODES else -score
+      node.q += score_for_player
       _update_children_ucb(node, exploration_param, select_best_child)
+
+    # TODO(mcts): Add options.save_rewards for this.
+    # Are we on the first layer in the tree?
+    if node.parent != NULL and node.parent.parent == NULL:
+      if node.rewards == NULL:
+        node.rewards = new vector[float]()
+      node.rewards.push_back(score_for_player)
+
     node = node.parent
 
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
@@ -217,4 +228,6 @@ cdef void delete_tree(Node *root_node) nogil:
   for i in range(MAX_CHILDREN):
     if root_node.children[i] != NULL:
       delete_tree(root_node.children[i])
+  if root_node.rewards != NULL:
+    del root_node.rewards
   free(root_node)

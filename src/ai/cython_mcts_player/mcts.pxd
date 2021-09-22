@@ -4,6 +4,8 @@
 
 # distutils: language=c++
 
+from libcpp.vector cimport vector
+
 from ai.cython_mcts_player.game_state cimport GameState, PlayerId
 from ai.cython_mcts_player.player_action cimport PlayerAction
 
@@ -25,6 +27,10 @@ cdef struct Node:
   bint fully_simulated
   bint terminal
   PlayerId player
+
+  # If Mcts is run with save_rewards=True, the children of the root node will
+  # save all the rewards obtained on paths that pass through them in this list.
+  vector[float] *rewards
 
 cdef Node *init_node(GameState *game_state, Node *parent) nogil
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
