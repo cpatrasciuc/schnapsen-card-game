@@ -64,9 +64,11 @@ def _render_colored_table(player_names, color, win_percentage):
   for i in range(len(player_names)):
     for j in range(len(player_names)):
       if np.isnan(win_percentage[i][j]):
-        continue
-      ax.text(j, i, "{:.2%}".format(win_percentage[i][j]), ha="center",
-              va="center", color="k" if color[i][j] == 0.5 else "w")
+        text = "N/A"
+      else:
+        text = "{:.2%}".format(win_percentage[i][j])
+      ax.text(j, i, text, ha="center", va="center",
+              color="k" if color[i][j] == 0.5 else "w")
 
   # Resize and layout.
   figure = plt.gcf()
