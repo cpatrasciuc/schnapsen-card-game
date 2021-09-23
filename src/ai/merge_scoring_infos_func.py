@@ -6,7 +6,7 @@ import dataclasses
 import logging
 import pprint
 from collections import Counter
-from typing import List, Tuple, Callable, Dict
+from typing import List, Tuple, Callable, Dict, Optional
 
 from model.player_action import PlayerAction
 
@@ -24,6 +24,11 @@ class ScoringInfo:
   """Same as Node.ucb, but from the player's perspective"""
   fully_simulated: bool
   terminal: bool
+
+  score_low: Optional[float] = None
+  """An optional lower bound for score in case CIs are used"""
+  score_upp: Optional[float] = None
+  """An optional upper bound for score in case CIs are used"""
 
 
 ActionsWithScores = Dict[PlayerAction, ScoringInfo]
