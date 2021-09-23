@@ -137,7 +137,8 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
     for _ in range(iterations_step):
       is_fully_simulated = run_one_iteration(root_node,
                                              options.exploration_param,
-                                             options.select_best_child)
+                                             options.select_best_child,
+                                             options.save_rewards)
       iteration += 1
       if is_fully_simulated:
         break
@@ -180,7 +181,8 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
       is_fully_simulated = True
       for i in range(root_nodes.size()):
         permutation_is_fully_simulated = run_one_iteration(
-          root_nodes[i], options.exploration_param, options.select_best_child)
+          root_nodes[i], options.exploration_param, options.select_best_child,
+          options.save_rewards)
         is_fully_simulated = \
           is_fully_simulated and permutation_is_fully_simulated
       iteration += 1

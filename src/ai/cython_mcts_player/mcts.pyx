@@ -144,7 +144,8 @@ cdef void _update_children_ucb(Node *node, float exploration_param,
         node.best_children[i] = (selection_score == max_selection_score)
 
 cdef void _backpropagate(Node *end_node, float score,
-                         float exploration_param, bint select_best_child) nogil:
+                         float exploration_param, bint select_best_child,
+                         bint save_rewards) nogil:
   cdef Node *node = end_node
   cdef float score_for_player
   while node != NULL:
@@ -155,31 +156,34 @@ cdef void _backpropagate(Node *end_node, float score,
       node.q += score_for_player
       _update_children_ucb(node, exploration_param, select_best_child)
 
-    # TODO(mcts): Add options.save_rewards for this.
-    # Are we on the first layer in the tree?
-    if node.parent != NULL and node.parent.parent == NULL:
-      if node.rewards == NULL:
-        node.rewards = new vector[float]()
-      node.rewards.push_back(score_for_player)
+    if save_rewards:
+      # Are we on the first layer in the tree?
+      if node.parent != NULL and node.parent.parent == NULL:
+        if node.rewards == NULL:
+          node.rewards = new vector[float]()
+        node.rewards.push_back(score_for_player)
 
     node = node.parent
 
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
-                            bint select_best_child) nogil:
+                            bint select_best_child, bint save_rewards) nogil:
   cdef Node *selected_node = _selection(root_node, select_best_child)
   if selected_node is NULL:
     return True
   cdef Node *end_node = _fully_expand(selected_node)
-  _backpropagate(end_node, end_node.ucb, exploration_param, select_best_child)
+  _backpropagate(end_node, end_node.ucb, exploration_param, select_best_child,
+                 save_rewards)
   return False
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
-                      float exploration_param, bint select_best_child) nogil:
+                      float exploration_param, bint select_best_child,
+                      bint save_rewards=False) nogil:
   cdef Node *root_node = init_node(game_state, NULL)
   cdef int iterations = 0
   while True:
     iterations += 1
-    if run_one_iteration(root_node, exploration_param, select_best_child):
+    if run_one_iteration(root_node, exploration_param, select_best_child,
+                         save_rewards):
       break
     if 0 < max_iterations <= iterations:
       break
