@@ -15,6 +15,17 @@ from main_wrapper import main_wrapper
 from model.game_state import GameState
 
 
+def _is_ci_overlap(first_low: float, first_upp: float, second_low: float,
+                   second_upp: float) -> bool:
+  if first_low < second_low < first_upp:
+    return True
+  if first_low < second_upp < first_upp:
+    return True
+  if second_low < first_upp < second_upp:
+    return True
+  return False
+
+
 def _get_dataframe(game_state: GameState, cheater: bool,
                    options: MctsPlayerOptions, num_samples: int) -> DataFrame:
   data = []
@@ -92,14 +103,10 @@ def mcts_ci_widths_across_multiple_game_states(use_player: bool,
       dataframe = dataframe[
         dataframe.iteration.eq(dataframe.iteration.max())].sort_values(
         "score", ascending=False)
-      best_action_low = dataframe.iloc[0].score_low
-      best_action_upp = dataframe.iloc[0].score_upp
-      second_action_low = dataframe.iloc[1].score_low
-      second_action_upp = dataframe.iloc[1].score_upp
-      overlap = (best_action_low < second_action_low < best_action_upp) or (
-          best_action_low < second_action_upp < best_action_upp) or (
-                    second_action_low < best_action_upp < second_action_upp)
-      if overlap:
+      if _is_ci_overlap(dataframe.iloc[0].score_low,
+                        dataframe.iloc[0].score_upp,
+                        dataframe.iloc[1].score_low,
+                        dataframe.iloc[1].score_upp):
         overlap_count += 1
       ci_widths = list(dataframe["ci_width"].values)
       while len(ci_widths) < 7:
