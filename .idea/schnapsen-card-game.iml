@@ -5,6 +5,14 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/src/htmlcov" />
+      <excludeFolder url="file://$MODULE_DIR$/src/ai/eval/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/src/ai/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/src/model/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/src/ui/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/src/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/src/build" />
+      <excludeFolder url="file://$MODULE_DIR$/.cache" />
+      <excludeFolder url="file://$MODULE_DIR$/Graphviz" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (schnapsen-card-game)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
