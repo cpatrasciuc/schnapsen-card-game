@@ -15,6 +15,8 @@ from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 class MctsPlayerOptions:
   """The set of parameters used to configure an MctsPlayer."""
 
+  # pylint: disable=too-many-instance-attributes
+
   # TODO(mcts): Find a good default value.
   max_iterations: Optional[int] = 1
   """
@@ -68,4 +70,12 @@ class MctsPlayerOptions:
   phase of the Mcts algorithm, one of the best children will always be selected.
   Higher values of exploration_param will increase the probability that one of
   the least selected children will be preferred.
+  """
+
+  save_rewards: bool = False
+  """
+  If True, the children of the root node in the Mcts algorithm will save all the
+  individual rewards obtained on paths that pass through them. This list can be
+  used to obtain a better score/estimate, measure the confidence of the score,
+  debug the algorithm, etc.
   """

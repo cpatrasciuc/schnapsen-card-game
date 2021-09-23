@@ -71,7 +71,8 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
                                     PlayerId opponent_id,
                                     int max_iterations,
                                     bint select_best_child,
-                                    float exploration_param):
+                                    float exploration_param,
+                                    bint save_rewards):
   cdef int i
   cdef GameState game_state
   cdef Node *root_node
@@ -79,9 +80,8 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
-    root_node = build_tree(&game_state, max_iterations,
-                           exploration_param=exploration_param,
-                           select_best_child=select_best_child)
+    root_node = build_tree(&game_state, max_iterations, exploration_param,
+                           select_best_child, save_rewards)
     py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes
@@ -107,4 +107,4 @@ class CythonMctsPlayer(BaseMctsPlayer):
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
       self._options.max_iterations or -1, self._options.select_best_child,
-      self._options.exploration_param)
+      self._options.exploration_param, self._options.save_rewards)

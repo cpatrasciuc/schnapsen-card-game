@@ -152,6 +152,8 @@ class MctsPlayer(BaseMctsPlayer):
                    self._options.num_processes)
     else:
       logging.info("MctsPlayer: Mcts will run in-process.")
+    if options.save_rewards:
+      raise ValueError("save_rewards is not supported by MctsPlayer")
 
   def cleanup(self) -> None:
     if self._pool is not None:

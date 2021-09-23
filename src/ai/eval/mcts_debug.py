@@ -78,7 +78,8 @@ def mcts_player_debug(game_state: GameState, options: MctsPlayerOptions):
 
 if __name__ == "__main__":
   main_wrapper(
-    lambda: mcts_player_debug(GameState.new(random_seed=60).next_player_view(),
-                              MctsPlayerOptions(max_iterations=4000,
-                                                max_permutations=20,
-                                                select_best_child=True)))
+    lambda: mcts_debug(GameState.new(random_seed=60),
+                       MctsPlayerOptions(max_iterations=4000,
+                                         max_permutations=20,
+                                         select_best_child=True,
+                                         save_rewards=True)))

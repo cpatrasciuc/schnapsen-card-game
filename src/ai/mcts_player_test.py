@@ -169,6 +169,13 @@ class MctsPlayerSelectBestChildTest(MctsPlayerTest):
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
+class MctsPlayerWithSaveRewards(unittest.TestCase):
+  def test_cannot_instantiate_with_save_rewards(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None, save_rewards=True)
+    with self.assertRaisesRegex(ValueError, "save_rewards is not supported"):
+      MctsPlayer(PlayerId.ONE, options=options)
+
+
 class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(max_iterations=None,
@@ -195,8 +202,7 @@ class CythonMctsPlayerMergeUcbsTest(MctsPlayerTest):
 
 class CythonMctsPlayerWithParallelismTest(unittest.TestCase):
   def test_cannot_instantiate_with_multi_threading(self) -> None:
-    options = MctsPlayerOptions(max_iterations=None,
-                                num_processes=10)
+    options = MctsPlayerOptions(max_iterations=None, num_processes=10)
     with self.assertRaisesRegex(ValueError, "10 threads"):
       CythonMctsPlayer(PlayerId.ONE, options=options)
 
@@ -205,6 +211,15 @@ class CythonMctsPlayerSelectBestChildTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(max_iterations=None,
                                 select_best_child=True,
+                                num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerSaveRewardsTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None,
+                                select_best_child=True,
+                                save_rewards=True,
                                 num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
