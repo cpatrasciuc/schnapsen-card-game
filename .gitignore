@@ -143,3 +143,4 @@ dmypy.json
 /src/ai/eval/mcts_variance_across_game_states.png
 /src/ai/eval/mcts_variance_across_game_states.csv
 /src/ai/eval/mcts_variance.png
+/.idea/csv-plugin.xml
