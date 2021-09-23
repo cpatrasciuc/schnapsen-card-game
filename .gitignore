@@ -132,3 +132,7 @@ dmypy.json
 /src/ai/eval/eval_results.csv
 /Graphviz/
 /src/ai/eval/player_rankings.svg
+/src/ai/eval/mcts_player_debug.png
+/src/ai/eval/mcts_player_debug.csv
+/src/ai/eval/mcts_debug.png
+/src/ai/eval/mcts_debug.csv
