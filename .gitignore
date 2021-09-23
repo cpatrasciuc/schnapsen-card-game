@@ -140,3 +140,6 @@ dmypy.json
 /src/ai/eval/mcts_ci_widths_across_game_states_player.csv
 /src/ai/eval/mcts_ci_widths_across_game_states.png
 /src/ai/eval/mcts_ci_widths_across_game_states.csv
+/src/ai/eval/mcts_variance_across_game_states.png
+/src/ai/eval/mcts_variance_across_game_states.csv
+/src/ai/eval/mcts_variance.png
