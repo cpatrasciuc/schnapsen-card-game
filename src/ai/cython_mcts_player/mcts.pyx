@@ -7,8 +7,9 @@
 import logging
 
 from libc.math cimport log, sqrt
-from libc.stdlib cimport free, malloc, rand
+from libc.stdlib cimport free, malloc, rand, srand
 from libc.string cimport memset
+from libc.time cimport time
 from libcpp.vector cimport vector
 
 from ai.cython_mcts_player.game_state cimport is_game_over, game_points
@@ -39,7 +40,6 @@ cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
         best_children.push_back(node.children[i])
     if not_fully_simulated_children.empty():
       return NULL
-    # TODO(mcts): Maybe call srand() to initialize the RNG?
     if select_best_child and best_children.size() > 0:
       index = rand() % best_children.size()
       best_child = best_children[index]
@@ -235,3 +235,6 @@ cdef void delete_tree(Node *root_node) nogil:
   if root_node.rewards != NULL:
     del root_node.rewards
   free(root_node)
+
+# Initialize the RNG.
+srand(time(NULL))
