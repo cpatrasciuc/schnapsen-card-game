@@ -134,7 +134,8 @@ def main():
   options = MctsPlayerOptions(num_processes=1,
                               max_iterations=1000,
                               max_permutations=200,
-                              select_best_child=True)
+                              select_best_child=True,
+                              save_rewards=True)
   num_samples = 1
   # mcts_variance(GameState.new(random_seed=0), cheater, options, num_samples)
   mcts_variance_across_multiple_game_states(cheater, options, num_samples,
@@ -142,7 +143,7 @@ def main():
   mcts_ci_widths_across_multiple_game_states(use_player=False,
                                              options=options,
                                              num_samples=num_samples,
-                                             num_game_states=3)
+                                             num_game_states=30)
 
 
 if __name__ == "__main__":
