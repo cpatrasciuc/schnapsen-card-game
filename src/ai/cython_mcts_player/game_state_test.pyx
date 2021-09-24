@@ -44,14 +44,14 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(Suit.CLUBS, game_state.trump)
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
     self.assertEqual([Card(Suit.DIAMONDS, CardValue.JACK),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      list(game_state.talon)[:2])
     self.assertEqual(0, game_state.next_player)
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([22, 53], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertTrue(is_to_lead(&game_state, 0))
@@ -79,15 +79,15 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(Suit.CLUBS, game_state.trump)
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
     self.assertEqual([Card(Suit.DIAMONDS, CardValue.JACK),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      list(game_state.talon)[:2])
     self.assertEqual(0, game_state.next_player)
     self.assertEqual(0, game_state.player_that_closed_the_talon)
     self.assertEqual(53, game_state.opponent_points_when_talon_was_closed)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([22, 53], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertTrue(is_to_lead(&game_state, 0))
@@ -99,20 +99,21 @@ class GameStateTest(unittest.TestCase):
   def test_get_game_state_with_all_tricks_played(self):
     cdef GameState game_state = from_python_game_state(
       get_game_state_with_all_tricks_played())
-    self.assertEqual(Card(Suit.NOSUIT, CardValue.NOVALUE),
+    self.assertEqual(Card(Suit.NO_SUIT, CardValue.NO_VALUE),
                      game_state.cards_in_hand[0][0])
-    self.assertEqual(Card(Suit.NOSUIT, CardValue.NOVALUE),
+    self.assertEqual(Card(Suit.NO_SUIT, CardValue.NO_VALUE),
                      game_state.cards_in_hand[1][0])
     self.assertEqual(Suit.CLUBS, game_state.trump)
-    self.assertEqual(Card(Suit.NOSUIT, CardValue.NOVALUE),
+    self.assertEqual(Card(Suit.NO_SUIT, CardValue.NO_VALUE),
                      game_state.trump_card)
-    self.assertEqual(Card(Suit.NOSUIT, CardValue.NOVALUE), game_state.talon[0])
+    self.assertEqual(Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                     game_state.talon[0])
     self.assertEqual(0, game_state.next_player)
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([60, 60], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertTrue(is_to_lead(&game_state, 0))
@@ -153,8 +154,8 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([0, 0], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertFalse(is_to_lead(&game_state, 0))
@@ -182,14 +183,14 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(Suit.CLUBS, game_state.trump)
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
     self.assertEqual([Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      list(game_state.talon)[:2])
     self.assertEqual(0, game_state.next_player)
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([22, 53], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertTrue(is_to_lead(&game_state, 0))
@@ -216,14 +217,14 @@ class GameStateTest(unittest.TestCase):
     self.assertEqual(Suit.CLUBS, game_state.trump)
     self.assertEqual(Card(Suit.CLUBS, CardValue.ACE), game_state.trump_card)
     self.assertEqual([Card(Suit.UNKNOWN_SUIT, CardValue.UNKNOWN_VALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      list(game_state.talon)[:2])
     self.assertEqual(1, game_state.next_player)
     self.assertEqual(-1, game_state.player_that_closed_the_talon)
     self.assertEqual([0, 0], game_state.pending_trick_points)
     self.assertEqual([22, 53], game_state.trick_points)
-    self.assertEqual([Card(Suit.NOSUIT, CardValue.NOVALUE),
-                      Card(Suit.NOSUIT, CardValue.NOVALUE)],
+    self.assertEqual([Card(Suit.NO_SUIT, CardValue.NO_VALUE),
+                      Card(Suit.NO_SUIT, CardValue.NO_VALUE)],
                      game_state.current_trick)
 
     self.assertFalse(is_to_lead(&game_state, 0))

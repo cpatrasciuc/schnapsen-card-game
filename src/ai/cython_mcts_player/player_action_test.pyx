@@ -44,7 +44,7 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.CLOSE_THE_TALON, 0,
                    Card(Suit.SPADES, CardValue.ACE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE))
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE))
     ]
     get_available_actions(&game_state, actions)
     self.assertEqual(expected_actions_player_one, actions)
@@ -91,9 +91,9 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 1, Card(Suit.SPADES, CardValue.JACK)),
       PlayerAction(ActionType.PLAY_CARD, 1, Card(Suit.CLUBS, CardValue.QUEEN)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -110,9 +110,9 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.TEN)),
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.ACE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -121,8 +121,8 @@ class AvailableActionsTest(unittest.TestCase):
       get_game_state_for_tests())
     cdef PlayerAction[7] actions
     cdef PlayerAction action = PlayerAction(ActionType.CLOSE_THE_TALON, 0,
-                                            Card(Suit.NOSUIT,
-                                                 CardValue.NOVALUE))
+                                            Card(Suit.NO_SUIT,
+                                                 CardValue.NO_VALUE))
     game_state = execute(&game_state, action)
     get_available_actions(&game_state, actions)
 
@@ -135,9 +135,9 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.TEN)),
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.ACE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -157,9 +157,9 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.ANNOUNCE_MARRIAGE, 1,
                    Card(Suit.CLUBS, CardValue.QUEEN)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -168,7 +168,7 @@ class AvailableActionsTest(unittest.TestCase):
       get_game_state_for_tests())
     cdef PlayerAction[7] actions
     cdef PlayerAction close_talon_action = PlayerAction(
-      ActionType.CLOSE_THE_TALON, 0, Card(Suit.NOSUIT, CardValue.NOVALUE))
+      ActionType.CLOSE_THE_TALON, 0, Card(Suit.NO_SUIT, CardValue.NO_VALUE))
     cdef PlayerAction action = PlayerAction(ActionType.PLAY_CARD, 0,
                                             Card(Suit.SPADES, CardValue.TEN))
     game_state = execute(&game_state, close_talon_action)
@@ -178,17 +178,17 @@ class AvailableActionsTest(unittest.TestCase):
     expected_actions = [
       PlayerAction(ActionType.PLAY_CARD, 1, Card(Suit.SPADES, CardValue.JACK)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -205,15 +205,15 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.TEN)),
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.ACE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -229,11 +229,11 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.HEARTS, CardValue.TEN)),
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.SPADES, CardValue.TEN)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -248,11 +248,11 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.ANNOUNCE_MARRIAGE, 1,
                    Card(Suit.CLUBS, CardValue.QUEEN)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -270,13 +270,13 @@ class AvailableActionsTest(unittest.TestCase):
       PlayerAction(ActionType.PLAY_CARD, 1, Card(Suit.CLUBS, CardValue.JACK)),
       PlayerAction(ActionType.PLAY_CARD, 1, Card(Suit.CLUBS, CardValue.QUEEN)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 
@@ -290,17 +290,17 @@ class AvailableActionsTest(unittest.TestCase):
     expected_actions = [
       PlayerAction(ActionType.PLAY_CARD, 0, Card(Suit.CLUBS, CardValue.ACE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
       PlayerAction(ActionType.NO_ACTION, 0,
-                   Card(Suit.NOSUIT, CardValue.NOVALUE)),
+                   Card(Suit.NO_SUIT, CardValue.NO_VALUE)),
     ]
     self.assertEqual(expected_actions, actions)
 

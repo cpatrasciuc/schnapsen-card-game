@@ -42,7 +42,7 @@ class CardTest(unittest.TestCase):
       self.assertEqual(queen, marriage_pair(king))
 
   def test_is_null(self):
-    self.assertTrue(is_null(Card(Suit.NOSUIT, CardValue.NOVALUE)))
-    self.assertTrue(is_null(Card(Suit.CLUBS, CardValue.NOVALUE)))
-    self.assertTrue(is_null(Card(Suit.NOSUIT, CardValue.KING)))
+    self.assertTrue(is_null(Card(Suit.NO_SUIT, CardValue.NO_VALUE)))
+    self.assertTrue(is_null(Card(Suit.CLUBS, CardValue.NO_VALUE)))
+    self.assertTrue(is_null(Card(Suit.NO_SUIT, CardValue.KING)))
     self.assertFalse(is_null(Card(Suit.CLUBS, CardValue.KING)))

@@ -137,8 +137,8 @@ cdef int _remove_card_from_hand(Card *cards_in_hand, Card card) nogil:
       if i < 4:
         memcpy(&cards_in_hand[i], &cards_in_hand[i + 1],
                (5 - i - 1) * sizeof(Card))
-      cards_in_hand[4].suit = Suit.NOSUIT
-      cards_in_hand[4].card_value = CardValue.NOVALUE
+      cards_in_hand[4].suit = Suit.NO_SUIT
+      cards_in_hand[4].card_value = CardValue.NO_VALUE
       empty_slot = i
       while i < 5 and not is_null(cards_in_hand[empty_slot]):
         empty_slot += 1
@@ -195,11 +195,11 @@ cdef GameState _execute_play_card_action(GameState *game_state,
   if not is_null(first_card) and \
       not is_talon_closed(&new_game_state):
     memcpy(new_game_state.talon, &new_game_state.talon[2], 7 * sizeof(Card))
-    new_game_state.talon[7].suit = Suit.NOSUIT
-    new_game_state.talon[8].suit = Suit.NOSUIT
+    new_game_state.talon[7].suit = Suit.NO_SUIT
+    new_game_state.talon[8].suit = Suit.NO_SUIT
     if is_null(second_card):
       second_card = new_game_state.trump_card
-      new_game_state.trump_card.suit = Suit.NOSUIT
+      new_game_state.trump_card.suit = Suit.NO_SUIT
 
     # TODO(optimization): If we want to reuse the the nodes in the Mcts tree we
     #  have to sort the card here, so the order won't matter.

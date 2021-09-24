@@ -3,7 +3,7 @@
 #  found in the LICENSE file.
 
 cdef bint is_null(Card this) nogil:
-  return this.suit == Suit.NOSUIT or this.card_value == CardValue.NOVALUE
+  return this.suit == Suit.NO_SUIT or this.card_value == CardValue.NO_VALUE
 
 cdef bint is_unknown(Card this) nogil:
   return this.suit == Suit.UNKNOWN_SUIT or \

@@ -3,8 +3,7 @@
 #  found in the LICENSE file.
 
 cdef enum Suit:
-  # TODO(refactor): Rename this to NO_SUIT.
-  NOSUIT = 0
+  NO_SUIT = 0
   HEARTS = 1
   SPADES = 2
   DIAMONDS = 3
@@ -12,7 +11,7 @@ cdef enum Suit:
   UNKNOWN_SUIT = 5
 
 cdef enum CardValue:
-  NOVALUE = 0
+  NO_VALUE = 0
   UNKNOWN_VALUE = 1
   JACK = 2
   QUEEN = 3
