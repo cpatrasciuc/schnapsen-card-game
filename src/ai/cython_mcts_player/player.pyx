@@ -80,6 +80,9 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
+    # TODO(mcts): If the number of permutations are smaller than
+    #  max_permutations, increase max_iterations to use the entire computational
+    #  budget.
     root_node = build_tree(&game_state, max_iterations, exploration_param,
                            select_best_child, save_rewards)
     py_root_nodes.append(build_scoring_info(root_node))
