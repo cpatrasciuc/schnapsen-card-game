@@ -149,6 +149,14 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=5000,
                                          select_best_child=True,
                                          exploration_param=1.0 / math.sqrt(2))),
+  "MctsPlayer20perm5000iter1exp":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=20,
+                                         max_iterations=5000,
+                                         select_best_child=True,
+                                         exploration_param=1)),
   "MctsPlayer20perm5000iterSqrt(2)exp":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
@@ -172,5 +180,5 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=20,
                                          max_iterations=5000,
                                          select_best_child=True,
-                                         exploration_param=5000))
+                                         exploration_param=5000)),
 }
