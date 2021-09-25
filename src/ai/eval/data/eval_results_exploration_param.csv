@@ -2,6 +2,12 @@ player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_
 MctsPlayer20perm5000iter0exp,MctsPlayer20perm5000iterRandomSelection,400,600,2683,3262,4778,5818,296090,319091
 MctsPlayer20perm5000iter1/Sqrt(2)exp,MctsPlayer20perm5000iterRandomSelection,520,480,2877,2909,5518,5292,303402,290818
 MctsPlayer20perm5000iter1/Sqrt(2)exp,MctsPlayer20perm5000iter0exp,629,371,3343,2787,6063,4727,337216,300503
+MctsPlayer20perm5000iter1exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,501,499,2922,2913,5336,5356,300259,298205
+MctsPlayer20perm5000iter1exp,MctsPlayer20perm5000iter0exp,626,374,3239,2770,5938,4703,327604,294878
+MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter1exp,517,483,2953,2903,5458,5288,301140,299768
+MctsPlayer20perm5000iter1exp,MctsPlayer20perm5000iterRandomSelection,533,467,2893,2859,5549,5134,302940,286976
+MctsPlayer20perm5000iter1exp,MctsPlayer20perm5000iter5000exp,534,466,2918,2916,5653,5235,305650,290446
+MctsPlayer20perm5000iter1exp,MctsPlayer20perm5000iter20exp,541,459,2881,2819,5497,5132,298796,285372
 MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iterRandomSelection,533,467,2899,2920,5590,5236,304538,293017
 MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter0exp,599,401,3325,2824,5980,4812,335761,305652
 MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,484,516,2901,2937,5329,5375,299615,301358
@@ -9,7 +15,6 @@ MctsPlayer20perm5000iterSqrt(2)exp,MctsPlayer20perm5000iter20exp,542,458,2959,29
 MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iterRandomSelection,523,477,2904,2828,5504,5239,295824,289094
 MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iter0exp,570,430,3232,2847,5787,4950,326794,304628
 MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,483,517,2882,2838,5210,5398,289775,295702
-MctsPlayer20perm5000iter20exp,MctsPlayer20perm5000iterSqrt(2)exp,49,51,290,270,511,499,29225,28995
 MctsPlayer20perm5000iter5000exp,MctsPlayer20perm5000iter20exp,501,499,2900,2837,5369,5430,292209,293605
 MctsPlayer20perm5000iter5000exp,MctsPlayer20perm5000iterSqrt(2)exp,459,541,2842,2925,5130,5561,287206,303215
 MctsPlayer20perm5000iter5000exp,MctsPlayer20perm5000iter1/Sqrt(2)exp,484,516,2947,2891,5305,5565,291660,305306
