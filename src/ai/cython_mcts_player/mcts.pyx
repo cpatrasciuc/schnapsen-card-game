@@ -61,6 +61,7 @@ cdef Node *init_node(GameState *game_state, Node *parent) nogil:
   node.ucb = 0
   node.player = node.game_state.next_player
   if node.terminal:
+    # TODO(mcts): Take the bummerl score into account.
     score_p1, score_p2 = game_points(&node.game_state)
     score_p1 /= 3.0
     score_p2 /= 3.0
