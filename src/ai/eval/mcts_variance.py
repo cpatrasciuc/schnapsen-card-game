@@ -129,6 +129,41 @@ def mcts_ci_widths_across_multiple_game_states(use_player: bool,
   plt.savefig(f"mcts_ci_widths_across_game_states{suffix}.png")
 
 
+def mcts_ci_widths_and_permutations_across_multiple_game_states(
+    options: MctsPlayerOptions,
+    num_samples: int,
+    num_game_states: int):
+  data = []
+  for seed in range(num_game_states):
+    print(f"Evaluating on GameState.new(random_seed={seed})")
+    for _ in range(num_samples):
+      for permutations in [1, 10, 20, 40, 80, 150]:
+        options.max_permutations = permutations
+        dataframe = run_mcts_player_step_by_step(
+          GameState.new(random_seed=seed).next_player_view(), options,
+          options.max_iterations)
+        dataframe["ci_width"] = dataframe["score_upp"] - dataframe["score_low"]
+        dataframe = dataframe[
+          dataframe.iteration.eq(dataframe.iteration.max())].sort_values(
+          "score", ascending=False)
+        ci_widths = [permutations] + list(dataframe["ci_width"].values)
+        while len(ci_widths) < 8:
+          ci_widths.append(np.nan)
+        data.append(tuple(ci_widths))
+  dataframe = DataFrame(
+    data, columns=["Permutations", "BestAction"] + [f"Action #{i}" for i in
+                                                    range(2, 8)])
+  csv_path = f"mcts_ci_widths_and_perm_across_game_states.csv"
+  # noinspection PyTypeChecker
+  dataframe.to_csv(csv_path, index=False)
+  # dataframe = pandas.read_csv(csv_path)
+  dataframe[["Permutations", "BestAction"]].boxplot(by=["Permutations"])
+  plt.xticks(rotation=45, ha='right')
+  plt.gcf().set_size_inches((5, 5))
+  plt.tight_layout()
+  plt.savefig(f"mcts_ci_widths_and_perm_across_game_states.png")
+
+
 def main():
   cheater = False
   options = MctsPlayerOptions(num_processes=1,
@@ -138,6 +173,10 @@ def main():
                               save_rewards=True)
   num_samples = 1
   # mcts_variance(GameState.new(random_seed=0), cheater, options, num_samples)
+  mcts_ci_widths_and_permutations_across_multiple_game_states(
+    options=options,
+    num_samples=num_samples,
+    num_game_states=30)
   mcts_variance_across_multiple_game_states(cheater, options, num_samples,
                                             num_game_states=3)
   mcts_ci_widths_across_multiple_game_states(use_player=False,
