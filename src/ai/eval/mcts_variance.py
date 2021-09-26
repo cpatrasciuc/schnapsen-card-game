@@ -153,7 +153,7 @@ def mcts_ci_widths_and_permutations_across_multiple_game_states(
   dataframe = DataFrame(
     data, columns=["Permutations", "BestAction"] + [f"Action #{i}" for i in
                                                     range(2, 8)])
-  csv_path = f"mcts_ci_widths_and_perm_across_game_states.csv"
+  csv_path = "mcts_ci_widths_and_perm_across_game_states.csv"
   # noinspection PyTypeChecker
   dataframe.to_csv(csv_path, index=False)
   # dataframe = pandas.read_csv(csv_path)
@@ -161,7 +161,7 @@ def mcts_ci_widths_and_permutations_across_multiple_game_states(
   plt.xticks(rotation=45, ha='right')
   plt.gcf().set_size_inches((5, 5))
   plt.tight_layout()
-  plt.savefig(f"mcts_ci_widths_and_perm_across_game_states.png")
+  plt.savefig("mcts_ci_widths_and_perm_across_game_states.png")
 
 
 def main():
