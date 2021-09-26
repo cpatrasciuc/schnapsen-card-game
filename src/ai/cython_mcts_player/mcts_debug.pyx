@@ -85,6 +85,10 @@ def _max_average_ucb_with_ci(
     score_upp = scores_upp[action]
     upp = None
     low = None
+    # TODO(mcts_debug): Find a proper way to compute these CIs. Towards the end
+    #  of the game, when we process *all* possible permutations, there should be
+    #  no additional uncertainty on top of the uncertainty coming with each
+    #  score from each permutation.
     if len(score_low) > 2 and len(score_upp) > 2:
       ci = bootstrap((score_low,), np.mean, method="percentile")
       low = ci.confidence_interval.low

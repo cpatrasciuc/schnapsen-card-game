@@ -16,9 +16,8 @@ import matplotlib.pyplot as plt
 import pandas
 from pandas import DataFrame
 
-from ai.cython_mcts_player.player import CythonMctsPlayer
-from ai.eval.utils import get_dataframe_from_actions_and_scores, \
-  same_game_state_after_each_trick_scenarios
+from ai.cython_mcts_player.mcts_debug import run_mcts_player_step_by_step
+from ai.eval.utils import same_game_state_after_each_trick_scenarios
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -40,15 +39,13 @@ def _run_mcts_step_by_step(game_state: GameState,
   dataframes = []
   while True:
     options.max_permutations = permutations
-    mcts_player = CythonMctsPlayer(game_state.next_player, False, options)
-    actions_and_scores = mcts_player.get_actions_and_scores(
-      game_state.next_player_view())
-    dataframe = get_dataframe_from_actions_and_scores(actions_and_scores)
+    dataframe = run_mcts_player_step_by_step(game_state.next_player_view(),
+                                             options, options.max_iterations)
     dataframe["permutations"] = permutations
     dataframes.append(dataframe)
     if max_permutations is not None and permutations >= max_permutations:
       break
-    permutations += 10
+    permutations += 20
   options.max_permutations = max_permutations
   return pandas.concat(dataframes, ignore_index=True)
 
@@ -87,13 +84,19 @@ def _plot_results(options: MctsPlayerOptions):
   # noinspection PyTypeChecker
   _, axes = plt.subplots(num_scenarios, 2, figsize=(20, 5 * num_scenarios),
                          squeeze=False, sharex=False, sharey=False)
+  colors = "bgrcmyk"
   for i, scenario in enumerate(scenarios):
     scenario_df = dataframe[dataframe.scenario.eq(scenario)]
-    for action in scenario_df.action.drop_duplicates():
+    for j, action in enumerate(scenario_df.action.drop_duplicates()):
       action_df = scenario_df[scenario_df.action.eq(action)].sort_values(
         "permutations")
-      axes[i, 0].plot(action_df.permutations, action_df.score, label=action)
-      axes[i, 1].plot(action_df.permutations, action_df["rank"], label=action)
+      axes[i, 0].plot(action_df.permutations, action_df.score, label=action,
+                      color=colors[j])
+      axes[i, 0].fill_between(action_df.permutations, action_df.score_low,
+                              action_df.score_upp, alpha=0.1,
+                              color=colors[j])
+      axes[i, 1].plot(action_df.permutations, action_df["rank"], label=action,
+                      color=colors[j])
     axes[i, 0].set_title(scenario)
     axes[i, 0].legend(loc=0)
     axes[i, 0].hlines([1, 0.66, 0.33, 0, -0.33, -0.66, -1], xmin=0,
@@ -108,7 +111,8 @@ def _plot_results(options: MctsPlayerOptions):
 
 
 def main():
-  options = MctsPlayerOptions(max_iterations=5000, max_permutations=150)
+  options = MctsPlayerOptions(max_iterations=5000, max_permutations=150,
+                              save_rewards=True, select_best_child=True)
   _generate_data(options)
   _plot_results(options)
 
