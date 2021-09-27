@@ -63,7 +63,7 @@ As a result of this initial debugging, the ideas to experiment with are:
 
 - [x] Reduce CPU usage, so we can run more iterations within the budget
 - [ ] Find the best combination of max_iterations and max_permutations for a fixed computational budget
-- [ ] Pick the best child during the selection phase and balance exploration versus exploitation
+- [x] Pick the best child during the selection phase and balance exploration versus exploitation
 - [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
 - [ ] Maybe reuse the nodes from the previous decisions instead of always starting from scratch
 - [ ] Improve merging the scores across root nodes
@@ -91,7 +91,7 @@ I added CPU profiling to [`iterations_and_time.py`](https://github.com/cpatrasci
 The [first results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/e19317e77cf9533f813ae651b2d996f153074e4b/src/ai/eval/data/iterations_and_time.profile.txt)
 showed that 88% of the time is spent in `copy.deepcopy()`.
 
-#### Step 1: Replace copy.deepcopy() with GameState.deep_copy()
+### Step 1: Replace copy.deepcopy() with GameState.deep_copy()
 
 I added my own `GameState.deep_copy()`, to create a deep copy of itself. I
 measured its speed in `GameStateCopyTest`. The results as follows:
@@ -107,7 +107,7 @@ Overall, this change allows the Mcts algorithm to run ~5x more iterations in the
 same amount of time. However, [the new CPU profile](https://github.com/cpatrasciuc/schnapsen-card-game/blob/95eacb321110269495dbee47d5a8f185acb66c04/src/ai/eval/data/iterations_and_time.profile.txt)
 shows that the new `GameState.deep_copy()` method takes ~66% of the time.
 
-#### Step 2: Replace deep copies with shallow copies
+### Step 2: Replace deep copies with shallow copies
 
 Instead of making deep copies for the game states to be stored in each tree
 node, I modified `PlayerAction.execute()` to create a (shallow) copy of the
@@ -124,7 +124,7 @@ increased from ~2k to ~20k.
 
 ![iterations_and_time_i7.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/d0337e7e31ce813ffb58c011ecd7e45a1d20a253/src/ai/eval/data/iterations_and_time_i7.png)
 
-#### Step 3: multiprocessing.Pool overhead
+### Step 3: multiprocessing.Pool overhead
 
 Even if I managed to reduce the CPU usage of the Mcts algorithm (i.e., the
 single threaded construction of one tree for a perfect information game state),
@@ -267,9 +267,139 @@ Combinations to try out:
 - 30 perms, 16666 iterations
 - 50 perms, 10000 iterations
 
+Idea: 
+If evals are equal, consider picking max_iterations such that at least we can fully simulate
+the CloseTheTalon action. Run 100 game states, max_iterations=10000, filter out
+the cases when the action was not fully simulated, see how many iterations were
+needed for the other cases. 
+
 ## Select the best child and balance exploration vs exploitation
 
-TODO
+During the selection phrase, the initial version of the MctsPlayer, always
+picked one of the not-fully-simulated children randomly, for each node. At this
+stage, I modified it to always pick the child that maximizes the Upper
+Confidence Bound (UCB) formula:
+
+![UCB Formula](https://latex.codecogs.com/svg.latex?%5Cfrac%7BQ_i%7D%7BN_i%7D%20&plus;%20C%5Csqrt%7B%5Cfrac%7B2log%28N_%7Bparent%7D%29%7D%7BN_i%7D%7D)
+
+* The first term represents the average points scored on the paths going through
+  the i-th child. This term is the *exploitation* component. It scores high for
+  children that gave good results so far.
+* The second term is the *exploration* component. It scores high for the
+  children that were least-visited until now.
+* The exploration parameter *C* controls the balance between exploration and
+  exploitation.
+
+### Improvements in the perfect information scenarios
+
+I tried to find a metric that would tell me if this version is better than just
+selecting a child randomly. By adding `save_rewards=True` to 
+`MctsPlayerOptions`, we store for each possible action (children of the Mcts
+root node) a list of all the rewards obtained on the paths going through that
+node. Then, I use `scipy.stats.bootstrap` to compute a 95% CI for the mean of
+these rewards. The random selection version has roughly the same confidence for
+all actions. The exploration-vs-exploitation version, trades some confidence
+from the not-so-good actions for a better confidence in the best action's score.
+
+| CI Widths for UCB-based Selection  | CI Widths for Random Selection |
+| :------: | :--------: |
+| ![ci_widths_best_child](https://github.com/cpatrasciuc/schnapsen-card-game/blob/select_best_child/src/ai/eval/data/mcts_ci_widths_across_game_states_best_child_1000iter.png) | ![ci_widths_random_selection](https://github.com/cpatrasciuc/schnapsen-card-game/blob/select_best_child/src/ai/eval/data/mcts_ci_widths_across_game_states_random_1000iter.png) |
+
+The results above use 30 initial game states and `max_iterations=1000`. They
+were obtained using
+`mcts_ci_widths_across_multiple_game_states(use_player=False)`.
+
+I verified that improving the confidence in a perfect information scenario
+leads to better decisions by running UCB-based Selection vs Random Selection,
+with `cheater=True`. The player that uses UCB-based Selection won in **64.40%
+[61.38%, 67.31%]** of the cases (out of 1000 bummerls).
+
+### Improvements in the imperfect information scenarios
+
+I couldn't prove that the confidence gains from the Mcts algorithm (perfect
+information) improve the confidence of the MctsPlayer (imperfect information).
+I had two main issues:
+
+* I didn't know how to compute the CI of the action score at the player level.
+  Some attempts were made in `mcts_debug._max_average_ucb_with_ci`:
+  * For each action consider only the scores coming from each permutation and
+    compute the CIs of their mean. This doesn't take
+    into account the CIs for these scores, so any improvement at the algorithm
+    level cannot be seen at the player level (unless one action is supposed to
+    have the similar score in all permutations?). This method is definitely not
+    correct in the late stages of the game, where we can fully simulate the
+    entire game tree for all permutations and there is no uncertainty in the
+    score. 
+  * Simple average of the CI limits coming from each permutation.
+    (Q: Does this ignore the fact that we only look at a subset of permutations,
+    and we don't process all possible permutations, so there should be some
+    additional uncertainty on top of the uncertainty coming with each score?)
+  * Use `scipy.stats.bootstrap` to get CIs on the averages computed at the
+    previous bullet (most likely incorrect?!).
+* The CI width for the best action doesn't seem to improve at the player level
+  if we select the best child in each perfect information scenario. The ideas
+  that I tried out were the following (since these use CIs, they also have the
+  issues in the previous bullet points):
+  * `mcts_permutations.py`: Manually debug the CI widths for a couple of game
+    states as we increase the number of permutations processed ([link](https://github.com/cpatrasciuc/schnapsen-card-game/blob/66c2ecb/src/ai/eval/data/mcts_permutations_5000iter.png)). 
+  * `mcts_variance_across_multiple_game_states`: For one game state, run the
+    MctsPlayer *M* times and compute the standard deviation of each action score
+    (as a measure of how much does the output change for the same input). Run
+    this for *N* different game states and check if the mean standard deviation
+    improves if we use UCB-based Selection.
+  * `mcts_ci_widths_across_multiple_game_states`: Same as above, but instead of
+    checking if the standard deviation shrinks, I checked whether the CI widths
+    shrink after moving to UCB-based Selection.
+  * `mcts_ci_widths_and_permutations_across_multiple_game_states`: For N game
+    states, compute the average CI width of the action deemed best by the
+    MctsPlayer and see how does this change as we increase `max_permutations`.
+    There seems to be no significant difference between UCB-based Selection
+    ([1000 iterations](https://github.com/cpatrasciuc/schnapsen-card-game/blob/73df21b89ca436c51a200530cbbfe76e7ee08435/src/ai/eval/data/mcts_ci_widths_and_perm_across_game_states_best_child_1000iter.png),
+     [2500 iterations](https://github.com/cpatrasciuc/schnapsen-card-game/blob/73df21b89ca436c51a200530cbbfe76e7ee08435/src/ai/eval/data/mcts_ci_widths_and_perm_across_game_states_best_child_2500iter.png))
+    and Random Selection
+    ([1000 iterations](https://github.com/cpatrasciuc/schnapsen-card-game/blob/73df21b89ca436c51a200530cbbfe76e7ee08435/src/ai/eval/data/mcts_ci_widths_and_perm_across_game_states_random_1000iter.png),
+     [2500 iterations](https://github.com/cpatrasciuc/schnapsen-card-game/blob/73df21b89ca436c51a200530cbbfe76e7ee08435/src/ai/eval/data/mcts_ci_widths_and_perm_across_game_states_random_2500iter.png)).
+  * For *N* game states, run the MctsPlayer and count in how many cases there is
+    an overlap between the CIs of the best and second-best action. This number
+    improved a bit after switching to UCB-based Selection, but it wasn't
+    convincing (it went from ~88% to ~75%).
+  
+**TODO:** 1) Find a proper way to compute CIs at the player level. 2) Maybe look
+at the ratio between the final score and its CI width.
+
+One possible explanation for why we don't see an improvement in the confidence
+at the player level could be the following: when we select the best child, for
+each perfect information scenario, we improve the confidence for the best
+action's score, and we lose confidence for the scores of the other actions. Now,
+unless some action is the best action across all perfect information scenarios,
+we improve the confidence in its score in some scenarios, and we lose confidence
+in its score in other scenarios. So at the player level (imperfect information
+scenario), when we average across the perfect information scenarios, the changes
+in confidence will cancel out. 
+
+### Tuning the exploration parameter
+
+Since I couldn't prove that switching to UCB-based Selection really improves
+the MctsPlayer, I decided to create a set of players that use
+`max_iterations=5000`, `max_permutations=20` and different values for the
+exploration parameter in the equation above, let them play against each other
+and check the results. I used the following values for the exploration
+parameter: 0 (no exploration, just exploitation), 1/&radic;2, 1, &radic;2, 20,
+5000 (for practical purposes, this high value should be equivalent to Random
+Selection). The results are the following:
+
+![exploration_param_eval_results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/ca0bbe9c7716b13c677bc0770a627882707776a7/src/ai/eval/data/eval_results_exploration_param.png)
+
+### Conclusion
+
+I will go forward with using UCB-based Selection with `exploration_param=1`.
+This also matches the value recommended on [Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Exploration_and_exploitation)
+(note that the formula there is slightly different).
+
+**NOTE**: In *"A Survey of Monte Carlo Tree Search Methods"* ([link1](https://ieeexplore.ieee.org/document/6145622), [link2](http://www.incompleteideas.net/609%20dropbox/other%20readings%20and%20resources/MCTS-survey.pdf))
+the recommended value is &radic;2, if the rewards are in the interval [0, 1].
+This is the other value that gave us good results, very similar to
+`exploration_param=1`.
 
 ## Start with the action deemed best by the HeuristicPlayer
 
