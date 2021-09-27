@@ -3,7 +3,6 @@
 #  found in the LICENSE file.
 
 import dataclasses
-import math
 import multiprocessing
 from typing import Optional
 
@@ -54,7 +53,7 @@ class MctsPlayerOptions:
   permutations.
   """
 
-  select_best_child: bool = False
+  select_best_child: bool = True
   """
   If True, during the selection step, the Mcts algorithm will always select the
   child with the highest UCB among the not-fully-simulated children. If there
@@ -62,8 +61,8 @@ class MctsPlayerOptions:
   False, during the selection step, the Mcts algorithm will pick a random child.
   """
 
-  # TODO(mcts): Find out which one is better: sqrt(2) or 1/sqrt(2).
-  exploration_param: float = 1 / math.sqrt(2)
+  # TODO(mcts): After all other tuning ideas are explored revisit sqrt(2) here.
+  exploration_param: float = 1
   """
   Parameter that balances exploration vs exploitation. It is used only if
   select_best_child is True. If exploration_param is zero, during the selection
