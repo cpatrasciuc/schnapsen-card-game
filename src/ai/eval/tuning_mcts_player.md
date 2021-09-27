@@ -252,12 +252,14 @@ Try out the hypothesis: for a fixed num of permutations 30, the more iterations 
 - 30 perm, 5000 iter
 - 30 perm, 2500 iter
 - 30 perm, 1000 iter
+- Conclusion: it seems to be true, but the differences are smaller after UCB-based Selection.
 
 Try out the hypothesis: for a fixed num of iterations, the more permutations the better.
 - 10 perm, 2500 iter
 - 40 perm, 2500 iter
 - 80 perm, 2500 iter
 - 150 perm, 2500 iter
+- Conclusion: it seems to be true, and the effect of increasing max_permutations increased after we switched to UCB-based Selection.
 
 
 For total_time ~ 5 sec:
