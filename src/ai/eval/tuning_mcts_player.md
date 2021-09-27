@@ -239,18 +239,21 @@ Combinations to try out:
 - 10 perms, 10k iterations
 - 30 perms, 3333 iterations
 - 50 perms, 2000 iterations
-Starting with 100 bummerls, no significat difference and each player won once and lost once.
+Starting with 100 bummerls, no significant difference and each player won once and lost once.
 
 Spreading a bit the number of permutations:
 - 10 perms, 10k iterations
 - 40 perms, 2500 iterations
 - 70 perms, 1428 iterations
 Using 100 bummerls, no significant difference. 10 perm has won against both, 70 has lost against both.
-Update after switching to UCB-based Selection:
+Update #1, after switching to UCB-based Selection:
 Using 1000 bummerls, 10perm has won against 40perm, the other were neutral.
 I was surprised that low perm high iter wins, given that after the switch to UCB-based Selection perms importance increased and iter importance decreased.
 I assumed that after 4 tricks, when there are only 6 perms at most, the high iter can simulate more and win the late game.
-I plan to allow high-perm-low-iter players to reallocate the budget in the late game.
+Update #2:
+I allowed the high-perm-low-iter players to reallocate the budget in the late game.
+The high perm players now win against the 10perm-10000iter.
+Next step: Go even higher with the number of perm: 100perm,1000iter.
 
 Try out the hypothesis: for a fixed num of permutations 30, the more iterations the better.
 - 30 perm, 10000 iter
