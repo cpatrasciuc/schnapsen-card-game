@@ -2,15 +2,16 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import functools
 import os
 import unittest
-from typing import Optional
+from typing import Optional, List
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import most_frequent_best_action, merge_ucbs, \
-  max_average_ucb
+  max_average_ucb, ActionsWithScores
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -233,3 +234,86 @@ class CythonMctsPlayerTest(unittest.TestCase):
     game_state = GameState.new(random_seed=0)
     mcts_player = CythonMctsPlayer(game_state.next_player, False, options)
     mcts_player.request_next_action(game_state.next_player_view())
+
+
+class ReallocateComputationalBudgetTest(unittest.TestCase):
+  def _assert_num_iterations(self,
+                             expected_iterations: int,
+                             actions_with_scores_list: List[ActionsWithScores]):
+    dummy_output = {}
+    iterations = 0
+    for actions_with_scores in actions_with_scores_list:
+      for action, scoring_info in actions_with_scores.items():
+        iterations += scoring_info.n
+        dummy_output[action] = scoring_info.score
+    self.assertEqual(expected_iterations, iterations)
+    return list(dummy_output.items())
+
+  def _run_test(self, player_class):
+    options = MctsPlayerOptions(
+      num_processes=1,
+      max_permutations=10,
+      max_iterations=10,
+      merge_scoring_info_func=functools.partial(self._assert_num_iterations,
+                                                10 * 10),
+      reallocate_computational_budget=False)
+    game_view = GameState.new(random_seed=0).next_player_view()
+    player = player_class(game_view.next_player, False, options)
+    player.get_actions_and_scores(game_view)
+
+    # There is one card left in the talon, the opponent played already a card
+    # from their hand, so there are only 4 unknown cards in the opponent's hand.
+    # This means there are only 4 permutations possible.
+    game_view = get_game_view_for_duck_puzzle()
+
+    # Without reallocating the computational budget, the player runs 4
+    # permutations of 100 iterations each.
+    options = MctsPlayerOptions(
+      num_processes=1,
+      max_permutations=100,
+      max_iterations=100,
+      merge_scoring_info_func=functools.partial(self._assert_num_iterations,
+                                                4 * 100),
+      reallocate_computational_budget=False)
+    player = player_class(game_view.next_player, False, options)
+    player.get_actions_and_scores(game_view)
+
+    # When reallocating the computational budget, the player runs 4
+    # permutations of 2500 iterations each, but 5784 are enough to simulate the
+    # entire game tree.
+    options = MctsPlayerOptions(
+      num_processes=1,
+      max_permutations=100,
+      max_iterations=100,
+      merge_scoring_info_func=functools.partial(self._assert_num_iterations,
+                                                5784),
+      reallocate_computational_budget=True)
+    player = player_class(game_view.next_player, False, options)
+    player.get_actions_and_scores(game_view)
+
+    # If max_iterations is None, the computational budget is unlimited, so
+    # reallocate_computational_budget has no effect.
+    options = MctsPlayerOptions(
+      num_processes=1,
+      max_permutations=100,
+      max_iterations=None,
+      merge_scoring_info_func=functools.partial(self._assert_num_iterations,
+                                                5784),
+      reallocate_computational_budget=False)
+    player = player_class(game_view.next_player, False, options)
+    player.get_actions_and_scores(game_view)
+    options = MctsPlayerOptions(
+      num_processes=1,
+      max_permutations=100,
+      max_iterations=None,
+      merge_scoring_info_func=functools.partial(self._assert_num_iterations,
+                                                5784),
+      reallocate_computational_budget=True)
+    player = player_class(game_view.next_player, False, options)
+    player.get_actions_and_scores(game_view)
+
+  def test_mcts_player(self):
+    self._run_test(MctsPlayer)
+
+  def test_cython_mcts_player(self):
+    self._run_test(CythonMctsPlayer)

@@ -106,9 +106,10 @@ class CythonMctsPlayer(BaseMctsPlayer):
     cdef int max_iterations = self._options.max_iterations or -1
     cdef int total_budget
     from_python_permutations(py_permutations, &permutations)
-    # TODO(mcts): Add a flag for this.
     options = self._options
-    if max_iterations > 0 and permutations.size() < options.max_permutations:
+    if options.reallocate_computational_budget and \
+        max_iterations > 0 and \
+        permutations.size() < options.max_permutations:
       total_budget = options.max_permutations * options.max_iterations
       max_iterations = <int> (total_budget / permutations.size())
     return _run_mcts_single_threaded(

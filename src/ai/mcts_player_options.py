@@ -78,3 +78,13 @@ class MctsPlayerOptions:
   used to obtain a better score/estimate, measure the confidence of the score,
   debug the algorithm, etc.
   """
+
+  reallocate_computational_budget: bool = True
+  """
+  The total computational budget is given by max_permutations * max_iterations.
+  If this field is True and the actual number of permutations to process is
+  smaller than max_permutations (e.g., the talon is empty, so all cards are
+  known), the player will increase the number of iterations per permutation such
+  that the total computational budget stays constant. This means that:
+  actual_permutations * actual_iterations = max_permutations * max_iterations.
+  """

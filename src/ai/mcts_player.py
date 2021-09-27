@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import abc
+import copy
 import functools
 import logging
 import math
@@ -10,7 +11,7 @@ import multiprocessing
 import random
 from typing import List, Optional, Tuple
 
-from ai.mcts_algorithm import Mcts, SchnapsenNode, ucb_for_player
+from ai.mcts_algorithm import Mcts, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import ScoringInfo, ActionsWithScores
 from ai.player import Player
@@ -119,12 +120,14 @@ class BaseMctsPlayer(Player, abc.ABC):
 
   @abc.abstractmethod
   def run_mcts_algorithm(self, game_view: GameState,
-                         permutations: List[List[Card]]) -> List[SchnapsenNode]:
+                         permutations: List[List[Card]]) -> List[
+    ActionsWithScores]:
     """
     This method is overridden by subclasses to run a particular implementation
     of the Mcts algorithm, given a game view and a list of permutations that
     convert the imperfect information game in a list of perfect information
-    games. It returns a list of Mcts root nodes, one for each permutation.
+    games. It returns a list of ActionsWithScores dicts, one for each
+    permutation.
     """
 
   def cleanup(self) -> None:
@@ -163,12 +166,19 @@ class MctsPlayer(BaseMctsPlayer):
   def run_mcts_algorithm(self, game_view: GameState,
                          permutations: List[List[Card]]) -> List[
     ActionsWithScores]:
+    options = self._options
+    if options.reallocate_computational_budget and \
+        options.max_iterations is not None and \
+        len(permutations) < options.max_permutations:
+      options = copy.copy(options)
+      total_budget = options.max_permutations * options.max_iterations
+      options.max_iterations = total_budget / len(permutations)
     if self._pool is not None:
       root_nodes = self._pool.map(
         functools.partial(run_mcts, game_view=game_view, player_id=self.id,
-                          options=self._options),
+                          options=options),
         permutations)
     else:
-      root_nodes = [run_mcts(permutation, game_view, self.id, self._options)
+      root_nodes = [run_mcts(permutation, game_view, self.id, options)
                     for permutation in permutations]
     return root_nodes
