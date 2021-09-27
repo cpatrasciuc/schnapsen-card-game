@@ -1,7 +1,7 @@
 player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
-MctsPlayer30perm1000iter,MctsPlayer30perm10000iter,408,592,2795,3286,4956,5870,303731,330650
-MctsPlayer30perm5000iter,MctsPlayer30perm10000iter,480,520,2719,2856,5238,5435,280271,287174
-MctsPlayer30perm5000iter,MctsPlayer30perm1000iter,575,425,3308,2848,5802,4993,332033,311075
-MctsPlayer30perm2500iter,MctsPlayer30perm10000iter,418,582,2702,3124,5016,5709,290937,309162
-MctsPlayer30perm2500iter,MctsPlayer30perm1000iter,562,438,3264,2920,5712,5048,330259,314806
-MctsPlayer30perm2500iter,MctsPlayer30perm5000iter,474,526,2842,2987,5225,5557,294516,303678
+MctsPlayer30perm1000iter,MctsPlayer30perm2500iter,470,530,3002,3165,5211,5524,315903,326297
+MctsPlayer30perm2500iter,MctsPlayer30perm5000iter,494,506,2898,3066,5249,5456,302494,311115
+MctsPlayer30perm5000iter,MctsPlayer30perm10000iter,478,522,2871,2969,5292,5451,294022,302126
+MctsPlayer30perm1000iter,MctsPlayer30perm5000iter,430,570,2870,3281,5042,5750,309296,327711
+MctsPlayer30perm1000iter,MctsPlayer30perm10000iter,418,582,2757,3224,4966,5785,296529,321788
+MctsPlayer30perm2500iter,MctsPlayer30perm10000iter,477,523,2855,3035,5210,5426,298927,307835
