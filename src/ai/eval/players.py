@@ -228,4 +228,12 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=1428,
                                          select_best_child=True,
                                          exploration_param=1)),
+  "MctsPlayer100perm1000iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=100,
+                                         max_iterations=1000,
+                                         select_best_child=True,
+                                         exploration_param=1)),
 }

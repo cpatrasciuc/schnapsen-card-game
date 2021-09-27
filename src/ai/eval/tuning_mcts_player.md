@@ -253,7 +253,8 @@ I assumed that after 4 tricks, when there are only 6 perms at most, the high ite
 Update #2:
 I allowed the high-perm-low-iter players to reallocate the budget in the late game.
 The high perm players now win against the 10perm-10000iter.
-Next step: Go even higher with the number of perm: 100perm,1000iter.
+Update #3: went higher with the number of perm: 100perm,1000iter. It won against 10perm10000iter, neutral vs the others.
+Next step: go even higher, until we find a player that becomes worse, so we know the upper-bound. Use 130perm769iter next.
 
 Try out the hypothesis: for a fixed num of permutations 30, the more iterations the better.
 - 30 perm, 10000 iter
