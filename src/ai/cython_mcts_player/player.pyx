@@ -80,9 +80,6 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
-    # TODO(mcts): If the number of permutations are smaller than
-    #  max_permutations, increase max_iterations to use the entire computational
-    #  budget.
     root_node = build_tree(&game_state, max_iterations, exploration_param,
                            select_best_child, save_rewards)
     py_root_nodes.append(build_scoring_info(root_node))
@@ -106,8 +103,15 @@ class CythonMctsPlayer(BaseMctsPlayer):
     ActionsWithScores]:
     cdef GameState game_view = from_python_game_state(py_game_view)
     cdef vector[vector[Card]] permutations
+    cdef int max_iterations = self._options.max_iterations or -1
+    cdef int total_budget
     from_python_permutations(py_permutations, &permutations)
+    # TODO(mcts): Add a flag for this.
+    options = self._options
+    if max_iterations > 0 and permutations.size() < options.max_permutations:
+      total_budget = options.max_permutations * options.max_iterations
+      max_iterations = <int> (total_budget / permutations.size())
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
-      self._options.max_iterations or -1, self._options.select_best_child,
-      self._options.exploration_param, self._options.save_rewards)
+      max_iterations, options.select_best_child, options.exploration_param,
+      options.save_rewards)
