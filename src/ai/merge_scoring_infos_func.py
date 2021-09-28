@@ -60,10 +60,10 @@ def best_action_frequency(
       [action for action, score in actions_with_scores.items() if
        score.score == max_score])
   counter = Counter(best_actions)
-  action_and_scores = counter.most_common(10)
+  actions_and_scores = counter.most_common(10)
   logging.info("MctsPlayer: Best action counts:\n%s",
-               pprint.pformat(action_and_scores, indent=True))
-  return action_and_scores
+               pprint.pformat(actions_and_scores, indent=True))
+  return actions_and_scores
 
 
 if __debug__:
@@ -101,17 +101,19 @@ def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
   return num / denom
 
 
-def _get_action_scores_for_fully_simulated_trees(
+def _average_ucb_for_fully_simulated_trees(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
   stats = {}
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
       stats[action] = stats.get(action, []) + [score.score]
-  if __debug__:
-    pprint.pprint(stats)
   actions_and_scores = [(action, sum(ucb) / len(ucb)) for action, ucb in
                         stats.items()]
+  # noinspection PyUnreachableCode
+  if __debug__:
+    logging.debug("MctsPlayer: Average UCBs:\n%s",
+                  pprint.pformat(actions_and_scores, indent=True))
   return actions_and_scores
 
 
@@ -156,7 +158,7 @@ def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
   is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
-    actions_and_scores = _get_action_scores_for_fully_simulated_trees(
+    actions_and_scores = _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
   else:
     actions_and_scores = _get_action_scores_for_partially_simulated_trees(
@@ -166,10 +168,13 @@ def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
   return actions_and_scores
 
 
-# TODO(tests): Add tests for this function.
 def average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
-  return _get_action_scores_for_fully_simulated_trees(actions_with_scores_list)
+  """
+  The aggregated score for each action is the arithmetic mean of its scores
+  from each permutation.
+  """
+  return _average_ucb_for_fully_simulated_trees(actions_with_scores_list)
 
 
 # TODO(tests): Add tests for this function.
@@ -177,7 +182,7 @@ def most_visited_node(actions_with_scores_list: List[ActionsWithScores]) -> \
     List[Tuple[PlayerAction, float]]:
   is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
-    return _get_action_scores_for_fully_simulated_trees(
+    return _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
   stats: Dict[PlayerAction, float] = {}
   for action_with_scores in actions_with_scores_list:
