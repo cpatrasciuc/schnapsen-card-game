@@ -5,7 +5,7 @@
 import dataclasses
 import logging
 import pprint
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import List, Tuple, Callable, Dict, Optional
 
 from model.player_action import PlayerAction
@@ -81,15 +81,11 @@ if __debug__:
 
 def _all_nodes_are_fully_simulated(
     actions_with_scores_list: List[ActionsWithScores]) -> bool:
-  is_fully_simulated = True
   for actions_with_scores in actions_with_scores_list:
     for score in actions_with_scores.values():
       if not score.fully_simulated:
-        is_fully_simulated = False
-        break
-    if not is_fully_simulated:
-      break
-  return is_fully_simulated
+        return False
+  return True
 
 
 # TODO(mcts): Can we aggregate better across permutations? Here we weight each
@@ -104,10 +100,10 @@ def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
 def _average_ucb_for_fully_simulated_trees(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
-  stats = {}
+  stats = defaultdict(list)
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
-      stats[action] = stats.get(action, []) + [score.score]
+      stats[action].append(score.score)
   actions_and_scores = [(action, sum(ucb) / len(ucb)) for action, ucb in
                         stats.items()]
   # noinspection PyUnreachableCode
@@ -177,15 +173,19 @@ def average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
   return _average_ucb_for_fully_simulated_trees(actions_with_scores_list)
 
 
-# TODO(tests): Add tests for this function.
-def most_visited_node(actions_with_scores_list: List[ActionsWithScores]) -> \
+def count_visits(actions_with_scores_list: List[ActionsWithScores]) -> \
     List[Tuple[PlayerAction, float]]:
+  """
+  If all permutations are fully simulated, this is identical to average_ucb().
+  Otherwise, the aggregated score for each action is the total number of visits
+  this action got across all permutations.
+  """
   is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     return _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
-  stats: Dict[PlayerAction, float] = {}
+  stats = defaultdict(float)
   for action_with_scores in actions_with_scores_list:
     for action, scoring_info in action_with_scores.items():
-      stats[action] = stats.get(action, 0) + scoring_info.n
+      stats[action] += scoring_info.n
   return list(stats.items())
