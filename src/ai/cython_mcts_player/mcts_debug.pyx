@@ -27,7 +27,7 @@ from ai.cython_mcts_player.player_action cimport ActionType
 from ai.cython_mcts_player.player_action cimport to_python_player_action
 from ai.mcts_player import generate_permutations
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import ActionsWithScores, max_average_ucb
+from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb
 from model.game_state import GameState as PyGameState
 from model.player_action import PlayerAction
 
@@ -61,11 +61,11 @@ cdef _build_scoring_info_with_debug(Node *root_node):
     scoring_info[py_action].score_upp = ci_upp
   return scoring_info
 
-def _max_average_ucb_with_ci(
+def _average_ucb_with_ci(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float, float, float]]:
   """
-  Same as max_average_ucb(), but tries to compute come CIs for the final score
+  Same as average_ucb(), but tries to compute come CIs for the final score
   of each action.
   WARNING: This is likely not correct from a statistics point of view.
   """
@@ -197,8 +197,8 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
     for j in range(root_nodes.size()):
       actions_with_scoring_infos.append(
         _build_scoring_info_with_debug(root_nodes[j]))
-    if options.merge_scoring_info_func == max_average_ucb:
-      actions_and_scores = _max_average_ucb_with_ci(actions_with_scoring_infos)
+    if options.merge_scoring_info_func == average_ucb:
+      actions_and_scores = _average_ucb_with_ci(actions_with_scoring_infos)
       dataframe = DataFrame(
         data=[(str(action), score, score_low, score_upp) for
               action, score, score_low, score_upp in actions_and_scores],

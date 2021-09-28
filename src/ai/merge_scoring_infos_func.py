@@ -94,7 +94,7 @@ def _all_nodes_are_fully_simulated(
 
 # TODO(mcts): Can we aggregate better across permutations? Here we weight each
 #  permutation by how many times a given action was visited for that
-#  simulation. In max_average_ucb() we weight all permutations equally.
+#  simulation. In average_ucb() we weight all permutations equally.
 def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
   num = sum(q * n for q, n in ucbs)
   denom = sum(n for q, n in ucbs)
@@ -167,7 +167,7 @@ def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
 
 
 # TODO(tests): Add tests for this function.
-def max_average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
+def average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
   return _get_action_scores_for_fully_simulated_trees(actions_with_scores_list)
 

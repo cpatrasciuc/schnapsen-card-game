@@ -6,7 +6,7 @@ import dataclasses
 import multiprocessing
 from typing import Optional
 
-from ai.merge_scoring_infos_func import max_average_ucb, MergeScoringInfosFunc
+from ai.merge_scoring_infos_func import average_ucb, MergeScoringInfosFunc
 from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 
 
@@ -47,7 +47,7 @@ class MctsPlayerOptions:
   be processed when request_next_action() is called.
   """
 
-  merge_scoring_info_func: Optional[MergeScoringInfosFunc] = max_average_ucb
+  merge_scoring_info_func: Optional[MergeScoringInfosFunc] = average_ucb
   """
   The function that merges all the ScoringInfos across all the processed
   permutations.

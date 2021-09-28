@@ -332,7 +332,7 @@ information) improve the confidence of the MctsPlayer (imperfect information).
 I had two main issues:
 
 * I didn't know how to compute the CI of the action score at the player level.
-  Some attempts were made in `mcts_debug._max_average_ucb_with_ci`:
+  Some attempts were made in `mcts_debug._average_ucb_with_ci`:
   * For each action consider only the scores coming from each permutation and
     compute the CIs of their mean. This doesn't take
     into account the CIs for these scores, so any improvement at the algorithm
