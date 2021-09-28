@@ -44,10 +44,15 @@ the output.
 """
 
 
-def most_frequent_best_action(
+def best_action_frequency(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
   Tuple[PlayerAction, float]]:
-  """Returns the most popular action across all root nodes' best actions."""
+  """
+  The aggregated score returned for each action is the number of permutations
+  for which the action is the best action. One or more actions are considered
+  the best action(s) for a permutation if they have the maximum score among all
+  actions for that particular permutation.
+  """
   best_actions = []
   for actions_with_scores in actions_with_scores_list:
     max_score = max(score.score for _, score in actions_with_scores.items())

@@ -10,7 +10,7 @@ from typing import Optional, List
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import most_frequent_best_action, merge_ucbs, \
+from ai.merge_scoring_infos_func import best_action_frequency, merge_ucbs, \
   max_average_ucb, ActionsWithScores
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
@@ -145,7 +145,7 @@ class MctsPlayerTest(unittest.TestCase):
 class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(
-      max_iterations=None, merge_scoring_info_func=most_frequent_best_action)
+      max_iterations=None, merge_scoring_info_func=best_action_frequency)
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
@@ -188,7 +188,7 @@ class CythonMctsPlayerMaxAverageUcbTest(MctsPlayerTest):
 class CythonMctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(
-      max_iterations=None, merge_scoring_info_func=most_frequent_best_action,
+      max_iterations=None, merge_scoring_info_func=best_action_frequency,
       num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 

@@ -3,7 +3,7 @@
 ## The problem
 
 The initial version of the MctsPlayer lost 70 out of 100 bummerls against
-the HeuristicPlayer. After switching from `most_frequent_best_action` to
+the HeuristicPlayer. After switching from `best_action_frequency` to
 `max_average_ucb_across_root_nodes`, the results against the HeuristicPlayer
 were the following:
 
