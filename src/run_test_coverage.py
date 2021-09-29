@@ -9,8 +9,10 @@ from typing import List
 
 import coverage
 
+from main_wrapper import main_wrapper
 
-def run_all_tests_with_coverage(folders: List[str] = None) -> float:
+
+def run_all_tests_with_coverage(folders: List[str] = None) -> None:
   """
   Runs all tests with code coverage; generates an HTML and a text report.
   Based on this: https://coverage.readthedocs.io/en/coverage-5.5/api.html#api
@@ -53,12 +55,9 @@ def run_all_tests_with_coverage(folders: List[str] = None) -> float:
 
   # Print a text report to stdout.
   print()
-  pct_covered = cov.report(skip_empty=True, skip_covered=True,
-                           show_missing=True)
+  cov.report(skip_empty=True, skip_covered=True, show_missing=True)
   print("\nOutput saved to: %s" % html_path)
-
-  return pct_covered
 
 
 if __name__ == "__main__":
-  run_all_tests_with_coverage(sys.argv[1:])
+  main_wrapper(lambda: run_all_tests_with_coverage(sys.argv[1:]))

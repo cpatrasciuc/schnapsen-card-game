@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 
+from main_wrapper import main_wrapper
+
 
 def get_all_python_files():
   py_files = []
@@ -53,4 +55,4 @@ def run_pylint():
 
 
 if __name__ == "__main__":
-  run_pylint()
+  main_wrapper(run_pylint)
