@@ -33,20 +33,23 @@ class ScoringInfo:
 
 ActionsWithScores = Dict[PlayerAction, ScoringInfo]
 
-MergeScoringInfosFunc = Callable[
-  [List[ActionsWithScores]], List[Tuple[PlayerAction, float]]]
+AggregatedScores = List[Tuple[PlayerAction, float]]
+"""
+A list containing each action and its aggregated score. An action should only
+appear once in the output.
+"""
+
+MergeScoringInfosFunc = Callable[[List[ActionsWithScores]], AggregatedScores]
 """
 Function that receives the ActionWithScores dictionaries for all the
 processed permutations (i.e., one dictionary per root node) and returns a list
 with (action, score) tuples, where the score is some aggregation across all the
-root nodes for that particular action. Each action should only appear once in
-the output.
+root nodes for that particular action.
 """
 
 
 def best_action_frequency(
-    actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float]]:
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   """
   The aggregated score returned for each action is the number of permutations
   for which the action is the best action. One or more actions are considered
@@ -98,8 +101,7 @@ def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
 
 
 def _average_ucb_for_fully_simulated_trees(
-    actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float]]:
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   stats = defaultdict(list)
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
@@ -114,8 +116,7 @@ def _average_ucb_for_fully_simulated_trees(
 
 
 def _get_action_scores_for_partially_simulated_trees(
-    actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float]]:
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   stats = {}
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
@@ -150,8 +151,8 @@ def _get_action_scores_for_partially_simulated_trees(
 # to be expanded in Mcts and/or consider the best node to be the mode visited
 # one.
 
-def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float]]:
+def merge_ucbs(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     actions_and_scores = _average_ucb_for_fully_simulated_trees(
@@ -164,8 +165,8 @@ def merge_ucbs(actions_with_scores_list: List[ActionsWithScores]) -> List[
   return actions_and_scores
 
 
-def average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float]]:
+def average_ucb(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   """
   The aggregated score for each action is the arithmetic mean of its scores
   from each permutation.
@@ -173,8 +174,8 @@ def average_ucb(actions_with_scores_list: List[ActionsWithScores]) -> List[
   return _average_ucb_for_fully_simulated_trees(actions_with_scores_list)
 
 
-def count_visits(actions_with_scores_list: List[ActionsWithScores]) -> \
-    List[Tuple[PlayerAction, float]]:
+def count_visits(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   """
   If all permutations are fully simulated, this is identical to average_ucb().
   Otherwise, the aggregated score for each action is the total number of visits

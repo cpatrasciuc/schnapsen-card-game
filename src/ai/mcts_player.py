@@ -13,7 +13,8 @@ from typing import List, Optional, Tuple
 
 from ai.mcts_algorithm import Mcts, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import ScoringInfo, ActionsWithScores
+from ai.merge_scoring_infos_func import ScoringInfo, ActionsWithScores, \
+  AggregatedScores
 from ai.player import Player
 from ai.utils import populate_game_view, get_unseen_cards
 from model.card import Card
@@ -23,7 +24,7 @@ from model.player_id import PlayerId
 
 
 def _find_action_with_max_score(
-    actions_and_scores: List[Tuple[PlayerAction, float]]) -> PlayerAction:
+    actions_and_scores: AggregatedScores) -> PlayerAction:
   """
   Given a list of PlayerActions and merged scores across all perfect information
   Mcts trees, it returns the action with the highest score. If there are
@@ -174,11 +175,12 @@ class MctsPlayer(BaseMctsPlayer):
       total_budget = options.max_permutations * options.max_iterations
       options.max_iterations = total_budget / len(permutations)
     if self._pool is not None:
-      root_nodes = self._pool.map(
+      actions_with_scores_list = self._pool.map(
         functools.partial(run_mcts, game_view=game_view, player_id=self.id,
                           options=options),
         permutations)
     else:
-      root_nodes = [run_mcts(permutation, game_view, self.id, options)
-                    for permutation in permutations]
-    return root_nodes
+      actions_with_scores_list = [
+        run_mcts(permutation, game_view, self.id, options)
+        for permutation in permutations]
+    return actions_with_scores_list
