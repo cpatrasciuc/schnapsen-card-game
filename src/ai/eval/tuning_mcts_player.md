@@ -254,7 +254,11 @@ Update #2:
 I allowed the high-perm-low-iter players to reallocate the budget in the late game.
 The high perm players now win against the 10perm-10000iter.
 Update #3: went higher with the number of perm: 100perm,1000iter. It won against 10perm10000iter, neutral vs the others.
-Next step: go even higher, until we find a player that becomes worse, so we know the upper-bound. Use 130perm769iter next.
+Update #4: went even higher, until we find a player that becomes worse.
+I used 130, 160, 190, 250, 500 and 1000 permutations. The latter lost significantly against 100permutations.
+Next steps:
+- Run a new grid with 10perm, 100perm, 250perm, 500perm, 1000perm.
+- Maybe rerun the hypotheses below by using a bigger range of iterations and permutations.
 
 Try out the hypothesis: for a fixed num of permutations 30, the more iterations the better.
 - 30 perm, 10000 iter

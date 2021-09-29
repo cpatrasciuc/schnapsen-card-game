@@ -236,4 +236,52 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=1000,
                                          select_best_child=True,
                                          exploration_param=1)),
+  "MctsPlayer130perm769iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=130,
+                                         max_iterations=769,
+                                         select_best_child=True,
+                                         exploration_param=1)),
+  "MctsPlayer160perm625iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=160,
+                                         max_iterations=625,
+                                         select_best_child=True,
+                                         exploration_param=1)),
+  "MctsPlayer190perm526iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=190,
+                                         max_iterations=526,
+                                         select_best_child=True,
+                                         exploration_param=1)),
+  "MctsPlayer250perm400iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=250,
+                                         max_iterations=400,
+                                         select_best_child=True,
+                                         exploration_param=1)),
+  "MctsPlayer500perm200iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=500,
+                                         max_iterations=200,
+                                         select_best_child=True,
+                                         exploration_param=1)),
+  "MctsPlayer1000perm100iter":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=1000,
+                                         max_iterations=100,
+                                         select_best_child=True,
+                                         exploration_param=1)),
 }
