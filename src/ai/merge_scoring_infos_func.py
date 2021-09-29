@@ -82,7 +82,7 @@ if __debug__:
       assert score.terminal
 
 
-def _all_nodes_are_fully_simulated(
+def _are_all_nodes_fully_simulated(
     actions_with_scores_list: List[ActionsWithScores]) -> bool:
   for actions_with_scores in actions_with_scores_list:
     for score in actions_with_scores.values():
@@ -153,7 +153,7 @@ def _get_action_scores_for_partially_simulated_trees(
 
 def merge_ucbs(
     actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
-  is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
+  is_fully_simulated = _are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     actions_and_scores = _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
@@ -181,7 +181,7 @@ def count_visits(
   Otherwise, the aggregated score for each action is the total number of visits
   this action got across all permutations.
   """
-  is_fully_simulated = _all_nodes_are_fully_simulated(actions_with_scores_list)
+  is_fully_simulated = _are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     return _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
