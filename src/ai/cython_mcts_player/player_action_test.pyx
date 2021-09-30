@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import hashlib
 import os
 import pickle
 import unittest
@@ -311,6 +312,10 @@ class ExecutePlayerActionsTest(unittest.TestCase):
     cdef PlayerAction action
     filename = os.path.join(os.path.dirname(__file__),
                             "bummerl_for_tests.pickle")
+    # TODO(cleanup): Remove this after debugging the GitHub failure.
+    with open(filename, "rb") as binary_file:
+      print("MD5 for bummerl_for_tests.pickle:",
+            hashlib.md5(binary_file.read()).hexdigest())
     bummerl = None
     with open(filename, "rb") as binary_file:
       bummerl = pickle.load(binary_file)
