@@ -257,9 +257,12 @@ Update #3: went higher with the number of perm: 100perm,1000iter. It won against
 Update #4: went even higher, until we find a player that becomes worse.
 I used 130, 160, 190, 250, 500 and 1000 permutations. The latter lost significantly against 100permutations.
 Update #5: run a new grid with 100perm, 250perm, 500perm, 1000perm. All match-ups were neutral. 
+Update #6:
+Run 130, 160 and 190 perm against each other to fill in the center of the grid. 
+No significant differences could be observed between these players. 130 and 160 perm seems to have a slight advantage if we look at bummerls, game_points and trick_points.
+Decided to go forward with a round number perm150iter667.
 Next steps:
-In the results grid, if we use "game_points" as the metric it seems 130, 160 and 190 perm have some wins and no clear loses.
-Simulate the games between these three players to fill in the missing data in the center of the grid.
+- Rewrite and close this section of the document.
 
 TODOs:
 Maybe rerun the hypotheses below by using a bigger range of iterations and permutations.
