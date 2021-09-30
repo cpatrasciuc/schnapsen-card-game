@@ -18,6 +18,7 @@ from model.player_action import PlayerAction, PlayCardAction, \
   ExchangeTrumpCardAction, AnnounceMarriageAction, CloseTheTalonAction, \
   get_available_actions
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 
 if __debug__:
@@ -151,7 +152,8 @@ class HeuristicPlayer(Player):
     self._remaining_cards = self._get_remaining_cards(game_view)
     self._remaining_cards.sort(key=_key_by_value_and_suit)
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
     """Returns the action that this player chose to play next."""
     assert game_view.next_player == self.id, "Not my turn"
     self._cache_game_state(game_view)

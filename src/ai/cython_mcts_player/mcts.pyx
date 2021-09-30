@@ -12,7 +12,7 @@ from libc.string cimport memset
 from libc.time cimport time
 from libcpp.vector cimport vector
 
-from ai.cython_mcts_player.game_state cimport is_game_over, game_points
+from ai.cython_mcts_player.game_state cimport is_game_over, game_points, Points
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
 
@@ -48,7 +48,8 @@ cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
     index = rand() % not_fully_simulated_children.size()
     node = not_fully_simulated_children[index]
 
-cdef Node *init_node(GameState *game_state, Node *parent) nogil:
+cdef Node *init_node(GameState *game_state, Node *parent,
+                     Points *bummerl_score) nogil:
   cdef Node *node = <Node *> malloc(sizeof(Node))
   cdef float score_p1, score_p2
   memset(node, 0, sizeof(Node))
@@ -61,8 +62,11 @@ cdef Node *init_node(GameState *game_state, Node *parent) nogil:
   node.ucb = 0
   node.player = node.game_state.next_player
   if node.terminal:
-    # TODO(mcts): Take the bummerl score into account.
     score_p1, score_p2 = game_points(&node.game_state)
+    if bummerl_score != NULL and bummerl_score[0] + score_p1 >= 7:
+      score_p1 = 7 - bummerl_score[0]
+    if bummerl_score != NULL and bummerl_score[1] + score_p2 >= 7:
+      score_p2 = 7 - bummerl_score[1]
     score_p1 /= 3.0
     score_p2 /= 3.0
     node.ucb = score_p1 - score_p2
@@ -72,7 +76,7 @@ cdef Node *init_node(GameState *game_state, Node *parent) nogil:
     get_available_actions(&node.game_state, node.actions)
   return node
 
-cdef Node *_expand(Node * node) nogil:
+cdef Node *_expand(Node * node, Points *bummerl_score) nogil:
   cdef vector[int] untried_indices
   cdef int i
   for i in range(MAX_CHILDREN):
@@ -83,13 +87,13 @@ cdef Node *_expand(Node * node) nogil:
   cdef int index = rand() % untried_indices.size()
   index = untried_indices[index]
   cdef GameState game_state = execute(&node.game_state, node.actions[index])
-  node.children[index] = init_node(&game_state, node)
+  node.children[index] = init_node(&game_state, node, bummerl_score)
   return node.children[index]
 
-cdef Node *_fully_expand(Node *start_node) nogil:
+cdef Node *_fully_expand(Node *start_node, Points *bummerl_score) nogil:
   cdef Node *node = start_node
   while not node.terminal:
-    node = _expand(node)
+    node = _expand(node, bummerl_score)
   return node
 
 cdef inline float _ucb_for_player(Node *node, PlayerId player_id) nogil:
@@ -167,24 +171,26 @@ cdef void _backpropagate(Node *end_node, float score,
     node = node.parent
 
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
-                            bint select_best_child, bint save_rewards) nogil:
+                            bint select_best_child, bint save_rewards,
+                            Points *bummerl_score) nogil:
   cdef Node *selected_node = _selection(root_node, select_best_child)
   if selected_node is NULL:
     return True
-  cdef Node *end_node = _fully_expand(selected_node)
+  cdef Node *end_node = _fully_expand(selected_node, bummerl_score)
   _backpropagate(end_node, end_node.ucb, exploration_param, select_best_child,
                  save_rewards)
   return False
 
 cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param, bint select_best_child,
-                      bint save_rewards=False) nogil:
-  cdef Node *root_node = init_node(game_state, NULL)
+                      bint save_rewards=False,
+                      Points *bummerl_score=NULL) nogil:
+  cdef Node *root_node = init_node(game_state, NULL, bummerl_score)
   cdef int iterations = 0
   while True:
     iterations += 1
     if run_one_iteration(root_node, exploration_param, select_best_child,
-                         save_rewards):
+                         save_rewards, bummerl_score):
       break
     if 0 < max_iterations <= iterations:
       break

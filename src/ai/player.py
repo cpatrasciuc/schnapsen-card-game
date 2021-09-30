@@ -3,10 +3,12 @@
 #  found in the LICENSE file.
 
 import abc
+from typing import Optional
 
 from model.game_state import GameState
 from model.player_action import PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 
 
 class Player(abc.ABC):
@@ -37,10 +39,13 @@ class Player(abc.ABC):
     return self._cheater
 
   @abc.abstractmethod
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
     """
     This method receives the current state of the game as seen from the player's
-    perspective and must return the action that the player chose to play.
+    perspective and must return the action that the player chose to play. If
+    provided, the game_points argument represents the current score at bummerl
+    level.
     """
 
   @property

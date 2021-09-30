@@ -6,6 +6,7 @@ import threading
 import time
 import unittest
 from multiprocessing import Event
+from typing import Optional
 from unittest.mock import Mock
 
 from ai.player import Player as AIPlayer
@@ -15,6 +16,7 @@ from model.game_state import GameState
 from model.game_state_test_utils import get_game_state_for_tests
 from model.player_action import PlayCardAction, PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from model.suit import Suit
 from ui.computer_player import ComputerPlayer, OutOfProcessComputerPlayer
 from ui.test_utils import GraphicUnitTest
@@ -25,7 +27,8 @@ class ComputerPlayerTest(unittest.TestCase):
     action = PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE))
 
     class TestPlayer(AIPlayer):
-      def request_next_action(self, game_view: GameState) -> PlayerAction:
+      def request_next_action(self, game_view: GameState, game_points: Optional[
+        PlayerPair[int]] = None) -> PlayerAction:
         return action
 
     ai_player = TestPlayer(PlayerId.ONE, True)
@@ -43,7 +46,8 @@ class _OutOfProcessTestPlayer(AIPlayer):
     super().__init__(player_id, cheater)
     self._event = event
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
     self._event.wait()
     return PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE))
 

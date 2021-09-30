@@ -21,6 +21,7 @@ from model.card import Card
 from model.game_state import GameState
 from model.player_action import PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 
 
 def _find_action_with_max_score(
@@ -102,10 +103,12 @@ class BaseMctsPlayer(Player, abc.ABC):
     assert len(permutations) == 1 or not self.cheater
     return permutations
 
-  def get_actions_and_scores(self, game_view: GameState) -> List[
+  def get_actions_and_scores(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> List[
     Tuple[PlayerAction, float]]:
     permutations = self._generate_permutations(game_view)
-    actions_with_scores_list = self.run_mcts_algorithm(game_view, permutations)
+    actions_with_scores_list = self.run_mcts_algorithm(game_view, permutations,
+                                                       game_points)
     if __debug__:
       for actions_with_scores in actions_with_scores_list:
         for action, score in actions_with_scores.items():
@@ -115,20 +118,23 @@ class BaseMctsPlayer(Player, abc.ABC):
       actions_with_scores_list)
     return actions_and_scores
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
-    actions_and_scores = self.get_actions_and_scores(game_view)
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
+    actions_and_scores = self.get_actions_and_scores(game_view, game_points)
     return _find_action_with_max_score(actions_and_scores)
 
   @abc.abstractmethod
   def run_mcts_algorithm(self, game_view: GameState,
-                         permutations: List[List[Card]]) -> List[
+                         permutations: List[List[Card]],
+                         game_points: Optional[PlayerPair[int]] = None) -> List[
     ActionsWithScores]:
     """
     This method is overridden by subclasses to run a particular implementation
     of the Mcts algorithm, given a game view and a list of permutations that
     convert the imperfect information game in a list of perfect information
     games. It returns a list of ActionsWithScores dicts, one for each
-    permutation.
+    permutation. If provided, the game_points argument represents the score at
+    bummerl level.
     """
 
   def cleanup(self) -> None:
@@ -158,6 +164,9 @@ class MctsPlayer(BaseMctsPlayer):
       logging.info("MctsPlayer: Mcts will run in-process.")
     if options.save_rewards:
       raise ValueError("save_rewards is not supported by MctsPlayer")
+    if options.use_game_points:
+      logging.warning("MctsPlayer: MctsPlayerOptions.use_game_points is True, "
+                      "but MctsPlayer ignores game_points.")
 
   def cleanup(self) -> None:
     if self._pool is not None:
@@ -165,7 +174,8 @@ class MctsPlayer(BaseMctsPlayer):
       self._pool.join()
 
   def run_mcts_algorithm(self, game_view: GameState,
-                         permutations: List[List[Card]]) -> List[
+                         permutations: List[List[Card]],
+                         game_points: Optional[PlayerPair[int]] = None) -> List[
     ActionsWithScores]:
     options = self._options
     if options.reallocate_computational_budget and \

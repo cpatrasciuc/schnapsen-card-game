@@ -12,7 +12,7 @@ from libcpp.vector cimport vector
 
 from ai.cython_mcts_player.card cimport Card, is_unknown
 from ai.cython_mcts_player.game_state cimport GameState, PlayerId, \
-  from_python_player_id, from_python_game_state
+  from_python_player_id, from_python_game_state, Points
 from ai.cython_mcts_player.mcts cimport Node, build_tree, MAX_CHILDREN, \
   delete_tree
 from ai.cython_mcts_player.player_action cimport ActionType, \
@@ -69,6 +69,7 @@ cdef build_scoring_info(Node *root_node):
 cdef list _run_mcts_single_threaded(GameState *game_view,
                                     vector[vector[Card]] *permutations,
                                     PlayerId opponent_id,
+                                    Points * bummerl_score,
                                     int max_iterations,
                                     bint select_best_child,
                                     float exploration_param,
@@ -81,7 +82,7 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
     root_node = build_tree(&game_state, max_iterations, exploration_param,
-                           select_best_child, save_rewards)
+                           select_best_child, save_rewards, bummerl_score)
     py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes
@@ -99,8 +100,8 @@ class CythonMctsPlayer(BaseMctsPlayer):
         "but multi-threading is not supported. Running in single-threaded mode")
 
   def run_mcts_algorithm(self, py_game_view: PyGameState,
-                         py_permutations: List[List[PyCard]]) -> List[
-    ActionsWithScores]:
+                         py_permutations: List[List[PyCard]],
+                         game_points = None) -> List[ActionsWithScores]:
     cdef GameState game_view = from_python_game_state(py_game_view)
     cdef vector[vector[Card]] permutations
     cdef int max_iterations = self._options.max_iterations or -1
@@ -112,7 +113,13 @@ class CythonMctsPlayer(BaseMctsPlayer):
         permutations.size() < options.max_permutations:
       total_budget = options.max_permutations * options.max_iterations
       max_iterations = <int> (total_budget / permutations.size())
+    cdef Points[2] bummerl_score
+    bummerl_score[0] = 0
+    bummerl_score[1] = 0
+    if options.use_game_points and game_points is not None:
+      bummerl_score[0] = game_points.one
+      bummerl_score[1] = game_points.two
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
-      max_iterations, options.select_best_child, options.exploration_param,
-      options.save_rewards)
+      bummerl_score, max_iterations, options.select_best_child,
+      options.exploration_param, options.save_rewards)

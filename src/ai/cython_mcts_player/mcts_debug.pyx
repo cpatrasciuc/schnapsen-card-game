@@ -4,7 +4,7 @@
 
 # distutils: language=c++
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 import pandas
@@ -15,7 +15,7 @@ from libcpp.vector cimport vector
 
 from ai.cython_mcts_player.card cimport Card
 from ai.cython_mcts_player.game_state cimport from_python_game_state, \
-  GameState, from_python_player_id, PlayerId
+  GameState, from_python_player_id, PlayerId, Points
 from ai.cython_mcts_player.mcts cimport MAX_CHILDREN
 from ai.cython_mcts_player.mcts cimport Node
 from ai.cython_mcts_player.mcts cimport run_one_iteration, init_node
@@ -30,6 +30,7 @@ from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb
 from model.game_state import GameState as PyGameState
 from model.player_action import PlayerAction
+from model.player_pair import PlayerPair
 
 def _add_rank_column(dataframe: DataFrame) -> None:
   dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
@@ -130,9 +131,16 @@ cdef _get_children_data(Node *root_node):
 
 def run_mcts_and_collect_data(py_game_state: PyGameState,
                               options: MctsPlayerOptions,
-                              iterations_step: int = 1):
+                              iterations_step: int = 1,
+                              game_points: Optional[PlayerPair[int]] = None):
+  cdef Points[2] bummerl_score
+  bummerl_score[0] = 0
+  bummerl_score[1] = 0
+  if game_points is not None and options.use_game_points:
+    bummerl_score[0] = game_points.one
+    bummerl_score[1] = game_points.two
   cdef GameState game_state = from_python_game_state(py_game_state)
-  cdef Node *root_node = init_node(&game_state, NULL)
+  cdef Node *root_node = init_node(&game_state, NULL, bummerl_score)
   cdef int iteration = 1
   cdef bint is_fully_simulated = False
   cdef int max_iterations = options.max_iterations
@@ -142,7 +150,8 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
       is_fully_simulated = run_one_iteration(root_node,
                                              options.exploration_param,
                                              options.select_best_child,
-                                             options.save_rewards)
+                                             options.save_rewards,
+                                             bummerl_score)
       iteration += 1
       if is_fully_simulated:
         break
@@ -158,7 +167,14 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
 
 def run_mcts_player_step_by_step(py_game_view: PyGameState,
                                  options: MctsPlayerOptions,
-                                 iterations_step: int):
+                                 iterations_step: int,
+                                 game_points: Optional[PlayerPair[int]] = None):
+  cdef Points[2] bummerl_score
+  bummerl_score[0] = 0
+  bummerl_score[1] = 0
+  if game_points is not None and options.use_game_points:
+    bummerl_score[0] = game_points.one
+    bummerl_score[1] = game_points.two
   cdef GameState game_view = from_python_game_state(py_game_view)
   cdef GameState game_state
   cdef vector[Node *] root_nodes
@@ -173,7 +189,7 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
   for i in range(permutations.size()):
     game_state = game_view
     populate_game_view(&game_state, &permutations[i], opponent_id)
-    root_nodes.push_back(init_node(&game_state, NULL))
+    root_nodes.push_back(init_node(&game_state, NULL, bummerl_score))
 
   cdef int iteration = 1
   cdef bint is_fully_simulated, permutation_is_fully_simulated
@@ -186,7 +202,7 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
       for i in range(root_nodes.size()):
         permutation_is_fully_simulated = run_one_iteration(
           root_nodes[i], options.exploration_param, options.select_best_child,
-          options.save_rewards)
+          options.save_rewards, bummerl_score)
         is_fully_simulated = \
           is_fully_simulated and permutation_is_fully_simulated
       iteration += 1

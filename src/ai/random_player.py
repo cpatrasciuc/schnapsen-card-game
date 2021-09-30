@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import random
+from typing import Optional
 
 from ai.player import Player
 from ai.utils import get_best_marriage
@@ -10,6 +11,7 @@ from model.game_state import GameState
 from model.player_action import PlayerAction, get_available_actions, \
   CloseTheTalonAction, ExchangeTrumpCardAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 
 
 class RandomPlayer(Player):
@@ -42,7 +44,8 @@ class RandomPlayer(Player):
     self._never_close_talon = never_close_talon
     self._force_marriage_announcement = force_marriage_announcement
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
     assert game_view.next_player == self.id, "Not my turn"
     available_actions = get_available_actions(game_view)
     if self._never_close_talon:

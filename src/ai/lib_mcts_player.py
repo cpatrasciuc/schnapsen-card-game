@@ -7,7 +7,7 @@ import random
 import time
 from collections import Counter
 from math import factorial
-from typing import List
+from typing import List, Optional
 
 import mcts
 
@@ -16,6 +16,7 @@ from ai.utils import populate_game_view, get_unseen_cards
 from model.game_state import GameState
 from model.player_action import get_available_actions, PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 
 
 class _State:
@@ -75,7 +76,8 @@ class LibMctsPlayer(Player):
     self._time_limit_sec = time_limit_sec
     self._max_permutations = max_permutations
 
-  def request_next_action(self, game_view: GameState) -> PlayerAction:
+  def request_next_action(self, game_view: GameState, game_points: Optional[
+    PlayerPair[int]] = None) -> PlayerAction:
     cards_set = get_unseen_cards(game_view)
     best_actions = []
     num_permutations = min(factorial(len(cards_set)), self._max_permutations)

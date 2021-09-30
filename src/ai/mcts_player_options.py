@@ -88,3 +88,13 @@ class MctsPlayerOptions:
   that the total computational budget stays constant. This means that:
   actual_permutations * actual_iterations = max_permutations * max_iterations.
   """
+
+  # TODO(mcts): Evaluate this.
+  use_game_points: bool = True
+  """
+  If True, the player takes into account the game points. This can change the
+  trade-offs towards the end of a bummerl, where winning/losing 3 points must
+  be the same as winning/losing 1 point, because the bummerl will be over. This
+  means that the break-even point changes, so the player will be more
+  conservative if it's leading and more aggressive if it's behind.
+  """
