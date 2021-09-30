@@ -132,13 +132,17 @@ def mcts_ci_widths_across_multiple_game_states(use_player: bool,
 def mcts_ci_widths_and_permutations_across_multiple_game_states(
     options: MctsPlayerOptions,
     num_samples: int,
-    num_game_states: int):
+    num_game_states: int,
+    keep_total_budget_constant: bool):
   data = []
+  total_budget = options.max_iterations * options.max_permutations
   for seed in range(num_game_states):
     print(f"Evaluating on GameState.new(random_seed={seed})")
     for _ in range(num_samples):
-      for permutations in [1, 10, 20, 40, 80, 150]:
+      for permutations in [20, 50, 100, 200, 500, 1000]:
         options.max_permutations = permutations
+        if keep_total_budget_constant:
+          options.max_iterations = total_budget // permutations
         dataframe = run_mcts_player_step_by_step(
           GameState.new(random_seed=seed).next_player_view(), options,
           options.max_iterations)
@@ -160,6 +164,10 @@ def mcts_ci_widths_and_permutations_across_multiple_game_states(
   dataframe[["Permutations", "BestAction"]].boxplot(by=["Permutations"])
   plt.xticks(rotation=45, ha='right')
   plt.gcf().set_size_inches((5, 5))
+  if keep_total_budget_constant:
+    plt.title(f"Total budget: {total_budget} iterations")
+  else:
+    plt.title(f"Constant iterations: {options.max_iterations} iterations")
   plt.tight_layout()
   plt.savefig("mcts_ci_widths_and_perm_across_game_states.png")
 
@@ -168,7 +176,7 @@ def main():
   cheater = False
   options = MctsPlayerOptions(num_processes=1,
                               max_iterations=1000,
-                              max_permutations=200,
+                              max_permutations=100,
                               select_best_child=True,
                               save_rewards=True)
   num_samples = 1
@@ -176,13 +184,14 @@ def main():
   mcts_ci_widths_and_permutations_across_multiple_game_states(
     options=options,
     num_samples=num_samples,
-    num_game_states=30)
-  mcts_variance_across_multiple_game_states(cheater, options, num_samples,
-                                            num_game_states=3)
-  mcts_ci_widths_across_multiple_game_states(use_player=False,
-                                             options=options,
-                                             num_samples=num_samples,
-                                             num_game_states=30)
+    num_game_states=30,
+    keep_total_budget_constant=True)
+  # mcts_variance_across_multiple_game_states(cheater, options, num_samples,
+  #                                           num_game_states=3)
+  # mcts_ci_widths_across_multiple_game_states(use_player=False,
+  #                                            options=options,
+  #                                            num_samples=num_samples,
+  #                                            num_game_states=30)
 
 
 if __name__ == "__main__":
