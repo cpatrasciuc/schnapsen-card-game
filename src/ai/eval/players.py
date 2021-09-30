@@ -443,4 +443,13 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
       MctsPlayerOptions(
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
+
+  "CacheTest":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=100,
+                                         max_iterations=1000,
+                                         select_best_child=True,
+                                         exploration_param=1)),
 }

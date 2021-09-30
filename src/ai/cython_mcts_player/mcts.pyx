@@ -12,6 +12,7 @@ from libc.string cimport memset
 from libc.time cimport time
 from libcpp.vector cimport vector
 
+from ai.cython_mcts_player.card cimport is_null
 from ai.cython_mcts_player.game_state cimport is_game_over, game_points, Points
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
@@ -19,6 +20,122 @@ from ai.cython_mcts_player.player_action cimport ActionType, execute, \
 cdef int MAX_CHILDREN = 7
 
 cdef PlayerId _PLAYER_FOR_TERMINAL_NODES = 0
+
+CACHE = None
+
+cdef _get_state_cache_key(GameState *game_state):
+  cdef int i
+  cards_one = []
+  for i in range(5):
+    if is_null(game_state.cards_in_hand[0][i]):
+      break
+    cards_one.append((game_state.cards_in_hand[0][i].suit,
+                      game_state.cards_in_hand[0][i].card_value))
+  cards_two = []
+  for i in range(5):
+    if is_null(game_state.cards_in_hand[1][i]):
+      break
+    cards_two.append((game_state.cards_in_hand[1][i].suit,
+                      game_state.cards_in_hand[1][i].card_value))
+  if is_null(game_state.trump_card):
+    trump_card = (game_state.trump_card.suit, game_state.trump_card.card_value)
+  else:
+    trump_card = None
+  trump_suit = game_state.trump
+  talon = []
+  for i in range(9):
+    if is_null(game_state.talon[i]):
+      break
+    talon.append((game_state.talon[i].suit, game_state.talon[i].card_value))
+  current_trick = [None, None]
+  if not is_null(game_state.current_trick[0]):
+    current_trick[0] = (game_state.current_trick[0].suit,
+                        game_state.current_trick[0].card_value)
+  if not is_null(game_state.current_trick[1]):
+    current_trick[0] = (game_state.current_trick[1].suit,
+                        game_state.current_trick[1].card_value)
+  state = (
+    tuple(sorted(cards_one)),
+    tuple(sorted(cards_two)), trump_suit, trump_card, tuple(talon),
+    int(game_state.next_player),
+    int(game_state.player_that_closed_the_talon),
+    int(game_state.opponent_points_when_talon_was_closed),
+    (game_state.pending_trick_points[0],
+     game_state.pending_trick_points[1]),
+    (game_state.trick_points[0], game_state.trick_points[1]),
+    tuple(current_trick)
+  )
+  return state
+
+CACHE = None
+CACHE_CALLS = 0
+CACHE_HITS = 0
+CACHE_MISSES = 0
+
+LOCAL_CACHE = None
+LOCAL_CACHE_CALLS = 0
+LOCAL_CACHE_HITS = 0
+LOCAL_CACHE_MISSES = 0
+
+cdef void _add_game_state_to_cache(GameState *game_state):
+  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
+  CACHE_CALLS += 1
+  state = _get_state_cache_key(game_state)
+  if CACHE is None:
+    CACHE = set()
+    print("Initializing cache")
+  if state in CACHE:
+    CACHE_HITS += 1
+  else:
+    CACHE_MISSES += 1
+
+  LOCAL_CACHE_CALLS += 1
+  if LOCAL_CACHE is None:
+    LOCAL_CACHE = set()
+    print("Initializing local cache")
+  if state in LOCAL_CACHE:
+    LOCAL_CACHE_HITS += 1
+  else:
+    LOCAL_CACHE_MISSES += 1
+    LOCAL_CACHE.add(state)
+
+def get_cache_stats():
+  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  return (CACHE_CALLS, CACHE_HITS, CACHE_MISSES,
+          (len(CACHE) if CACHE is not None else 0))
+
+def get_local_cache_stats():
+  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
+  return (LOCAL_CACHE_CALLS,
+          LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES,
+          (len(LOCAL_CACHE) if LOCAL_CACHE is not None else 0))
+
+def reset_cache():
+  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
+  print("Cache is reset")
+  CACHE = None
+  CACHE_CALLS = 0
+  CACHE_HITS = 0
+  CACHE_MISSES = 0
+  LOCAL_CACHE = None
+  LOCAL_CACHE_CALLS = 0
+  LOCAL_CACHE_HITS = 0
+  LOCAL_CACHE_MISSES = 0
+
+def move_local_cache_to_global_cache():
+  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
+  print("Moving local cache to global cache")
+  if CACHE is None:
+    CACHE = set(LOCAL_CACHE)
+  else:
+    CACHE.update(LOCAL_CACHE)
+  LOCAL_CACHE = None
+  LOCAL_CACHE_CALLS = 0
+  LOCAL_CACHE_HITS = 0
+  LOCAL_CACHE_MISSES = 0
 
 cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
   cdef Node *node = root_node
@@ -50,6 +167,8 @@ cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
 
 cdef Node *init_node(GameState *game_state, Node *parent,
                      Points *bummerl_score) nogil:
+  with gil:
+    _add_game_state_to_cache(game_state)
   cdef Node *node = <Node *> malloc(sizeof(Node))
   cdef float score_p1, score_p2
   memset(node, 0, sizeof(Node))
