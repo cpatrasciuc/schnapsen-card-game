@@ -14,6 +14,7 @@ from ai.random_player import RandomPlayer
 from model.game_state import GameState
 from model.player_action import PlayerAction
 from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 from ui.player import Player
 
 
@@ -29,8 +30,10 @@ class ComputerPlayer(Player):
     self._player = player or RandomPlayer(PlayerId.TWO)
 
   def request_next_action(self, game_view: GameState,
-                          callback: Callable[[PlayerAction], None]) -> None:
-    callback(self._player.request_next_action(game_view))
+                          callback: Callable[[PlayerAction], None],
+                          game_points: Optional[
+                            PlayerPair[int]] = None) -> None:
+    callback(self._player.request_next_action(game_view, game_points))
 
   def is_cheater(self) -> bool:
     return self._player.cheater
@@ -49,12 +52,12 @@ def _player_process(conn: Connection, player_class: Type[AIPlayer],
   while True:
     logging.info("AIProcess: Waiting for a GameView from the UI process...")
     try:
-      game_view = conn.recv()
+      game_view, game_points = conn.recv()
     except EOFError:
       logging.info("AIProcess: The pipe was closed. Exiting.")
       break
     logging.info("AIProcess: GameView received. Processing...")
-    action = player.request_next_action(game_view)
+    action = player.request_next_action(game_view, game_points)
     logging.info("AIProcess: Sending action (%s) to the UI process", action)
     try:
       conn.send(action)
@@ -99,13 +102,15 @@ class OutOfProcessComputerPlayer(Player):
     self._ai_process.join()
 
   def request_next_action(self, game_view: GameState,
-                          callback: Callable[[PlayerAction], None]) -> None:
+                          callback: Callable[[PlayerAction], None],
+                          game_points: Optional[
+                            PlayerPair[int]] = None) -> None:
     """
     Sends the GameView to the AIProcess and schedules an event that checks for a
     reply before the next frame is drawn. One should not send a GameView to the
     AIProcess before a reply for the previous GameView is received.
     """
-    self._conn.send(game_view)
+    self._conn.send((game_view, game_points))
     Clock.schedule_once(lambda *_: self._poll_for_ai_reply(callback))
 
   def _poll_for_ai_reply(self,

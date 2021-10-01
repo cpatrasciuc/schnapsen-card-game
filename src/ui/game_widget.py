@@ -823,7 +823,9 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.check_aspect_ratio(True)
 
   def request_next_action(self, game_view: GameState,
-                          callback: Callable[[PlayerAction], None]) -> None:
+                          callback: Callable[[PlayerAction], None],
+                          game_points: Optional[
+                            PlayerPair[int]] = None) -> None:
     available_actions = get_available_actions(game_view)
     logging.info("GameWidget: Action requested. Available actions are: %s",
                  available_actions)

@@ -3,10 +3,11 @@
 #  found in the LICENSE file.
 
 import abc
-from typing import Callable
+from typing import Callable, Optional
 
 from model.game_state import GameState
 from model.player_action import PlayerAction
+from model.player_pair import PlayerPair
 
 
 class Player(abc.ABC):
@@ -18,7 +19,9 @@ class Player(abc.ABC):
 
   @abc.abstractmethod
   def request_next_action(self, game_view: GameState,
-                          callback: Callable[[PlayerAction], None]) -> None:
+                          callback: Callable[[PlayerAction], None],
+                          game_points: Optional[
+                            PlayerPair[int]] = None) -> None:
     """
     This method is called by the GameController when a new action is needed from
     this player.
@@ -26,6 +29,8 @@ class Player(abc.ABC):
     :param callback: The function to be called by the player when then next
     action is available. The action should be passed as the only argument to
     this callback.
+    :param game_points: The current bummerl score. If not provided, the player
+    will use (0, 0).
     """
 
   def is_cheater(self) -> bool:  # pylint: disable=no-self-use

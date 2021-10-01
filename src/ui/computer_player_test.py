@@ -61,7 +61,7 @@ class OutOfProcessComputerPlayerTest(GraphicUnitTest):
     self.assertTrue(player.is_cheater())
     game_state = get_game_state_for_tests()
     callback = Mock()
-    player.request_next_action(game_state, callback)
+    player.request_next_action(game_state, callback, PlayerPair(2, 3))
     callback.assert_not_called()
     self.advance_frames(5)
     callback.assert_not_called()

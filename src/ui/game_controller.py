@@ -91,7 +91,8 @@ class GameController:
       game_view = game_state.next_player_view()
     logging.info("GameController: Requesting next action for %s", next_player)
     self._players[next_player].request_next_action(game_view,
-                                                   self._handle_action_response)
+                                                   self._handle_action_response,
+                                                   self._bummerl.game_points)
 
   def _handle_action_response(self, action: PlayerAction) -> None:
     """
