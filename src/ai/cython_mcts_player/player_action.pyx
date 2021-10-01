@@ -2,7 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
-from libc.string cimport memcpy, memset
+from libc.string cimport memset
 
 from ai.cython_mcts_player.card cimport CardValue, is_null, Suit, wins
 from ai.cython_mcts_player.game_state cimport is_to_lead, must_follow_suit, \
@@ -128,15 +128,18 @@ cdef void get_available_actions(GameState *game_state,
       action_index += 1
 
 cdef int _remove_card_from_hand(Card *cards_in_hand, Card card) nogil:
-  cdef int i, empty_slot
+  cdef int i, j, empty_slot
   for i in range(5):
     if is_null(cards_in_hand[i]):
       break
     if cards_in_hand[i].suit == card.suit \
         and cards_in_hand[i].card_value == card.card_value:
       if i < 4:
-        memcpy(&cards_in_hand[i], &cards_in_hand[i + 1],
-               (5 - i - 1) * sizeof(Card))
+        # TODO(debug): Revert this after debugging GitHub failure.
+        # memcpy(&cards_in_hand[i], &cards_in_hand[i + 1],
+        #        (5 - i - 1) * sizeof(Card))
+        for j in range(5 - i - 1):
+          cards_in_hand[i + j] = cards_in_hand[i + j + 1]
       cards_in_hand[4].suit = Suit.NO_SUIT
       cards_in_hand[4].card_value = CardValue.NO_VALUE
       empty_slot = i
@@ -192,9 +195,13 @@ cdef GameState _execute_play_card_action(GameState *game_state,
   # Maybe draw new cards from the talon.
   cdef Card first_card = new_game_state.talon[0]
   cdef Card second_card = new_game_state.talon[1]
+  cdef int i
   if not is_null(first_card) and \
       not is_talon_closed(&new_game_state):
-    memcpy(new_game_state.talon, &new_game_state.talon[2], 7 * sizeof(Card))
+    # TODO(debug): Revert this after debugging GitHub failure.
+    # memcpy(new_game_state.talon, &new_game_state.talon[2], 7 * sizeof(Card))
+    for i in range(7):
+      new_game_state.talon[i] = new_game_state.talon[i + 2]
     new_game_state.talon[7].suit = Suit.NO_SUIT
     new_game_state.talon[8].suit = Suit.NO_SUIT
     if is_null(second_card):
