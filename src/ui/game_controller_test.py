@@ -27,7 +27,7 @@ class GameControllerTest(GraphicUnitTest):
     game_widget = Mock()
     players = PlayerPair(Mock(), Mock())
     players.one.is_cheater.return_value = False
-    players.two.is_cheater.return_value = False
+    players.two.is_cheater.return_value = True
     score_view = Mock()
     # noinspection PyTypeChecker
     game_controller = GameController(game_widget, players, score_view)
@@ -59,8 +59,11 @@ class GameControllerTest(GraphicUnitTest):
       players[action.player_id].request_next_action.assert_called_once()
       actual_game_state, action_callback, actual_game_points = \
         players[action.player_id].request_next_action.call_args.args
-      self.assertEqual(expected_game_state.next_player_view(),
-                       actual_game_state)
+      if actual_game_state.next_player == PlayerId.ONE:
+        self.assertEqual(expected_game_state.next_player_view(),
+                         actual_game_state)
+      else:
+        self.assertEqual(expected_game_state, actual_game_state)
       self.assertEqual(bummerl.game_points, actual_game_points)
       expected_game_state = action.execute(expected_game_state)
       players[action.player_id].reset_mock()
@@ -238,3 +241,60 @@ class GameControllerTest(GraphicUnitTest):
     game_controller.start()
     self.wait_for_mock_callback(two_bummerls_played, timeout_seconds=60)
     game_controller.stop()
+
+  def test_stop_is_called_with_pending_callback(self):
+    self.render(None)
+
+    game_widget = Mock()
+    players = PlayerPair(Mock(), Mock())
+    players.one.is_cheater.return_value = False
+    players.two.is_cheater.return_value = False
+    score_view = Mock()
+    # noinspection PyTypeChecker
+    game_controller = GameController(game_widget, players, score_view)
+
+    bummerl = Bummerl(next_dealer=PlayerId.ONE)
+    bummerl.start_game(seed=2)
+    actions = get_actions_for_one_complete_game(PlayerId.TWO)
+
+    expected_game_state = GameState.new(dealer=PlayerId.ONE, random_seed=2)
+
+    game_controller.start(bummerl)
+
+    # Initializes the game widget.
+    game_widget.reset.assert_called_once()
+    game_widget.init_from_game_state.assert_called_once()
+    actual_game_state, done_callback, game_points = \
+      game_widget.init_from_game_state.call_args.args
+    self.assertEqual(expected_game_state, actual_game_state)
+    self.assertEqual(PlayerPair(0, 0), game_points)
+    game_widget.reset_mock()
+    done_callback()
+
+    # Player action is requested.
+    action = actions[0]
+    players[action.player_id].request_next_action.assert_called_once()
+    actual_game_state, action_callback, actual_game_points = \
+      players[action.player_id].request_next_action.call_args.args
+
+    self.assertEqual(bummerl.game_points, actual_game_points)
+    expected_game_state = action.execute(expected_game_state)
+    players[action.player_id].reset_mock()
+
+    # GameController.stop() is called before the GameWidget calls
+    # action_callback().
+    game_controller.stop()
+
+    # Player responds with an action.
+    action_callback(action)
+
+    # GameWidget.on_action() is called to update the UI.
+    game_widget.on_action.assert_called_once()
+    actual_action, done_callback = game_widget.on_action.call_args.args
+    self.assertEqual(action, actual_action)
+    game_widget.reset_mock()
+    done_callback()
+
+    # The GameController requests no action from the next player.
+    next_player = expected_game_state.next_player
+    players[next_player].request_next_action.assert_not_called()

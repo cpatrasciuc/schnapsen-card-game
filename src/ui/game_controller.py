@@ -79,12 +79,10 @@ class GameController:
 
   def _request_next_action(self) -> None:
     """Requests a new action from the player that must play the next move."""
-    # TODO(tests): Add tests for this.
     if self._players is None:
       return
     game_state = self._bummerl.game.game_state
     next_player = game_state.next_player
-    # TODO(tests): Add tests for this.
     if self._players[next_player].is_cheater():
       game_view = game_state
     else:
