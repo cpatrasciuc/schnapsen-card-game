@@ -83,10 +83,12 @@ def accumulate_metrics(acc_metrics: MetricsDict, metrics: MetricsDict):
     acc_metrics[metric_name].two += metrics[metric_name].two
 
 
-def _request_next_action_and_time_it(game_view: GameState, player: Player):
+def _request_next_action_and_time_it(game_view: GameState,
+                                     game_points: PlayerPair[int],
+                                     player: Player):
   start_perf = time.perf_counter()
   start_process = time.process_time()
-  action = player.request_next_action(game_view)
+  action = player.request_next_action(game_view, game_points)
   end_perf = time.perf_counter()
   end_process = time.process_time()
   return action, end_perf - start_perf, end_process - start_process
@@ -132,7 +134,7 @@ def evaluate_player_pair_in_process(num_bummerls: int,
         else:
           game_view = game.game_state.next_player_view()
         action, perf_counter, process_time = _request_next_action_and_time_it(
-          game_view, players[player_id])
+          game_view, bummerl.game_points, players[player_id])
         game.play_action(action)
         perf_counter_sum[player_id] += perf_counter
         process_time_sum[player_id] += process_time
