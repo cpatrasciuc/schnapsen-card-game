@@ -10,6 +10,8 @@ from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
+from ai.merge_scoring_infos_func import average_ucb, count_visits, \
+  merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average
 from ai.player import Player
 from ai.random_player import RandomPlayer
 from model.player_id import PlayerId
@@ -284,4 +286,53 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=100,
                                          select_best_child=True,
                                          exploration_param=1)),
+
+  # Evaluate merge scoring info functions.
+  "MctsPlayerAverageUcb":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         merge_scoring_info_func=average_ucb)),
+  "MctsPlayerCountVisits":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         merge_scoring_info_func=count_visits)),
+  "MctsPlayerSimpleAverage":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=merge_ucbs_using_simple_average)),
+  "MctsPlayerWeightedAverage":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=merge_ucbs_using_weighted_average)),
+
+  # Evaluate the use of bummerl score in computing Mcts node rewards.
+  "MctsPlayerDisableGamePoints":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         use_game_points=False)),
+  "MctsPlayerEnableGamePoints":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         use_game_points=True)),
+
 }
