@@ -10,8 +10,9 @@ from typing import Optional, List
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import best_action_frequency, merge_ucbs, \
-  average_ucb, ActionsWithScores
+from ai.merge_scoring_infos_func import best_action_frequency, \
+  average_ucb, ActionsWithScores, merge_ucbs_using_simple_average, \
+  merge_ucbs_using_weighted_average, count_visits
 from ai.utils import get_unseen_cards, populate_game_view
 from model.card import Card
 from model.card_value import CardValue
@@ -149,13 +150,6 @@ class MctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
     self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
 
 
-class MctsPlayerMergeUcbsTest(MctsPlayerTest):
-  def setUp(self) -> None:
-    options = MctsPlayerOptions(max_iterations=None,
-                                merge_scoring_info_func=merge_ucbs)
-    self._mcts_player = MctsPlayer(PlayerId.ONE, options=options)
-
-
 class InProcessMctsPlayerTest(MctsPlayerTest):
   def setUp(self) -> None:
     options = MctsPlayerOptions(max_iterations=None, num_processes=1)
@@ -193,11 +187,30 @@ class CythonMctsPlayerMostFrequentBestActionTest(MctsPlayerTest):
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 
-class CythonMctsPlayerMergeUcbsTest(MctsPlayerTest):
+class CythonMctsPlayerCountVisitsTest(MctsPlayerTest):
   def setUp(self) -> None:
-    options = MctsPlayerOptions(max_iterations=None,
-                                merge_scoring_info_func=merge_ucbs,
-                                num_processes=1)
+    options = MctsPlayerOptions(
+      max_iterations=None,
+      merge_scoring_info_func=count_visits,
+      num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerMergeUcbsUsingSimpleAverageTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(
+      max_iterations=None,
+      merge_scoring_info_func=merge_ucbs_using_simple_average,
+      num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerMergeUcbsUsingWeightedAverageTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(
+      max_iterations=None,
+      merge_scoring_info_func=merge_ucbs_using_weighted_average,
+      num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 

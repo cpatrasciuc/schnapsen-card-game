@@ -69,14 +69,12 @@ def best_action_frequency(
   return actions_and_scores
 
 
+# noinspection PyUnreachableCode
 if __debug__:
   def _assert_action_is_terminal_across_root_nodes(
-      actions_with_scores_list: List[ActionsWithScores],
-      action: PlayerAction) -> None:
+      actions_with_scores_list: List[ActionsWithScores], action: PlayerAction):
     for actions_with_scores in actions_with_scores_list:
       score = actions_with_scores.get(action, None)
-      # TODO(tests): Double check this is not a bug. This means this action was
-      #  not even visited for this root node.
       if score is None:
         continue
       assert score.terminal
@@ -91,10 +89,19 @@ def _are_all_nodes_fully_simulated(
   return True
 
 
-# TODO(mcts): Can we aggregate better across permutations? Here we weight each
-#  permutation by how many times a given action was visited for that
-#  simulation. In average_ucb() we weight all permutations equally.
-def _agg_ucb(ucbs: List[Tuple[float, int]]) -> float:
+MergeUcbsFunc = Callable[[List[Tuple[float, int]]], float]
+"""
+Function that receives a list of (Q, N) pairs and returns the aggregated score.
+"""
+
+
+def _simple_average_merge_ucbs_func(ucbs: List[Tuple[float, int]]) -> float:
+  num = sum(q for q, n in ucbs)
+  denom = sum(n for q, n in ucbs)
+  return num / denom
+
+
+def _weighted_average_merge_ucbs_func(ucbs: List[Tuple[float, int]]) -> float:
   num = sum(q * n for q, n in ucbs)
   denom = sum(n for q, n in ucbs)
   return num / denom
@@ -115,25 +122,24 @@ def _average_ucb_for_fully_simulated_trees(
   return actions_and_scores
 
 
-def _get_action_scores_for_partially_simulated_trees(
-    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
-  stats = {}
+def _average_ucb_for_partially_simulated_trees(
+    actions_with_scores_list: List[ActionsWithScores],
+    merge_ucb_func: MergeUcbsFunc) -> AggregatedScores:
+  stats = defaultdict(list)
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
       if score.terminal:
+        # noinspection PyUnreachableCode
         if __debug__:
           _assert_action_is_terminal_across_root_nodes(actions_with_scores,
                                                        action)
         q = score.score
-        # TODO(mcts): We could us the real value of score.n here.
         n = 1
       else:
         q = score.q
         n = score.n
-      stats[action] = stats.get(action, []) + [(q, n)]
-  if __debug__:
-    pprint.pprint(stats)
-  actions_and_scores = [(action, _agg_ucb(ucbs)) for action, ucbs in
+      stats[action].append((q, n))
+  actions_and_scores = [(action, merge_ucb_func(ucbs)) for action, ucbs in
                         stats.items()]
   return actions_and_scores
 
@@ -150,19 +156,33 @@ def _get_action_scores_for_partially_simulated_trees(
 # Leaving this function here in case we can use it when we pick the best child
 # to be expanded in Mcts and/or consider the best node to be the mode visited
 # one.
-
-def merge_ucbs(
-    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
+def _merge_ucbs(
+    actions_with_scores_list: List[ActionsWithScores],
+    merge_ucb_func: MergeUcbsFunc) -> AggregatedScores:
   is_fully_simulated = _are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     actions_and_scores = _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
   else:
-    actions_and_scores = _get_action_scores_for_partially_simulated_trees(
-      actions_with_scores_list)
+    actions_and_scores = _average_ucb_for_partially_simulated_trees(
+      actions_with_scores_list, merge_ucb_func)
+  # noinspection PyUnreachableCode
   if __debug__:
-    pprint.pprint(sorted(actions_and_scores, key=lambda x: x[1], reverse=True))
+    logging.debug("MctsPlayer: Merged UCBs:\n%s",
+                  pprint.pformat(sorted(actions_and_scores, key=lambda x: x[1],
+                                        reverse=True)))
   return actions_and_scores
+
+
+def merge_ucbs_using_simple_average(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
+  return _merge_ucbs(actions_with_scores_list, _simple_average_merge_ucbs_func)
+
+
+def merge_ucbs_using_weighted_average(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
+  return _merge_ucbs(actions_with_scores_list,
+                     _weighted_average_merge_ucbs_func)
 
 
 def average_ucb(
