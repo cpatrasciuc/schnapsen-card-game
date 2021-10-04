@@ -4,6 +4,7 @@
 
 # pylint: disable=too-many-locals,duplicate-code
 
+import copy
 import logging
 import os
 from typing import Optional, Dict, List
@@ -31,12 +32,15 @@ _folder = os.path.join(os.path.dirname(__file__), "data")
 
 def _get_csv_path(cheater: bool):
   suffix = "_cheater" if cheater else ""
-  return os.path.join(_folder, f"mcts_iterations_40perm{suffix}.csv")
+  return os.path.join(_folder, f"mcts_iterations{suffix}.csv")
 
 
 def _run_simulations(game_states: Dict[str, GameState],
                      cheater: bool,
-                     options: MctsPlayerOptions) -> List[DataFrame]:
+                     options: MctsPlayerOptions,
+                     constant_budget: bool) -> List[DataFrame]:
+  if constant_budget:
+    return _run_simulations_with_constant_budget(game_states, cheater, options)
   dataframes = []
   for name, game_state in game_states.items():
     logging.info("Scenario: %s", name)
@@ -48,7 +52,35 @@ def _run_simulations(game_states: Dict[str, GameState],
   return dataframes
 
 
-def _generate_data(cheater: bool, options: MctsPlayerOptions):
+def _run_simulations_with_constant_budget(
+    game_states: Dict[str, GameState],
+    cheater: bool,
+    input_options: MctsPlayerOptions) -> List[DataFrame]:
+  dataframes = []
+  max_iterations = input_options.max_iterations
+  total_budget = input_options.max_permutations * input_options.max_iterations
+  assert max_iterations is not None
+  for name, game_state in game_states.items():
+    logging.info("Scenario: %s", name)
+    options = copy.copy(input_options)
+    iterations = 100
+    game_view = game_state if cheater else game_state.next_player_view()
+    while True:
+      options.max_iterations = iterations
+      options.max_permutations = total_budget // options.max_iterations
+      dataframe = run_mcts_player_step_by_step(game_view, options,
+                                               iterations_step=iterations)
+      dataframe["scenario"] = name
+      dataframes.append(dataframe)
+      if iterations >= max_iterations:
+        break
+      iterations *= 2
+      iterations = min(iterations, 2500)
+  return dataframes
+
+
+def _generate_data(cheater: bool, options: MctsPlayerOptions,
+                   constant_budget: bool):
   dataframes = []
   fully_simulated_game_states = {
     "You first. No, you first":
@@ -62,16 +94,18 @@ def _generate_data(cheater: bool, options: MctsPlayerOptions):
     "Game state for tests": get_game_state_for_tests(),
   }
   # dataframes.extend(
-  #   _run_simulations(fully_simulated_game_states, cheater, options))
+  #   _run_simulations(fully_simulated_game_states, cheater, options,
+  #                    constant_budget))
   partially_simulated_game_states = {}
   for seed in [0, 20, 40, 60, 100]:
     partially_simulated_game_states[f"Random GameState (seed={seed})"] = \
       GameState.new(dealer=PlayerId.ONE, random_seed=seed)
   dataframes.extend(
-    _run_simulations(partially_simulated_game_states, cheater, options))
+    _run_simulations(partially_simulated_game_states, cheater, options,
+                     constant_budget))
   dataframes.extend(
     _run_simulations(same_game_state_after_each_trick_scenarios(20), cheater,
-                     options))
+                     options, constant_budget))
   dataframe = pandas.concat(dataframes, ignore_index=True)
   # noinspection PyTypeChecker
   dataframe.to_csv(_get_csv_path(cheater), index=False)
@@ -112,7 +146,7 @@ def _plot_results(cheater: bool):
       axes[i, 1].set_xscale("log")
   suffix = "_cheater" if cheater else ""
   plt.tight_layout()
-  plt.savefig(os.path.join(_folder, f"mcts_iterations_40perm{suffix}.png"))
+  plt.savefig(os.path.join(_folder, f"mcts_iterations{suffix}.png"))
 
 
 def _min_iterations_to_find_the_best_action(
@@ -179,10 +213,10 @@ def _min_iterations_to_find_the_best_action(
 
 def main():
   cheater = False
-  options = MctsPlayerOptions(max_iterations=10000, max_permutations=40,
+  options = MctsPlayerOptions(max_iterations=2500, max_permutations=40,
                               select_best_child=True,
                               reallocate_computational_budget=False)
-  _generate_data(cheater, options)
+  _generate_data(cheater, options, constant_budget=False)
   _plot_results(cheater)
   # _min_iterations_to_find_the_best_action(num_game_states=100, cheater=cheater,
   #                                         num_samples_per_game_state=1,
