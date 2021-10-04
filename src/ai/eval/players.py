@@ -335,4 +335,20 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=667,
                                          use_game_points=True)),
 
+  # Evaluate reallocate_computational_budget.
+  "MctsPlayerDoNotReallocateBudget":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        reallocate_computational_budget=False)),
+  "MctsPlayerReallocateBudget":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         reallocate_computational_budget=True)),
 }
