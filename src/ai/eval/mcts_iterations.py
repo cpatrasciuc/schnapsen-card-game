@@ -214,9 +214,8 @@ def _min_iterations_to_find_the_best_action(
 def main():
   cheater = False
   options = MctsPlayerOptions(max_iterations=2500, max_permutations=40,
-                              select_best_child=True,
-                              reallocate_computational_budget=False)
-  _generate_data(cheater, options, constant_budget=False)
+                              select_best_child=True)
+  _generate_data(cheater, options, constant_budget=True)
   _plot_results(cheater)
   # _min_iterations_to_find_the_best_action(num_game_states=100, cheater=cheater,
   #                                         num_samples_per_game_state=1,
