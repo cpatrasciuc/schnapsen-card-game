@@ -31,7 +31,7 @@ _folder = os.path.join(os.path.dirname(__file__), "data")
 
 def _get_csv_path(cheater: bool):
   suffix = "_cheater" if cheater else ""
-  return os.path.join(_folder, f"mcts_convergence_40perm{suffix}.csv")
+  return os.path.join(_folder, f"mcts_iterations_40perm{suffix}.csv")
 
 
 def _run_simulations(game_states: Dict[str, GameState],
@@ -112,7 +112,7 @@ def _plot_results(cheater: bool):
       axes[i, 1].set_xscale("log")
   suffix = "_cheater" if cheater else ""
   plt.tight_layout()
-  plt.savefig(os.path.join(_folder, f"mcts_convergence_40perm{suffix}.png"))
+  plt.savefig(os.path.join(_folder, f"mcts_iterations_40perm{suffix}.png"))
 
 
 def _min_iterations_to_find_the_best_action(
