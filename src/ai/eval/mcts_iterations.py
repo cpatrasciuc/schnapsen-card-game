@@ -180,7 +180,7 @@ def _min_iterations_to_find_the_best_action(
 def main():
   cheater = False
   options = MctsPlayerOptions(max_iterations=10000, max_permutations=40,
-                              select_best_child=False,
+                              select_best_child=True,
                               reallocate_computational_budget=False)
   _generate_data(cheater, options)
   _plot_results(cheater)
