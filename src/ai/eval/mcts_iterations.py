@@ -93,9 +93,9 @@ def _generate_data(cheater: bool, options: MctsPlayerOptions,
     "Forcing the issue": get_game_state_for_forcing_the_issue_puzzle(),
     "Game state for tests": get_game_state_for_tests(),
   }
-  # dataframes.extend(
-  #   _run_simulations(fully_simulated_game_states, cheater, options,
-  #                    constant_budget))
+  dataframes.extend(
+    _run_simulations(fully_simulated_game_states, cheater, options,
+                     constant_budget))
   partially_simulated_game_states = {}
   for seed in [0, 20, 40, 60, 100]:
     partially_simulated_game_states[f"Random GameState (seed={seed})"] = \
