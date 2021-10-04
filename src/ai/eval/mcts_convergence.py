@@ -31,7 +31,7 @@ _folder = os.path.join(os.path.dirname(__file__), "data")
 
 def _get_csv_path(cheater: bool):
   suffix = "_cheater" if cheater else ""
-  return os.path.join(_folder, f"mcts_convergence{suffix}.csv")
+  return os.path.join(_folder, f"mcts_convergence_40perm{suffix}.csv")
 
 
 def _run_simulations(game_states: Dict[str, GameState],
@@ -41,7 +41,8 @@ def _run_simulations(game_states: Dict[str, GameState],
   for name, game_state in game_states.items():
     logging.info("Scenario: %s", name)
     game_view = game_state if cheater else game_state.next_player_view()
-    dataframe = run_mcts_player_step_by_step(game_view, options)
+    dataframe = run_mcts_player_step_by_step(game_view, options,
+                                             iterations_step=100)
     dataframe["scenario"] = name
     dataframes.append(dataframe)
   return dataframes
@@ -60,8 +61,8 @@ def _generate_data(cheater: bool, options: MctsPlayerOptions):
     "Forcing the issue": get_game_state_for_forcing_the_issue_puzzle(),
     "Game state for tests": get_game_state_for_tests(),
   }
-  dataframes.extend(
-    _run_simulations(fully_simulated_game_states, cheater, options))
+  # dataframes.extend(
+  #   _run_simulations(fully_simulated_game_states, cheater, options))
   partially_simulated_game_states = {}
   for seed in [0, 20, 40, 60, 100]:
     partially_simulated_game_states[f"Random GameState (seed={seed})"] = \
@@ -85,13 +86,19 @@ def _plot_results(cheater: bool):
   # noinspection PyTypeChecker
   _, axes = plt.subplots(num_scenarios, 2, figsize=(20, 5 * num_scenarios),
                          squeeze=False, sharex=False, sharey=False)
+  colors = "bgrcmyk"
   for i, scenario in enumerate(scenarios):
     scenario_df = dataframe[dataframe.scenario.eq(scenario)]
-    for action in scenario_df.action.drop_duplicates():
+    for j, action in enumerate(scenario_df.action.drop_duplicates()):
       action_df = scenario_df[scenario_df.action.eq(action)].sort_values(
         "iteration")
-      axes[i, 0].plot(action_df.iteration, action_df.score, label=action)
-      axes[i, 1].plot(action_df.iteration, action_df["rank"], label=action)
+      axes[i, 0].plot(action_df.iteration, action_df.score, label=action,
+                      color=colors[j])
+      axes[i, 0].fill_between(action_df.iteration, action_df.score_low,
+                              action_df.score_upp, alpha=0.1,
+                              color=colors[j])
+      axes[i, 1].plot(action_df.iteration, action_df["rank"], label=action,
+                      color=colors[j])
     axes[i, 0].set_title(scenario)
     axes[i, 0].legend(loc=0)
     axes[i, 0].hlines([1, 0.66, 0.33, 0, -0.33, -0.66, -1], xmin=0,
@@ -105,7 +112,7 @@ def _plot_results(cheater: bool):
       axes[i, 1].set_xscale("log")
   suffix = "_cheater" if cheater else ""
   plt.tight_layout()
-  plt.savefig(os.path.join(_folder, f"mcts_convergence{suffix}.png"))
+  plt.savefig(os.path.join(_folder, f"mcts_convergence_40perm{suffix}.png"))
 
 
 def _min_iterations_to_find_the_best_action(
@@ -172,8 +179,9 @@ def _min_iterations_to_find_the_best_action(
 
 def main():
   cheater = False
-  options = MctsPlayerOptions(max_iterations=25000, max_permutations=40,
-                              select_best_child=True)
+  options = MctsPlayerOptions(max_iterations=10000, max_permutations=40,
+                              select_best_child=False,
+                              reallocate_computational_budget=False)
   _generate_data(cheater, options)
   _plot_results(cheater)
   # _min_iterations_to_find_the_best_action(num_game_states=100, cheater=cheater,
