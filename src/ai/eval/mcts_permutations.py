@@ -8,6 +8,7 @@
 
 # pylint: disable=too-many-locals,duplicate-code
 
+import copy
 import logging
 import os
 from typing import Dict, List
@@ -32,21 +33,26 @@ def _get_csv_path(options: MctsPlayerOptions):
 
 
 def _run_mcts_step_by_step(game_state: GameState,
-                           options: MctsPlayerOptions) -> DataFrame:
+                           input_options: MctsPlayerOptions,
+                           constant_budget: bool = False) -> DataFrame:
+  options = copy.copy(input_options)
   options.num_processes = 1
   max_permutations = options.max_permutations
+  total_budget = options.max_permutations * options.max_iterations
   permutations = 10
   dataframes = []
   while True:
     options.max_permutations = permutations
+    if constant_budget:
+      options.max_iterations = total_budget // options.max_permutations
     dataframe = run_mcts_player_step_by_step(game_state.next_player_view(),
                                              options, options.max_iterations)
     dataframe["permutations"] = permutations
     dataframes.append(dataframe)
     if max_permutations is not None and permutations >= max_permutations:
       break
-    permutations += 20
-  options.max_permutations = max_permutations
+    permutations *= 2
+    permutations = min(permutations, 250)
   return pandas.concat(dataframes, ignore_index=True)
 
 
@@ -105,14 +111,16 @@ def _plot_results(options: MctsPlayerOptions):
     axes[i, 0].set_ylim(min(scenario_df.score) - 0.05,
                         max(scenario_df.score) + 0.05)
     axes[i, 1].set_title(scenario)
+    axes[i, 0].set_xscale("log")
+    axes[i, 1].set_xscale("log")
   output_png = csv_path.replace(".csv", ".png")
   plt.tight_layout()
   plt.savefig(output_png)
 
 
 def main():
-  options = MctsPlayerOptions(max_iterations=5000, max_permutations=150,
-                              save_rewards=True, select_best_child=True)
+  options = MctsPlayerOptions(max_iterations=400, max_permutations=250,
+                              save_rewards=False, select_best_child=True)
   _generate_data(options)
   _plot_results(options)
 
