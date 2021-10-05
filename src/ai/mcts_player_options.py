@@ -41,6 +41,7 @@ class MctsPlayerOptions:
   parallel.
   """
 
+  # TODO(mcts): Eval this parameter.
   perm_generator: Optional[PermutationsGenerator] = sims_table_perm_generator
   """
   The function that generates the permutations of the unseen cards set that will
