@@ -2,7 +2,7 @@
 Kivy~=2.0.0
 
 # Requirements for tests/linting.
-coverage~=5.5
+coverage~=6.0
 pylint~=2.9.6
 
 # Requirements for evaluating AI players.
