@@ -119,8 +119,9 @@ def _plot_results(options: MctsPlayerOptions):
 
 
 def main():
-  options = MctsPlayerOptions(max_iterations=400, max_permutations=250,
-                              save_rewards=False, select_best_child=True)
+  options = MctsPlayerOptions(max_iterations=5000, max_permutations=150,
+                              save_rewards=False, select_best_child=False,
+                              reallocate_computational_budget=False)
   _generate_data(options)
   _plot_results(options)
 
