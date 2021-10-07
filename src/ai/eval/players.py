@@ -11,7 +11,8 @@ from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
-  merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average
+  merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average, \
+  merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards
 from ai.player import Player
 from ai.random_player import RandomPlayer
 from model.player_id import PlayerId
@@ -318,6 +319,25 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_weighted_average)),
+  # TODO(mcts): Run evals for this player.
+  "MctsPlayerLowerCiBoundAverage":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=merge_ucbs_using_lower_ci_bound)),
+  # TODO(mcts): Run evals for this player.
+  "MctsPlayerLowerCiBoundOnRawRewards":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        save_rewards=True,
+        merge_scoring_info_func=lower_ci_bound_on_raw_rewards)),
 
   # Evaluate the use of bummerl score in computing Mcts node rewards.
   "MctsPlayerDisableGamePoints":
