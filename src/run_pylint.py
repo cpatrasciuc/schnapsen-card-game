@@ -55,4 +55,4 @@ def run_pylint():
 
 
 if __name__ == "__main__":
-  main_wrapper(run_pylint)
+  sys.exit(main_wrapper(run_pylint))

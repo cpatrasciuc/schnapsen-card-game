@@ -60,4 +60,4 @@ def run_all_tests_with_coverage(folders: List[str] = None) -> None:
 
 
 if __name__ == "__main__":
-  main_wrapper(lambda: run_all_tests_with_coverage(sys.argv[1:]))
+  sys.exit(main_wrapper(lambda: run_all_tests_with_coverage(sys.argv[1:])))
