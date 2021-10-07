@@ -3,7 +3,7 @@ Kivy~=2.0.0
 
 # Requirements for tests/linting.
 coverage~=6.0
-pylint~=2.11.1
+pylint~=2.9.6
 
 # Requirements for evaluating AI players.
 statsmodels~=0.13.0
