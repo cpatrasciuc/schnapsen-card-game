@@ -244,7 +244,8 @@ def lower_ci_bound_on_raw_rewards(
       else:
         actions_and_scores.append((action, rewards[0]))
     else:
-      bootstrap_result = bootstrap((rewards,), np.mean, method='percentile')
+      bootstrap_result = bootstrap((rewards,), np.mean, method='percentile',
+                                   n_resamples=1000)
       confidence_interval = bootstrap_result.confidence_interval
       if debug:
         actions_and_scores.append((action, confidence_interval.low,
