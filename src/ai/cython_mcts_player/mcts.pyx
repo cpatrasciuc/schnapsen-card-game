@@ -72,6 +72,8 @@ cdef Node *init_node(GameState *game_state, Node *parent,
     node.ucb = score_p1 - score_p2
     node.fully_simulated = True
     node.player = _PLAYER_FOR_TERMINAL_NODES
+    node.n = 1
+    node.q = node.ucb
   else:
     get_available_actions(&node.game_state, node.actions)
   return node
