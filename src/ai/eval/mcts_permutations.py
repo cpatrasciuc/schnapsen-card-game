@@ -20,6 +20,7 @@ from pandas import DataFrame
 from ai.cython_mcts_player.mcts_debug import run_mcts_player_step_by_step
 from ai.eval.utils import same_game_state_after_each_trick_scenarios
 from ai.mcts_player_options import MctsPlayerOptions
+from ai.merge_scoring_infos_func import lower_ci_bound_on_raw_rewards
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 from model.player_id import PlayerId
@@ -34,7 +35,7 @@ def _get_csv_path(options: MctsPlayerOptions):
 
 def _run_mcts_step_by_step(game_state: GameState,
                            input_options: MctsPlayerOptions,
-                           constant_budget: bool = False) -> DataFrame:
+                           constant_budget: bool = True) -> DataFrame:
   options = copy.copy(input_options)
   options.num_processes = 1
   max_permutations = options.max_permutations
@@ -98,9 +99,10 @@ def _plot_results(options: MctsPlayerOptions):
         "permutations")
       axes[i, 0].plot(action_df.permutations, action_df.score, label=action,
                       color=colors[j])
-      axes[i, 0].fill_between(action_df.permutations, action_df.score_low,
-                              action_df.score_upp, alpha=0.1,
-                              color=colors[j])
+      if "score_low" in action_df.columns:
+        axes[i, 0].fill_between(action_df.permutations, action_df.score_low,
+                                action_df.score_upp, alpha=0.1,
+                                color=colors[j])
       axes[i, 1].plot(action_df.permutations, action_df["rank"], label=action,
                       color=colors[j])
     axes[i, 0].set_title(scenario)
@@ -119,9 +121,9 @@ def _plot_results(options: MctsPlayerOptions):
 
 
 def main():
-  options = MctsPlayerOptions(max_iterations=5000, max_permutations=150,
-                              save_rewards=False, select_best_child=False,
-                              reallocate_computational_budget=False)
+  options = MctsPlayerOptions(
+    max_iterations=667, max_permutations=150, save_rewards=True,
+    merge_scoring_info_func=lower_ci_bound_on_raw_rewards)
   _generate_data(options)
   _plot_results(options)
 
