@@ -6,13 +6,18 @@ import dataclasses
 import logging
 import pprint
 from collections import Counter, defaultdict
-from typing import List, Tuple, Callable, Dict, Optional
+from typing import List, Tuple, Callable, Dict, Optional, Union
+
+import numpy as np
+from scipy.stats import bootstrap
 
 from model.player_action import PlayerAction
 
 
 @dataclasses.dataclass
 class ScoringInfo:
+  # pylint: disable=too-many-instance-attributes
+
   """
   A simplified data structure that only has the fields from an Mcts Node that
   are used in selecting the best action across all the Mcts trees.
@@ -29,6 +34,12 @@ class ScoringInfo:
   """An optional lower bound for score in case CIs are used"""
   score_upp: Optional[float] = None
   """An optional upper bound for score in case CIs are used"""
+
+  rewards: Optional[List[float]] = None
+  """
+  Individual rewards from all paths going through this action. This is filled
+  only if MctsPlayerOptions.save_rewards is True.
+  """
 
 
 ActionsWithScores = Dict[PlayerAction, ScoringInfo]
@@ -80,7 +91,7 @@ if __debug__:
       assert score.terminal
 
 
-def _are_all_nodes_fully_simulated(
+def are_all_nodes_fully_simulated(
     actions_with_scores_list: List[ActionsWithScores]) -> bool:
   for actions_with_scores in actions_with_scores_list:
     for score in actions_with_scores.values():
@@ -105,6 +116,14 @@ def _weighted_average_merge_ucbs_func(ucbs: List[Tuple[float, int]]) -> float:
   num = sum(q * n for q, n in ucbs)
   denom = sum(n for q, n in ucbs)
   return num / denom
+
+
+def _lower_ci_bound(ucbs: List[Tuple[float, int]]) -> float:
+  scores = [q / n for q, n in ucbs]
+  if len(scores) == 1:
+    return scores[0]
+  bootstrap_result = bootstrap((scores,), np.mean, method='percentile')
+  return bootstrap_result.confidence_interval.low
 
 
 def _average_ucb_for_fully_simulated_trees(
@@ -144,7 +163,6 @@ def _average_ucb_for_partially_simulated_trees(
   return actions_and_scores
 
 
-# TODO(tests): Add tests for this function.
 # This function doesn't work if the children of a root node are terminal nodes.
 # If the nodes to be expanded are chosen randomly, using Q and N directly might
 # only increase the confidence of scenarios that where visited more frequently.
@@ -159,7 +177,7 @@ def _average_ucb_for_partially_simulated_trees(
 def _merge_ucbs(
     actions_with_scores_list: List[ActionsWithScores],
     merge_ucb_func: MergeUcbsFunc) -> AggregatedScores:
-  is_fully_simulated = _are_all_nodes_fully_simulated(actions_with_scores_list)
+  is_fully_simulated = are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     actions_and_scores = _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)
@@ -185,6 +203,64 @@ def merge_ucbs_using_weighted_average(
                      _weighted_average_merge_ucbs_func)
 
 
+def merge_ucbs_using_lower_ci_bound(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
+  """
+  The aggregated score is the lower CI bound of the mean of the scores coming
+  from each permutation.
+  """
+  return _merge_ucbs(actions_with_scores_list, _lower_ci_bound)
+
+
+def lower_ci_bound_on_raw_rewards(
+    actions_with_scores_list: List[ActionsWithScores],
+    debug: bool = False) -> Union[
+  AggregatedScores, List[Tuple[PlayerAction, float, float, float]]]:
+  """
+  The aggregated score is the lower CI bound of the mean of all the individual
+  rewards across all permutations (i.e., it doesn't compute averages for each
+  permutation first). This requires MctsPlayerOptions.save_rewards to be True.
+  If debug is True, the output contains the CI limits as well.
+  WARNING: This is very slow.
+  """
+  # pylint: disable=too-many-branches
+  is_fully_simulated = are_all_nodes_fully_simulated(actions_with_scores_list)
+  if is_fully_simulated:
+    return _average_ucb_for_fully_simulated_trees(actions_with_scores_list)
+
+  stats = defaultdict(list)
+  for actions_with_scores in actions_with_scores_list:
+    for action, score in actions_with_scores.items():
+      if score.fully_simulated:
+        stats[action].extend([score.score for _ in range(score.n)])
+      else:
+        stats[action].extend(score.rewards)
+
+  actions_and_scores = []
+  for action, rewards in stats.items():
+    if len(rewards) == 1:
+      if debug:
+        actions_and_scores.append((action, rewards[0], rewards[0], rewards[0]))
+      else:
+        actions_and_scores.append((action, rewards[0]))
+    else:
+      bootstrap_result = bootstrap((rewards,), np.mean, method='percentile')
+      confidence_interval = bootstrap_result.confidence_interval
+      if debug:
+        actions_and_scores.append((action, confidence_interval.low,
+                                   confidence_interval.low,
+                                   confidence_interval.high))
+      else:
+        actions_and_scores.append((action, confidence_interval.low))
+  # noinspection PyUnreachableCode
+  if __debug__:
+    logging.debug("MctsPlayer: Lower CI bounds on raw rewards:\n%s",
+                  pprint.pformat(
+                    sorted(actions_and_scores, key=lambda x: x[1],
+                           reverse=True)))
+  return actions_and_scores
+
+
 def average_ucb(
     actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
   """
@@ -201,7 +277,7 @@ def count_visits(
   Otherwise, the aggregated score for each action is the total number of visits
   this action got across all permutations.
   """
-  is_fully_simulated = _are_all_nodes_fully_simulated(actions_with_scores_list)
+  is_fully_simulated = are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     return _average_ucb_for_fully_simulated_trees(
       actions_with_scores_list)

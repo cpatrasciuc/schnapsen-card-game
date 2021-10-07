@@ -6,7 +6,8 @@ import unittest
 
 from ai.merge_scoring_infos_func import ScoringInfo, best_action_frequency, \
   average_ucb, count_visits, merge_ucbs_using_simple_average, \
-  merge_ucbs_using_weighted_average
+  merge_ucbs_using_weighted_average, merge_ucbs_using_lower_ci_bound, \
+  lower_ci_bound_on_raw_rewards
 from model.card import Card
 from model.card_value import CardValue
 from model.player_action import PlayCardAction
@@ -377,3 +378,207 @@ class MergeUcbsUsingWeightedAverageTest(unittest.TestCase):
       (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), 5),
       (PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)), 3),
     }, {(action, round(score, 4)) for action, score in actions_and_scores})
+
+
+class MergeUcbsUsingLowerCiBoundTest(unittest.TestCase):
+  def test_fully_simulated_trees(self):
+    actions_and_scores_list = [
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=6, n=6, score=-0.33, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=20, score=15 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=20, n=20, score=20 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=20, score=5 / 20, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=15, score=0.66, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=12, n=20, score=12 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)):
+          ScoringInfo(q=3, n=10, score=3 / 10, fully_simulated=True,
+                      terminal=False),
+      },
+    ]
+    actions_and_scores = merge_ucbs_using_lower_ci_bound(
+      actions_and_scores_list)
+    self.assertEqual({
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)), 0.7478),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)), 0.4233),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), 0.5417),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)), 0.3),
+    }, {(action, round(score, 4)) for action, score in actions_and_scores})
+
+  def test_not_fully_simulated_trees(self):
+    actions_and_scores_list = [
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=6, n=6, score=-0.33, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=20, score=15 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=20, n=20, score=20 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=20, score=5 / 20, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=15, score=0.66, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=12, n=20, score=12 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)):
+          ScoringInfo(q=3, n=10, score=3 / 10, fully_simulated=False,
+                      terminal=False),
+      },
+    ]
+    actions_and_scores = merge_ucbs_using_lower_ci_bound(
+      actions_and_scores_list)
+    self.assertEqual({
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)), 0.75),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)), 0.6),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), 0.25),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)), 0.3),
+    }, {(action, round(score, 4)) for action, score in actions_and_scores})
+
+
+class LowerCiBoundOnRawRewardsTest(unittest.TestCase):
+  def test_fully_simulated_trees(self):
+    actions_and_scores_list = [
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=6, n=6, score=-0.33, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=20, score=15 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=20, n=20, score=20 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=20, score=5 / 20, fully_simulated=True,
+                      terminal=False),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=15, score=0.66, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=12, n=20, score=12 / 20, fully_simulated=True,
+                      terminal=False),
+        PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)):
+          ScoringInfo(q=3, n=10, score=3 / 10, fully_simulated=True,
+                      terminal=False),
+      },
+    ]
+    actions_and_scores = lower_ci_bound_on_raw_rewards(actions_and_scores_list)
+    self.assertEqual({
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)), 0.7478),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)), 0.4233),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), 0.5417),
+      (PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)), 0.3),
+    }, {(action, round(score, 4)) for action, score in actions_and_scores})
+
+  def test_not_fully_simulated_trees(self):
+    actions_and_scores_list = [
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=False,
+                      terminal=False, rewards=[1, 1, 1, 1, 1, 0]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=6, n=6, score=-0.33, fully_simulated=True,
+                      terminal=False, rewards=[-0.33, 0.33, 2, 2, 2, 0]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=False,
+                      terminal=False, rewards=[1, 1, 1, 1, 1, 0]),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=20, score=15 / 20, fully_simulated=False,
+                      terminal=False,
+                      rewards=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+                               0, 0, 0, 0]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=20, n=20, score=20 / 20, fully_simulated=False,
+                      terminal=False,
+                      rewards=[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1,
+                               -1, -1, -1, -1, -1]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)):
+          ScoringInfo(q=5, n=20, score=5 / 20, fully_simulated=False,
+                      terminal=False,
+                      rewards=[1, 1, 1, 1, 1, 0, -0.33, 0.33, -0.33, 0.33,
+                               -0.33, 0.33, -0.33, 0.33, -0.33, 0.33, -0.33,
+                               0.33, -0.33, 0.33]),
+      },
+      {
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)):
+          ScoringInfo(q=15, n=15, score=0.66, fully_simulated=True,
+                      terminal=False,
+                      rewards=[0.66, 0.33, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                               1]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)):
+          ScoringInfo(q=12, n=20, score=12 / 20, fully_simulated=False,
+                      terminal=False,
+                      rewards=[1, 1, 1, 1, 2, 0, 1, 1, 1, 2, 0, 2, -1, 0, 0, 0,
+                               0, 0, 0, 0]),
+        PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)):
+          ScoringInfo(q=3, n=10, score=3 / 10, fully_simulated=False,
+                      terminal=False,
+                      rewards=[1, 1, 1, 0, 1, -1, 1, -1, 1, -1]),
+      },
+    ]
+    for action_with_scores in actions_and_scores_list:
+      for action, score in action_with_scores.items():
+        self.assertEqual(score.n, len(score.rewards))
+        self.assertAlmostEqual(score.q, sum(score.rewards), places=1)
+        if score.fully_simulated:
+          self.assertIn(score.score, score.rewards)
+        else:
+          self.assertEqual(score.score, sum(score.rewards) / len(score.rewards))
+    actions_and_scores = lower_ci_bound_on_raw_rewards(actions_and_scores_list)
+    expected_scores = {
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.ACE)): 0.62,
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.TEN)): 0.35,
+      PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)): 0.16,
+      PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)): -0.3,
+    }
+    for action, score in actions_and_scores:
+      self.assertAlmostEqual(expected_scores[action], score, delta=0.05)

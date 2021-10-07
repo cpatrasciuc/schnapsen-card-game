@@ -63,6 +63,10 @@ cdef build_scoring_info(Node *root_node):
       n=node.n,
       score=(node.ucb if node.player == root_node.player else -node.ucb),
       fully_simulated=bool(node.fully_simulated), terminal=bool(node.terminal))
+    if node.rewards != NULL:
+      scoring_info.rewards = list(node.rewards[0])
+      if node.player != root_node.player:
+        scoring_info.rewards = [-reward for reward in scoring_info.rewards]
     actions_with_scores[py_action] = scoring_info
   return actions_with_scores
 

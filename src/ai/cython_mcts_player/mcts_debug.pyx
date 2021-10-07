@@ -4,6 +4,7 @@
 
 # distutils: language=c++
 
+from collections import defaultdict
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -27,7 +28,8 @@ from ai.cython_mcts_player.player_action cimport ActionType
 from ai.cython_mcts_player.player_action cimport to_python_player_action
 from ai.mcts_player import generate_permutations
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb
+from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb, \
+  lower_ci_bound_on_raw_rewards, are_all_nodes_fully_simulated
 from model.game_state import GameState as PyGameState
 from model.player_action import PlayerAction
 from model.player_pair import PlayerPair
@@ -70,16 +72,16 @@ def _average_ucb_with_ci(
   of each action.
   WARNING: This is likely not correct from a statistics point of view.
   """
-  scores = {}
-  scores_low = {}
-  scores_upp = {}
+  scores = defaultdict(list)
+  scores_low = defaultdict(list)
+  scores_upp = defaultdict(list)
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
-      scores[action] = scores.get(action, []) + [score.score]
+      scores[action].append(score.score)
       if score.score_low is not None:
-        scores_low[action] = scores_low.get(action, []) + [score.score_low]
+        scores_low[action].append(score.score_low)
       if score.score_upp is not None:
-        scores_upp[action] = scores_upp.get(action, []) + [score.score_upp]
+        scores_upp[action].append(score.score_upp)
   actions_and_scores = []
   for action, ucbs in scores.items():
     score_low = scores_low[action]
@@ -100,6 +102,14 @@ def _average_ucb_with_ci(
       upp = score_upp[0]
     actions_and_scores.append((action, sum(ucbs) / len(ucbs), low, upp))
   return actions_and_scores
+
+def _lower_ci_bound_on_raw_rewards_with_ci(
+    actions_with_scores_list: List[ActionsWithScores]) -> List[
+  Tuple[PlayerAction, float, float, float]]:
+  is_fully_simulated = are_all_nodes_fully_simulated(actions_with_scores_list)
+  if is_fully_simulated:
+    return _average_ucb_with_ci(actions_with_scores_list)
+  return lower_ci_bound_on_raw_rewards(actions_with_scores_list, debug=True)
 
 cdef _get_children_data(Node *root_node):
   cdef int i
@@ -215,6 +225,13 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
         _build_scoring_info_with_debug(root_nodes[j]))
     if options.merge_scoring_info_func == average_ucb:
       actions_and_scores = _average_ucb_with_ci(actions_with_scoring_infos)
+      dataframe = DataFrame(
+        data=[(str(action), score, score_low, score_upp) for
+              action, score, score_low, score_upp in actions_and_scores],
+        columns=["action", "score", "score_low", "score_upp"])
+    elif options.merge_scoring_info_func == lower_ci_bound_on_raw_rewards:
+      actions_and_scores = _lower_ci_bound_on_raw_rewards_with_ci(
+        actions_with_scoring_infos)
       dataframe = DataFrame(
         data=[(str(action), score, score_low, score_upp) for
               action, score, score_low, score_upp in actions_and_scores],
