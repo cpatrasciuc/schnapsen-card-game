@@ -94,7 +94,7 @@ showed that 88% of the time is spent in `copy.deepcopy()`.
 ### Step 1: Replace copy.deepcopy() with GameState.deep_copy()
 
 I added my own `GameState.deep_copy()`, to create a deep copy of itself. I
-measured its speed in `GameStateCopyTest`. The results as follows:
+measured its speed in `GameStateCopyTest`. The results are as follows:
 
 | Function | Time (ms) |
 | :------: | :--------: |
