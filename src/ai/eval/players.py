@@ -338,6 +338,17 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_iterations=667,
         save_rewards=True,
         merge_scoring_info_func=lower_ci_bound_on_raw_rewards)),
+  # TODO(mcts): Run evals on this vs AverageUcb on 1000 bummerls.
+  "MctsPlayerLowerCiBoundOnRawRewardsRandomSelection":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        save_rewards=True,
+        select_best_child=False,
+        merge_scoring_info_func=lower_ci_bound_on_raw_rewards)),
 
   # Evaluate the use of bummerl score in computing Mcts node rewards.
   "MctsPlayerDisableGamePoints":
