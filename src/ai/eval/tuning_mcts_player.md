@@ -62,8 +62,8 @@ consider.
 As a result of this initial debugging, the ideas to experiment with are:
 
 - [x] Reduce CPU usage, so we can run more iterations within the budget
-- [ ] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [x] Pick the best child during the selection phase and balance exploration versus exploitation
+- [x] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
 - [ ] Maybe reuse the nodes from the previous decisions instead of always starting from scratch
 - [ ] Improve merging the scores across root nodes
@@ -227,75 +227,6 @@ Overall, after steps 1-4, the player went from running 8 permutations x 800
 iterations in 10 seconds (using 8 cores) to running 250 permutations x 
 4000 iterations in the same amount of time (i.e., 156 times faster).
 
-## Tune the max_iterations and max_permutations params
-
-It seems the permutations stabilize after 30-40 permutation. For iterations it's
-not that clear. I will fix the total_iterations budget and permutations;
-max_iterations will be budget / max_permutations.
-
-For total_time ~ 1 sec:
-Total iterations budget: ~100k iterations
-Combinations to try out: 
-- 10 perms, 10k iterations
-- 30 perms, 3333 iterations
-- 50 perms, 2000 iterations
-Starting with 100 bummerls, no significant difference and each player won once and lost once.
-
-Spreading a bit the number of permutations:
-- 10 perms, 10k iterations
-- 40 perms, 2500 iterations
-- 70 perms, 1428 iterations
-Using 100 bummerls, no significant difference. 10 perm has won against both, 70 has lost against both.
-Update #1, after switching to UCB-based Selection:
-Using 1000 bummerls, 10perm has won against 40perm, the other were neutral.
-I was surprised that low perm high iter wins, given that after the switch to UCB-based Selection perms importance increased and iter importance decreased.
-I assumed that after 4 tricks, when there are only 6 perms at most, the high iter can simulate more and win the late game.
-Update #2:
-I allowed the high-perm-low-iter players to reallocate the budget in the late game.
-The high perm players now win against the 10perm-10000iter.
-Update #3: went higher with the number of perm: 100perm,1000iter. It won against 10perm10000iter, neutral vs the others.
-Update #4: went even higher, until we find a player that becomes worse.
-I used 130, 160, 190, 250, 500 and 1000 permutations. The latter lost significantly against 100permutations.
-Update #5: run a new grid with 100perm, 250perm, 500perm, 1000perm. All match-ups were neutral. 
-Update #6:
-Run 130, 160 and 190 perm against each other to fill in the center of the grid. 
-No significant differences could be observed between these players. 130 and 160 perm seems to have a slight advantage if we look at bummerls, game_points and trick_points.
-Decided to go forward with a round number perm150iter667.
-Next steps:
-- Rewrite and close this section of the document.
-
-TODOs:
-Maybe rerun the hypotheses below by using a bigger range of iterations and permutations.
-Maybe rerun the hypotheses below after reallocating the computational budget.
-
-Try out the hypothesis: for a fixed num of permutations 30, the more iterations the better.
-- 30 perm, 10000 iter
-- 30 perm, 5000 iter
-- 30 perm, 2500 iter
-- 30 perm, 1000 iter
-- Conclusion: it seems to be true, but the differences are smaller after UCB-based Selection.
-
-Try out the hypothesis: for a fixed num of iterations, the more permutations the better.
-- 10 perm, 2500 iter
-- 40 perm, 2500 iter
-- 80 perm, 2500 iter
-- 150 perm, 2500 iter
-- Conclusion: it seems to be true, and the effect of increasing max_permutations increased after we switched to UCB-based Selection.
-
-
-For total_time ~ 5 sec:
-Total iterations budget: ~500k iterations
-Combinations to try out:
-- 10 perms, 50k iterations
-- 30 perms, 16666 iterations
-- 50 perms, 10000 iterations
-
-Idea: 
-If evals are equal, consider picking max_iterations such that at least we can fully simulate
-the CloseTheTalon action. Run 100 game states, max_iterations=10000, filter out
-the cases when the action was not fully simulated, see how many iterations were
-needed for the other cases. 
-
 ## Select the best child and balance exploration vs exploitation
 
 During the selection phrase, the initial version of the MctsPlayer, always
@@ -423,6 +354,153 @@ This also matches the value recommended on [Wikipedia](https://en.wikipedia.org/
 the recommended value is &radic;2, if the rewards are in the interval [0, 1].
 This is the other value that gave us good results, very similar to
 `exploration_param=1`.
+
+## Tune the max_iterations and max_permutations params
+
+The purpose of this section is to find the best combination of `max_iterations`
+and `max_permutations` for a fixed computational budget. I tried to pick two
+budgets that would be similar to the initial setups, i.e., they would take 1
+second and 5 seconds per move on my computer. Based on [this plot](https://github.com/cpatrasciuc/schnapsen-card-game/blob/80e0e15cfd95877df165da8a9a9f322ed2bf75a4/src/ai/eval/data/iterations_and_time_i7.png),
+this corresponds to 100k and 500k iterations, respectively.
+
+The work in this section lead to a couple of improvements that were developed in
+parallel and then merged back into this work stream: adding UCB-based Selection
+and allowing Computational Budget Reallocation.
+
+### How does max_iterations influence the performance?
+
+I tried to understand how does the number of iterations influence the
+performance of the player. The initial hypothesis was that the performance will
+increase if one uses a higher number of iterations. I tested this using a set of
+players that process an equal number of permutations (30), but they use 1000,
+2500, 5000 and 10000 iterations per permutation, respectively.
+
+When using **Random Selection**, the players with more iterations were able to
+defeat the ones with fewer iterations ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/62d05e61877044b89a60387ec65fbbc4c112e978/src/ai/eval/data/eval_results_same_perm_different_iterations.png)).
+Everyone defeated the player that uses only 1000 iterations, and the player
+using 10k iterations also defeated the one using 2500 iterations. By looking at
+the [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/4a7a996c36ab0986dadb411391f6b84c609daff3/src/ai/eval/data/mcts_iterations_40perm.png),
+I didn't see a lot of changes in the order of the actions after 1000 iterations.
+The relative order of the player's actions after 10k iterations seems to be very
+similar to what we already have after 1k iterations, or even before that. One
+exception might be the CloseTheTalon action which, given enough iterations,
+might see significant changes in its score.
+
+After switching to **UCB-based Selection**, the players with more iterations
+could not beat the players with fewer iterations that often ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/c6278f07f1a44461f3d1b0488585df119462d4aa/src/ai/eval/data/eval_results_same_perm_different_iterations.png)).
+This might suggest that the players are able to pick the good moves using fewer
+iterations. This is in line with the [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/f1f16624eda783efc6e45a246518299dff062247/src/ai/eval/data/mcts_iterations_40perm.png)
+that show states where the best action is identified after a few iterations
+and stays the best until the end (e.g., seed=0, seed=100 in the plots), as
+opposed to Random Selection which doesn't settle on the best action that early.
+Even the CloseTheTalon action it is explored earlier if it might be useful, or
+discarded early otherwise.
+
+After enabling **budget reallocation**, there is no clear conclusion on whether
+more iterations lead to better performance ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/87fe5bab686730692ba6d3dcc7acfa26eba213d5/src/ai/eval/data/eval_results_same_perm_different_iterations.png)).
+The [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/fdf3b90e3a5560a719bac8bafe4ef78aa9eac9c9/src/ai/eval/data/mcts_iterations_100k_budget_with_reallocation.png)
+also tell a similar story: the order of the action scores doesn't change
+significantly for more iterations. It also doesn't change significantly when
+compared to the [debug plots without budget reallocation](https://github.com/cpatrasciuc/schnapsen-card-game/blob/02db00ea2c311ff46ece595215d2f96cf64e0676/src/ai/eval/data/mcts_iterations_100k_budget_without_reallocation.png).
+
+**NOTE:** The confidence on the plots above is a simple CI for the mean scores
+coming from each permutation. That's why when using a smaller number of
+iterations and constant budget, thus a larger number of permutations, the CIs
+are tighter. If we don't pre-aggregate the rewards at permutation-level, and 
+just feed all the rewards in a single big average across permutations, this
+difference in confidence goes away ([plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/10cad087e86a92e7e466c70fb4e74113077a4a7d/src/ai/eval/data/mcts_permutations_100k_budget_with_reallocation_ci_on_raw_rewards.png)).
+This is also affected by the issues I had with the CIs at player level,
+described in the previous section.
+
+### How does max_permutations influence the performance?
+
+I tried to understand how does the number of permutations influence the
+performance of the player. The initial hypothesis was that the performance will
+increase if one uses a higher number of permutations. I tested this using a
+set of players that run an equal number of iterations per permutation (2500),
+but they process 1, 5, 10, 40, 80 and 150 permutations, respectively.
+
+With **Random Selection**, it wasn't clear that more permutations lead to better
+performance ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/be3350fcd54e59b39774d11cac4f9622891ed2cc/src/ai/eval/data/eval_results_same_iterations_different_permutations.png)).
+It was expected that the players that use only 1 or 5 permutations will lose
+against all the other players. I was surprised though that the players that use
+40 or 80 permutations couldn't be significantly better than the player that uses
+10 permutations in 1000 bummerls. The [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/bef006f4ed8dd91b5e7e03a087eb9fc8e3c94b17/src/ai/eval/data/mcts_permutations_5000iter.png)
+don't show any significant changes between 10 or 150 permutations. I had two
+possible explanations: (1) the scores from each permutation are not accurate
+enough, and/or (2) we need to process significantly more permutations, which
+implies fewer iterations per permutation, so we need to make sure we use the
+iterations wisely. Based on both these ideas, I decided to add support for
+[UCB-based Selection](#select-the-best-child-and-balance-exploration-vs-exploitation).
+
+After enabling **UCB-based Selection**, the players with more permutations were
+able to beat the player that uses only 10 permutations ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/c6278f07f1a44461f3d1b0488585df119462d4aa/src/ai/eval/data/eval_results_same_iterations_different_permutations.png)).
+The differences might not be significant though. On the [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/4d37a7fc541a18ce23fff726f8748ef1075cc929/src/ai/eval/data/mcts_permutations_100k_budget_without_reallocation.png)
+there is some noise when using less than 40 permutations, but then the order
+of the actions is pretty stable, as before.
+
+After enabling **budget reallocation**, the [results grid](https://github.com/cpatrasciuc/schnapsen-card-game/blob/0c91c063767e7c439e4f380707eea97213ba4ee7/src/ai/eval/data/eval_results_same_iterations_different_permutations.png)
+and [debug plots](https://github.com/cpatrasciuc/schnapsen-card-game/blob/4d37a7fc541a18ce23fff726f8748ef1075cc929/src/ai/eval/data/mcts_permutations_100k_budget_with_reallocation.png)
+showed no big changes.
+
+#### Does it matter which permutations we process?
+
+TODO
+
+### Fixed computational budget grid
+
+Since there was no clear conclusion on how to pick a good value for
+`max_iterations` or `max_permutations`, I decided to generate a grid of players
+with various combinations of max_iterations and max_permutations such that:
+`max_iterations * max_permutations = 100k iterations`.
+
+#### Reallocating the computational budget
+
+After the initial games in this grid, the player using 10 permutations and
+10k iterations was significantly better than the player using 40 permutations
+and 2500 iterations ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/790f1aba3d7962ad358fd9347f7575b50104d797/src/ai/eval/data/eval_results_100k_iter_budget.png)).
+It also won more than 50% of the bummerls against the player using 70
+permutations and 1428 iterations. This was surprising, because in the grid
+from the previous sub-section, where we use the same number of iterations (2500)
+and different permutations, the player that uses 10 permutations was defeated by
+all the other players ([results grid](https://github.com/cpatrasciuc/schnapsen-card-game/blob/0c91c063767e7c439e4f380707eea97213ba4ee7/src/ai/eval/data/eval_results_same_iterations_different_permutations.png)).
+Given that after 4 out of 10 possible tricks, there are at most 6 permutations
+to process, and after 5 tricks there is only one permutation (i.e., the game
+becomes a perfect information game), the players that have `max_permutations >
+6` have no advantage. On top of that, the lower values for max_iterations (since the total
+budget must remain constant) might cost them the win in the late game.
+
+I introduced `MctsPlayerOptions.reallocate_computational_budget` which allows
+the players to increase the number of iterations per permutation late game,
+such that the total computational budget stays the same. This means that:
+
+*actual_permutations * actual_iterations = max_permutations * max_iterations*
+
+By using this, there is no difference between the players in the grid after the
+forth trick, and the only differences in performance should come from the first
+4 tricks (where processing more permutations should be better). This was indeed
+the case: after allowing players to reallocate the budget late game, the player
+that uses 10 permutations and 10k iterations was defeated by the other two
+players ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/64b75c2981f8100ec97700e7573af10b14da2e64/src/ai/eval/data/eval_results_100k_iter_budget.png)).
+
+TODO: Evaluation of the reallocation option.
+
+### Conclusion
+
+The final grid for a total budget of 100k iterations can be seen [here](https://github.com/cpatrasciuc/schnapsen-card-game/blob/f1ddf49aa0a6d16523d19644bf51782438683dca/src/ai/eval/data/eval_results_100k_iter_budget.png).
+There was no clear winner, so I looked at other metrics, such as game points won
+and trick points won. It seems that the players having 130 and 160 permutations
+are slightly better than the others on these metrics, so I decided to pick a 
+value between these two. I will move forward with a player that uses 150
+permutations and 667 iterations per permutation.
+
+TODO: Tune max_iterations and max_permutations for a budget of 500k iterations.
+
+TODO Idea: 
+If evals are equal, consider picking max_iterations such that at least we can fully simulate
+the CloseTheTalon action. Run 100 game states, max_iterations=10000, filter out
+the cases when the action was not fully simulated, see how many iterations were
+needed for the other cases. 
 
 ## Start with the action deemed best by the HeuristicPlayer
 
