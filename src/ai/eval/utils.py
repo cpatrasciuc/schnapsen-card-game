@@ -37,5 +37,5 @@ def same_game_state_after_each_trick_scenarios(seed):
   for i in range(5):
     game_state = _play_one_trick(game_state)
     same_game_state_after_each_trick[
-      f"GameState (seed=0), after {i + 1} trick(s) played"] = game_state
+      f"GameState (seed={seed}), after {i + 1} trick(s) played"] = game_state
   return same_game_state_after_each_trick
