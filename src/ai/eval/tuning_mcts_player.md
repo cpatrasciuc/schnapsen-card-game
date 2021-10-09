@@ -485,6 +485,64 @@ players ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/64b75
 
 TODO: Evaluation of the reallocation option.
 
+#### Can we make sure we fully simulate closing the talon?
+
+Closing the talon could be a powerful action: if you think you are in a position
+to win the game, you can win it faster and get more game points since the score
+is based on your opponent's trick points at the time the talon gets closed. If
+there is no clear difference in how we pick max_permutations and max_iterations,
+one idea could be to pick a value for max_iterations such that the player can
+fully simulate that subtree within the budget, and make better decisions on when
+it should close the talon. The player can still choose to close the talon even
+if the subtree is not fully simulated, but it will do so based on the UCB score
+not based on the MiniMax score.
+
+To investigate this, I took 1000 random game states (seed between 0 and 999) and
+run on each of them 10k iterations of the Mcts algorithm. After 10k iterations,
+if the CloseTheTalon action is not fully simulated it means the algorithm didn't
+consider it useful enough and spent the budget on other actions. Since closing
+the talon is not very relevant in these scenarios, I excluded them from the
+analysis. For the remaining game states I looked at how many iterations were
+required until CloseTheTalon action was fully simulated. I then repeated the
+same analysis, on the same game states, but after 1, 2, 3 or 4 random tricks are
+played. The code for this is in `iterations_for_closing_the_talon.py`.
+
+The percentiles for the number of iterations required to fully simulate
+the CloseTheTalon action are as follows:
+
+| Scenario | Fully simulated scenarios | Min | 25% | 50% | 75% | Max |
+| :------: | :-----------------: | :---: | :---: | :---: | :---: | :---: |
+| Start of the game | 4% | 600 | 1200 | 2000 | 4850 | 9700 |
+| After 1 trick | 11% | 300 | 1000 | 2000 | 4700 | 9000 |
+| After 2 tricks | 21% | 100 | 800 | 1450 | 3976 | 10000 |
+| After 3 tricks | 34% | 52 | 600 | 1400 | 4076 | 9900 |
+| After 4 tricks | 62% | 38 | 500 | 1600 | 4400 | 10000 |  
+ 
+Observations based on the numbers above:
+* As we advance through the game, closing the talon becomes more and more
+  important. At the beginning of a game we fully simulate this action only in 4%
+  of the cases; after 4 tricks we fully simulate it in 62% of the cases. As the
+  action becomes more and more important, the Mcts algorithm also expands it
+  earlier (25th percentile goes from 1200 iterations at the beginning of a game
+  to 500 iterations after 4 tricks).
+* There is no big change in the 50th and 75th percentile as we advance through
+  the game, which probably means these are the cases where it's not that obvious
+  whether closing the talon is the best action, and it stays so.
+* After 4 tricks there are at most 6 permutations possible, so with a 100k total
+  computational budget, a player would use 100k / 6 = 16k iterations. This means
+  that it will cover all the 62% of the cases from the last row in the table,
+  and maybe a few more from the 38% that were not fully simulated within 10k
+  iterations.
+* After 3 tricks, the player can cover the 25th percentile if it uses less than
+  100k / 600 = 166 permutations.
+* After 2 tricks, the player can cover the 25th percentile if it uses less than
+  100k / 800 = 125 permutations.
+* Trying to cover early game scenarios is probably not worth it. If we only
+  consider the 25th percentile as scenarios where closing the talon is a viable
+  option, this only happens in 25% of 4% = 1% of the initial game states. On top
+  of that, this is only one permutation, and for CloseTheTalon to be the best
+  action, it would have to be the best action in a lot of other permutations.
+
 ### Conclusion
 
 The final grid for a total budget of 100k iterations can be seen [here](https://github.com/cpatrasciuc/schnapsen-card-game/blob/f1ddf49aa0a6d16523d19644bf51782438683dca/src/ai/eval/data/eval_results_100k_iter_budget.png).
@@ -495,12 +553,6 @@ value between these two. I will move forward with a player that uses 150
 permutations and 667 iterations per permutation.
 
 TODO: Tune max_iterations and max_permutations for a budget of 500k iterations.
-
-TODO Idea: 
-If evals are equal, consider picking max_iterations such that at least we can fully simulate
-the CloseTheTalon action. Run 100 game states, max_iterations=10000, filter out
-the cases when the action was not fully simulated, see how many iterations were
-needed for the other cases. 
 
 ## Start with the action deemed best by the HeuristicPlayer
 
