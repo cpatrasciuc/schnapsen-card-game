@@ -10,6 +10,8 @@ from typing import List, Optional
 
 from libcpp.vector cimport vector
 
+from cpython.ref cimport PyObject, Py_INCREF
+
 from ai.cython_mcts_player.card cimport Card, is_unknown
 from ai.cython_mcts_player.game_state cimport GameState, PlayerId, \
   from_python_player_id, from_python_game_state, Points
@@ -24,6 +26,8 @@ from ai.merge_scoring_infos_func import ActionsWithScores, ScoringInfo
 from model.card import Card as PyCard
 from model.game_state import GameState as PyGameState
 from model.player_id import PlayerId as PyPlayerId
+
+from ai.utils import populate_game_view as py_populate_game_view
 
 cdef void from_python_permutations(py_permutations,
                                    vector[vector[Card]] *permutations):
@@ -77,7 +81,9 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
                                     int max_iterations,
                                     bint select_best_child,
                                     float exploration_param,
-                                    bint save_rewards):
+                                    bint save_rewards,
+                                    object py_game_view,
+                                    object py_permutations):
   cdef int i
   cdef GameState game_state
   cdef Node *root_node
@@ -85,8 +91,11 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
+    py_game_state = py_populate_game_view(py_game_view, py_permutations[i])
+    Py_INCREF(py_game_state)
     root_node = build_tree(&game_state, max_iterations, exploration_param,
-                           select_best_child, save_rewards, bummerl_score)
+                           select_best_child, save_rewards, bummerl_score,
+                           <PyObject *> py_game_state)
     py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes
@@ -126,4 +135,5 @@ class CythonMctsPlayer(BaseMctsPlayer):
     return _run_mcts_single_threaded(
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
       bummerl_score, max_iterations, options.select_best_child,
-      options.exploration_param, options.save_rewards)
+      options.exploration_param, options.save_rewards, py_game_view,
+      py_permutations)

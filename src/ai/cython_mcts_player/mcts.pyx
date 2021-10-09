@@ -6,6 +6,7 @@
 
 import logging
 
+from cpython.ref cimport Py_INCREF, Py_DECREF
 from libc.math cimport log, sqrt
 from libc.stdlib cimport free, malloc, rand, srand
 from libc.string cimport memset
@@ -15,6 +16,7 @@ from libcpp.vector cimport vector
 from ai.cython_mcts_player.game_state cimport is_game_over, game_points, Points
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
+from ai.cython_mcts_player.player_action cimport to_python_player_action
 
 cdef int MAX_CHILDREN = 7
 
@@ -49,11 +51,13 @@ cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
     node = not_fully_simulated_children[index]
 
 cdef Node *init_node(GameState *game_state, Node *parent,
-                     Points *bummerl_score) nogil:
+                     Points *bummerl_score,
+                     PyObject *py_game_state = NULL) nogil:
   cdef Node *node = <Node *> malloc(sizeof(Node))
   cdef float score_p1, score_p2
   memset(node, 0, sizeof(Node))
   node.game_state = game_state[0]
+  node.py_game_state = py_game_state
   node.parent = parent
   node.terminal = is_game_over(&node.game_state)
   node.fully_simulated = False
@@ -89,7 +93,12 @@ cdef Node *_expand(Node * node, Points *bummerl_score) nogil:
   cdef int index = rand() % untried_indices.size()
   index = untried_indices[index]
   cdef GameState game_state = execute(&node.game_state, node.actions[index])
-  node.children[index] = init_node(&game_state, node, bummerl_score)
+  with gil:
+    py_action = to_python_player_action(node.actions[index])
+    py_game_state = py_action.execute(<object> node.py_game_state)
+    Py_INCREF(py_game_state)
+  node.children[index] = init_node(&game_state, node, bummerl_score,
+                                   <PyObject *> py_game_state)
   return node.children[index]
 
 cdef Node *_fully_expand(Node *start_node, Points *bummerl_score) nogil:
@@ -186,8 +195,10 @@ cdef bint run_one_iteration(Node *root_node, float exploration_param,
 cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param, bint select_best_child,
                       bint save_rewards=False,
-                      Points *bummerl_score=NULL) nogil:
-  cdef Node *root_node = init_node(game_state, NULL, bummerl_score)
+                      Points *bummerl_score=NULL,
+                      PyObject *py_game_state=NULL) nogil:
+  cdef Node *root_node = init_node(game_state, NULL, bummerl_score,
+                                   py_game_state)
   cdef int iterations = 0
   while True:
     iterations += 1
@@ -243,6 +254,9 @@ cdef void delete_tree(Node *root_node) nogil:
       delete_tree(root_node.children[i])
   if root_node.rewards != NULL:
     del root_node.rewards
+  if root_node.py_game_state != NULL:
+    with gil:
+      Py_DECREF(<object> root_node.py_game_state)
   free(root_node)
 
 # Initialize the RNG.

@@ -14,6 +14,8 @@ from scipy.stats import bootstrap
 
 from libcpp.vector cimport vector
 
+from cpython.ref cimport Py_INCREF, PyObject
+
 from ai.cython_mcts_player.card cimport Card
 from ai.cython_mcts_player.game_state cimport from_python_game_state, \
   GameState, from_python_player_id, PlayerId, Points
@@ -154,7 +156,9 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
     bummerl_score[0] = game_points.one
     bummerl_score[1] = game_points.two
   cdef GameState game_state = from_python_game_state(py_game_state)
-  cdef Node *root_node = init_node(&game_state, NULL, bummerl_score)
+  Py_INCREF(py_game_state)
+  cdef Node *root_node = init_node(&game_state, NULL, bummerl_score,
+                                   <PyObject *> py_game_state)
   cdef int iteration = 1
   cdef bint is_fully_simulated = False
   cdef int max_iterations = options.max_iterations

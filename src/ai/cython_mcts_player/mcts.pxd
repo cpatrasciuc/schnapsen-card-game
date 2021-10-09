@@ -6,6 +6,8 @@
 
 from libcpp.vector cimport vector
 
+from cpython.ref cimport PyObject
+
 from ai.cython_mcts_player.game_state cimport GameState, PlayerId, Points
 from ai.cython_mcts_player.player_action cimport PlayerAction
 
@@ -32,14 +34,18 @@ cdef struct Node:
   # save all the rewards obtained on paths that pass through them in this list.
   vector[float] *rewards
 
+  # Experimental: The equivalent Python GameState, used by the HeuristicPlayer.
+  PyObject *py_game_state
+
 cdef Node *init_node(GameState *game_state, Node *parent,
-                     Points *bummerl_score) nogil
+                     Points *bummerl_score, PyObject *py_game_state= *) nogil
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
                             bint select_best_child, bint save_rewards,
                             Points *bummerl_score) nogil
 cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param, bint select_best_child,
-                      bint save_rewards= *, Points *bummerl_score= *) nogil
+                      bint save_rewards= *, Points *bummerl_score= *,
+                      PyObject *py_game_state= *) nogil
 cdef void delete_tree(Node *root_node) nogil
 
 cdef list best_actions_for_tests(Node *node)
