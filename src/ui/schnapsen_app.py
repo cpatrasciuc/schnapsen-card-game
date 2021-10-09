@@ -37,8 +37,8 @@ class SchnapsenApp(App):
     computer_player: Player = OutOfProcessComputerPlayer(
       # TODO(mcts): Tune the number of max_iterations.
       CythonMctsPlayer,
-      (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=4000,
-                                              max_permutations=100,
+      (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=667,
+                                              max_permutations=150,
                                               num_processes=1)))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     self._game_controller = GameController(self._game_widget, players)
