@@ -130,12 +130,14 @@ cdef _get_children_data(Node *root_node):
       node.n,
       (node.ucb if node.player == root_node.player else -node.ucb),
       node.exploration_score,
+      node.fully_simulated,
       ci_low,
       ci_upp,
     ))
 
   dataframe = DataFrame(data, columns=["action", "q", "n", "score", "exp_comp",
-                                       "score_low", "score_upp"])
+                                       "fully_simulated", "score_low",
+                                       "score_upp"])
   _add_rank_column(dataframe)
   return dataframe
 
