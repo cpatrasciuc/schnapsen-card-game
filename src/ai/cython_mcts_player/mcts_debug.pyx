@@ -19,6 +19,7 @@ from ai.cython_mcts_player.game_state cimport from_python_game_state, \
   GameState, from_python_player_id, PlayerId, Points
 from ai.cython_mcts_player.mcts cimport MAX_CHILDREN
 from ai.cython_mcts_player.mcts cimport Node
+from ai.cython_mcts_player.mcts cimport build_tree
 from ai.cython_mcts_player.mcts cimport run_one_iteration, init_node
 from ai.cython_mcts_player.mcts cimport delete_tree
 from ai.cython_mcts_player.player cimport build_scoring_info
@@ -26,6 +27,7 @@ from ai.cython_mcts_player.player cimport from_python_permutations
 from ai.cython_mcts_player.player cimport populate_game_view
 from ai.cython_mcts_player.player_action cimport ActionType
 from ai.cython_mcts_player.player_action cimport to_python_player_action
+from ai.heuristic_player import HeuristicPlayer
 from ai.mcts_player import generate_permutations
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb, \
@@ -257,3 +259,42 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
   for i in range(root_nodes.size()):
     delete_tree(root_nodes[i])
   return pandas.concat(dataframes, ignore_index=True)
+
+cdef _accumulate_overlap(Node *root_node, py_game_state, level, data):
+  if root_node.terminal:
+    return
+  heuristic_player = HeuristicPlayer(py_game_state.next_player)
+  best_heuristic_action = heuristic_player.request_next_action(py_game_state)
+  cdef int i = 0
+  cdef int max_visits = -1
+  cdef int heuristic_visits = -1
+  cdef Node *node
+  children_visits = []
+  for i in range(MAX_CHILDREN):
+    if root_node.actions[i].action_type == ActionType.NO_ACTION:
+      break
+    if root_node.children[i] == NULL:
+      continue
+    py_action = to_python_player_action(root_node.actions[i])
+    node = root_node.children[i]
+    max_visits = max(max_visits, node.n)
+    if py_action == best_heuristic_action:
+      heuristic_visits = node.n
+    children_visits.append(node.n)
+    new_py_game_state = py_action.execute(py_game_state)
+    _accumulate_overlap(node, new_py_game_state, level + 1, data)
+  heuristic_rank = len([x for x in children_visits if x < heuristic_visits])
+  data.append((max_visits, heuristic_visits, heuristic_rank, level))
+
+def overlap_between_mcts_and_heuristic(py_game_state: PyGameState,
+                                       options: MctsPlayerOptions):
+  cdef GameState game_state = from_python_game_state(py_game_state)
+  cdef Node *root_node = build_tree(&game_state, options.max_iterations,
+                                    options.exploration_param,
+                                    options.select_best_child,
+                                    options.save_rewards)
+  data = []
+  _accumulate_overlap(root_node, py_game_state, 0, data)
+  delete_tree(root_node)
+  columns = ["max_visits", "heuristic_visits", "heuristic_rank", "level"]
+  return DataFrame(data, columns, dtype=int)
