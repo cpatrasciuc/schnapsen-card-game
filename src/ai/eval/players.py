@@ -382,4 +382,23 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=150,
                                          max_iterations=667,
                                          reallocate_computational_budget=True)),
+
+  # TODO(mcts): Evaluate these players against each other.
+  # Tune max_iterations and max_permutations for a budget of 500k iterations.
+  "MctsPlayerIterX5":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1, max_permutations=150, max_iterations=667 * 5)),
+  "MctsPlayerPermX5":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1, max_permutations=150 * 5, max_iterations=667)),
+  "MctsPlayerIterAndPermXSqrt5":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1, max_permutations=int(150 * math.sqrt(5)),
+        max_iterations=int(667 * math.sqrt(5)))),
 }
