@@ -135,9 +135,6 @@ cdef int _remove_card_from_hand(Card *cards_in_hand, Card card) nogil:
     if cards_in_hand[i].suit == card.suit \
         and cards_in_hand[i].card_value == card.card_value:
       if i < 4:
-        # TODO(debug): Revert this after debugging GitHub failure.
-        # memcpy(&cards_in_hand[i], &cards_in_hand[i + 1],
-        #        (5 - i - 1) * sizeof(Card))
         for j in range(5 - i - 1):
           cards_in_hand[i + j] = cards_in_hand[i + j + 1]
       cards_in_hand[4].suit = Suit.NO_SUIT
@@ -198,8 +195,6 @@ cdef GameState _execute_play_card_action(GameState *game_state,
   cdef int i
   if not is_null(first_card) and \
       not is_talon_closed(&new_game_state):
-    # TODO(debug): Revert this after debugging GitHub failure.
-    # memcpy(new_game_state.talon, &new_game_state.talon[2], 7 * sizeof(Card))
     for i in range(7):
       new_game_state.talon[i] = new_game_state.talon[i + 2]
     new_game_state.talon[7].suit = Suit.NO_SUIT
