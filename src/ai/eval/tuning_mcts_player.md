@@ -476,14 +476,19 @@ such that the total computational budget stays the same. This means that:
 
 *actual_permutations * actual_iterations = max_permutations * max_iterations*
 
-By using this, there is no difference between the players in the grid after the
-forth trick, and the only differences in performance should come from the first
-4 tricks (where processing more permutations should be better). This was indeed
-the case: after allowing players to reallocate the budget late game, the player
-that uses 10 permutations and 10k iterations was defeated by the other two
-players ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/64b75c2981f8100ec97700e7573af10b14da2e64/src/ai/eval/data/eval_results_100k_iter_budget.png)).
+I confirmed that this option is an improvement by itself, by simulating 100
+bummerls between two players that use the same options (max_permutations=150,
+max_iterations=667), except that one reallocates the budget and the other one
+doesn't (`MctsPlayerReallocateBudget` and `MctsPlayerDoNotReallocateBudget` from
+`players.py`). The player that reallocates the budget won in **64% [54.24%, 
+72.73%]** of the cases.
 
-TODO: Evaluation of the reallocation option.
+By enabling this option for all the players in the grid, there is no difference
+between them after the forth trick, and the only differences in performance
+should come from the first 4 tricks (where processing more permutations should
+be better). This was indeed the case: after allowing players to reallocate the
+budget late game, the player that uses 10 permutations and 10k iterations was
+defeated by the other two players ([results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/64b75c2981f8100ec97700e7573af10b14da2e64/src/ai/eval/data/eval_results_100k_iter_budget.png)).
 
 #### Can we make sure we fully simulate closing the talon?
 
