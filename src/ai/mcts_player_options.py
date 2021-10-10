@@ -99,3 +99,12 @@ class MctsPlayerOptions:
   means that the break-even point changes, so the player will be more
   conservative if it's leading and more aggressive if it's behind.
   """
+
+  use_heuristic: bool = False
+  """
+  If True, when a node is expanded for the first time during the Mcts algorithm,
+  we expand the action deemed best by the HeuristicPlayer for that game state.
+  If False, one of the not-yet-expanded actions will be picked randomly.
+  If the node was already expanded once in one of the previous Mcts iterations,
+  this option has no effect.
+  """

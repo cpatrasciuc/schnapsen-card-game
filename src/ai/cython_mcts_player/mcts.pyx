@@ -16,7 +16,9 @@ from libcpp.vector cimport vector
 from ai.cython_mcts_player.game_state cimport is_game_over, game_points, Points
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
+from ai.cython_mcts_player.player_action cimport from_python_player_action
 from ai.cython_mcts_player.player_action cimport to_python_player_action
+from ai.heuristic_player import HeuristicPlayer
 
 cdef int MAX_CHILDREN = 7
 
@@ -82,16 +84,42 @@ cdef Node *init_node(GameState *game_state, Node *parent,
     get_available_actions(&node.game_state, node.actions)
   return node
 
-cdef Node *_expand(Node * node, Points *bummerl_score) nogil:
+cdef Node *_expand(Node * node, Points *bummerl_score,
+                   bint use_heuristic) nogil:
   cdef vector[int] untried_indices
   cdef int i
+  cdef bint first_expansion = True
   for i in range(MAX_CHILDREN):
     if node.actions[i].action_type == ActionType.NO_ACTION:
       break
     if node.children[i] == NULL:
       untried_indices.push_back(i)
+    else:
+      first_expansion = False
   cdef int index = rand() % untried_indices.size()
   index = untried_indices[index]
+  cdef PlayerAction heuristic_best_action
+  if first_expansion and use_heuristic:
+    with gil:
+      py_game_state = <object> node.py_game_state
+      heuristic_player = HeuristicPlayer(py_game_state.next_player)
+      py_heuristic_best_action = heuristic_player.request_next_action(
+        py_game_state)
+      heuristic_best_action = from_python_player_action(
+        py_heuristic_best_action)
+      for i in range(MAX_CHILDREN):
+        if node.actions[i].action_type != heuristic_best_action.action_type:
+          continue
+        if heuristic_best_action.action_type == ActionType.PLAY_CARD or \
+            heuristic_best_action.action_type == ActionType.ANNOUNCE_MARRIAGE:
+          if heuristic_best_action.card.suit != node.actions[i].card.suit or \
+              heuristic_best_action.card.card_value != node.actions[
+            i].card.card_value:
+            continue
+        index = i
+        break
+      else:
+        raise Exception("Should not reach this code")
   cdef GameState game_state = execute(&node.game_state, node.actions[index])
   with gil:
     py_action = to_python_player_action(node.actions[index])
@@ -101,10 +129,11 @@ cdef Node *_expand(Node * node, Points *bummerl_score) nogil:
                                    <PyObject *> py_game_state)
   return node.children[index]
 
-cdef Node *_fully_expand(Node *start_node, Points *bummerl_score) nogil:
+cdef Node *_fully_expand(Node *start_node, Points *bummerl_score,
+                         bint use_heuristic) nogil:
   cdef Node *node = start_node
   while not node.terminal:
-    node = _expand(node, bummerl_score)
+    node = _expand(node, bummerl_score, use_heuristic)
   return node
 
 cdef inline float _ucb_for_player(Node *node, PlayerId player_id) nogil:
@@ -183,11 +212,12 @@ cdef void _backpropagate(Node *end_node, float score,
 
 cdef bint run_one_iteration(Node *root_node, float exploration_param,
                             bint select_best_child, bint save_rewards,
-                            Points *bummerl_score) nogil:
+                            Points *bummerl_score, bint use_heuristic) nogil:
   cdef Node *selected_node = _selection(root_node, select_best_child)
   if selected_node is NULL:
     return True
-  cdef Node *end_node = _fully_expand(selected_node, bummerl_score)
+  cdef Node *end_node = _fully_expand(selected_node, bummerl_score,
+                                      use_heuristic)
   _backpropagate(end_node, end_node.ucb, exploration_param, select_best_child,
                  save_rewards)
   return False
@@ -196,14 +226,15 @@ cdef Node *build_tree(GameState *game_state, int max_iterations,
                       float exploration_param, bint select_best_child,
                       bint save_rewards=False,
                       Points *bummerl_score=NULL,
-                      PyObject *py_game_state=NULL) nogil:
+                      PyObject *py_game_state=NULL,
+                      bint use_heuristic=False) nogil:
   cdef Node *root_node = init_node(game_state, NULL, bummerl_score,
                                    py_game_state)
   cdef int iterations = 0
   while True:
     iterations += 1
     if run_one_iteration(root_node, exploration_param, select_best_child,
-                         save_rewards, bummerl_score):
+                         save_rewards, bummerl_score, use_heuristic):
       break
     if 0 < max_iterations <= iterations:
       break

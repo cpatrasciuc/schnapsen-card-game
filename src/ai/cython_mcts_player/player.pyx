@@ -83,7 +83,8 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
                                     float exploration_param,
                                     bint save_rewards,
                                     object py_game_view,
-                                    object py_permutations):
+                                    object py_permutations,
+                                    bint use_heuristic):
   cdef int i
   cdef GameState game_state
   cdef Node *root_node
@@ -95,7 +96,7 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
     Py_INCREF(py_game_state)
     root_node = build_tree(&game_state, max_iterations, exploration_param,
                            select_best_child, save_rewards, bummerl_score,
-                           <PyObject *> py_game_state)
+                           <PyObject *> py_game_state, use_heuristic)
     py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes
@@ -136,4 +137,4 @@ class CythonMctsPlayer(BaseMctsPlayer):
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
       bummerl_score, max_iterations, options.select_best_child,
       options.exploration_param, options.save_rewards, py_game_view,
-      py_permutations)
+      py_permutations, options.use_heuristic)

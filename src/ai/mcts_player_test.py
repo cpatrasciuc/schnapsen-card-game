@@ -238,6 +238,15 @@ class CythonMctsPlayerSaveRewardsTest(MctsPlayerTest):
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 
+class CythonMctsPlayerUseHeuristicTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None,
+                                select_best_child=True,
+                                use_heuristic=True,
+                                num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
 class CythonMctsPlayerTest(unittest.TestCase):
   @staticmethod
   def test_max_iterations_less_than_available_actions():

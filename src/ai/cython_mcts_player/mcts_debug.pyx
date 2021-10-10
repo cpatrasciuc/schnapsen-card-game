@@ -38,6 +38,8 @@ from model.game_state import GameState as PyGameState
 from model.player_action import PlayerAction
 from model.player_pair import PlayerPair
 
+from ai.utils import populate_game_view as py_populate_game_view
+
 def _add_rank_column(dataframe: DataFrame) -> None:
   dataframe["rank"] = dataframe["score"].sort_values().rank(method="min",
                                                             ascending=False)
@@ -169,7 +171,8 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
                                              options.exploration_param,
                                              options.select_best_child,
                                              options.save_rewards,
-                                             bummerl_score)
+                                             bummerl_score,
+                                             options.use_heuristic)
       iteration += 1
       if is_fully_simulated:
         break
@@ -200,14 +203,17 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
     py_game_view.next_player.opponent())
 
   cdef vector[vector[Card]] permutations
-  from_python_permutations(generate_permutations(py_game_view, options),
-                           &permutations)
+  py_permutations = generate_permutations(py_game_view, options)
+  from_python_permutations(py_permutations, &permutations)
 
   cdef int i, j
   for i in range(permutations.size()):
     game_state = game_view
     populate_game_view(&game_state, &permutations[i], opponent_id)
-    root_nodes.push_back(init_node(&game_state, NULL, bummerl_score))
+    py_game_state = py_populate_game_view(py_game_view, py_permutations[i])
+    Py_INCREF(py_game_state)
+    root_nodes.push_back(
+      init_node(&game_state, NULL, bummerl_score, <PyObject *> py_game_state))
 
   cdef int iteration = 1
   cdef bint is_fully_simulated, permutation_is_fully_simulated
@@ -220,7 +226,7 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
       for i in range(root_nodes.size()):
         permutation_is_fully_simulated = run_one_iteration(
           root_nodes[i], options.exploration_param, options.select_best_child,
-          options.save_rewards, bummerl_score)
+          options.save_rewards, bummerl_score, options.use_heuristic)
         is_fully_simulated = \
           is_fully_simulated and permutation_is_fully_simulated
       iteration += 1
@@ -293,10 +299,13 @@ cdef _accumulate_overlap(Node *root_node, py_game_state, level, data):
 def overlap_between_mcts_and_heuristic(py_game_state: PyGameState,
                                        options: MctsPlayerOptions):
   cdef GameState game_state = from_python_game_state(py_game_state)
+  Py_INCREF(py_game_state)
   cdef Node *root_node = build_tree(&game_state, options.max_iterations,
                                     options.exploration_param,
                                     options.select_best_child,
-                                    options.save_rewards)
+                                    options.save_rewards,
+                                    NULL, <PyObject *> py_game_state,
+                                    options.use_heuristic)
   data = []
   _accumulate_overlap(root_node, py_game_state, 0, data)
   delete_tree(root_node)
