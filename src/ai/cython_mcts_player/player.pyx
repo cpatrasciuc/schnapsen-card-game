@@ -92,11 +92,15 @@ cdef list _run_mcts_single_threaded(GameState *game_view,
   for i in range(permutations.size()):
     game_state = game_view[0]
     populate_game_view(&game_state, &permutations[0][i], opponent_id)
-    py_game_state = py_populate_game_view(py_game_view, py_permutations[i])
-    Py_INCREF(py_game_state)
-    root_node = build_tree(&game_state, max_iterations, exploration_param,
-                           select_best_child, save_rewards, bummerl_score,
-                           <PyObject *> py_game_state, use_heuristic)
+    if use_heuristic:
+      py_game_state = py_populate_game_view(py_game_view, py_permutations[i])
+      Py_INCREF(py_game_state)
+    else:
+      py_game_state = None
+    root_node = build_tree(
+      &game_state, max_iterations, exploration_param, select_best_child,
+      save_rewards, bummerl_score,
+      <PyObject *> py_game_state if use_heuristic else NULL, use_heuristic)
     py_root_nodes.append(build_scoring_info(root_node))
     delete_tree(root_node)
   return py_root_nodes

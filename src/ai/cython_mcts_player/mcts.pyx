@@ -121,12 +121,15 @@ cdef Node *_expand(Node * node, Points *bummerl_score,
       else:
         raise Exception("Should not reach this code")
   cdef GameState game_state = execute(&node.game_state, node.actions[index])
-  with gil:
-    py_action = to_python_player_action(node.actions[index])
-    py_game_state = py_action.execute(<object> node.py_game_state)
-    Py_INCREF(py_game_state)
-  node.children[index] = init_node(&game_state, node, bummerl_score,
-                                   <PyObject *> py_game_state)
+  if use_heuristic:
+    with gil:
+      py_action = to_python_player_action(node.actions[index])
+      py_game_state = py_action.execute(<object> node.py_game_state)
+      Py_INCREF(py_game_state)
+    node.children[index] = init_node(&game_state, node, bummerl_score,
+                                     <PyObject *> py_game_state)
+  else:
+    node.children[index] = init_node(&game_state, node, bummerl_score, NULL)
   return node.children[index]
 
 cdef Node *_fully_expand(Node *start_node, Points *bummerl_score,
@@ -229,7 +232,10 @@ cdef Node *build_tree(GameState *game_state, int max_iterations,
                       PyObject *py_game_state=NULL,
                       bint use_heuristic=False) nogil:
   cdef Node *root_node = init_node(game_state, NULL, bummerl_score,
-                                   py_game_state)
+                                   py_game_state if use_heuristic else NULL)
+  if py_game_state != NULL and not use_heuristic:
+    with gil:
+      Py_DECREF(<object> py_game_state)
   cdef int iterations = 0
   while True:
     iterations += 1
