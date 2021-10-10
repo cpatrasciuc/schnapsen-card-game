@@ -163,7 +163,7 @@ class SimsTablePermGenerator:
   def __init__(self, n: int, m: int = 0, counter: Optional[int] = None,
                increment: Optional[int] = None):
     """
-    A permutation generator based on Sims table. This is described here:
+    A permutation generator based on Sims tables. This is described here:
     https://psellos.com/schnapsen/blog/2012/07/sims.html
     http://doi.ieeecomputersociety.org/10.1109/ICTAI.2010.76
 
