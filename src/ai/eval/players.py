@@ -401,4 +401,21 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
       MctsPlayerOptions(
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
+
+  # TODO(mcts): Evaluate these players.
+  # Evaluate use_heuristic.
+  "MctsPlayerDoNotUseHeuristic":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         use_heuristic=False)),
+  "MctsPlayerUseHeuristic":
+    lambda player_id: CythonMctsPlayer(player_id, False,
+                                       MctsPlayerOptions(
+                                         num_processes=1,
+                                         max_permutations=150,
+                                         max_iterations=667,
+                                         use_heuristic=True)),
 }
