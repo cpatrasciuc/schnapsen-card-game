@@ -1,0 +1,4 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+MctsPlayerLexicographicPerm,MctsPlayerRandomPerm,277,723,2274,3273,4005,6488,272141,291680
+MctsPlayerSimsPerm,MctsPlayerRandomPerm,520,480,3124,3000,5437,5204,322835,318357
+MctsPlayerSimsPerm,MctsPlayerLexicographicPerm,755,245,3331,2196,6578,3887,291488,268555

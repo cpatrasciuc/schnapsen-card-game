@@ -6,13 +6,14 @@ import math
 from typing import Dict, Callable
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
-
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
   merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average, \
   merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards
+from ai.permutations import random_perm_generator, \
+  lexicographic_perm_generator, sims_table_perm_generator
 from ai.player import Player
 from ai.random_player import RandomPlayer
 from model.player_id import PlayerId
@@ -287,6 +288,33 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_iterations=100,
                                          select_best_child=True,
                                          exploration_param=1)),
+
+  # Evaluate MctsPlayerOptions.perm_generator.
+  "MctsPlayerRandomPerm":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        perm_generator=random_perm_generator
+      )),
+  "MctsPlayerLexicographicPerm":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        perm_generator=lexicographic_perm_generator)),
+  "MctsPlayerSimsPerm":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        perm_generator=sims_table_perm_generator)),
 
   # Evaluate merge scoring info functions.
   "MctsPlayerAverageUcb":
