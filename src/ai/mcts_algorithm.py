@@ -244,8 +244,6 @@ class Mcts(Generic[_State, _Action]):
     while not node.terminal:
       if not node.fully_expanded:
         return node
-      # TODO(mcts): Check if the UCB formula is still valid if we don't pick the
-      #  node randomly.
       not_fully_simulated_children = [child for child in
                                       node.children.values() if
                                       not child.fully_simulated]
@@ -276,7 +274,6 @@ class Mcts(Generic[_State, _Action]):
     while node is not None:
       if not node.terminal:
         node.n += 1
-        # TODO(stats): Store all rewards in debug mode and check histogram.
         node.q += score if node.player == _PLAYER_FOR_TERMINAL_NODES else -score
         node.update_children_ucb(self._exploration_param)
       node = node.parent
