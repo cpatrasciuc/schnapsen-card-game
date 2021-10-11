@@ -80,17 +80,6 @@ def best_action_frequency(
   return actions_and_scores
 
 
-# noinspection PyUnreachableCode
-if __debug__:
-  def _assert_action_is_terminal_across_root_nodes(
-      actions_with_scores_list: List[ActionsWithScores], action: PlayerAction):
-    for actions_with_scores in actions_with_scores_list:
-      score = actions_with_scores.get(action, None)
-      if score is None:
-        continue
-      assert score.terminal
-
-
 def are_all_nodes_fully_simulated(
     actions_with_scores_list: List[ActionsWithScores]) -> bool:
   for actions_with_scores in actions_with_scores_list:
@@ -147,13 +136,9 @@ def _average_ucb_for_partially_simulated_trees(
   stats = defaultdict(list)
   for actions_with_scores in actions_with_scores_list:
     for action, score in actions_with_scores.items():
-      if score.terminal:
-        # noinspection PyUnreachableCode
-        if __debug__:
-          _assert_action_is_terminal_across_root_nodes(actions_with_scores,
-                                                       action)
-        q = score.score
-        n = 1
+      if score.fully_simulated:
+        q = score.score * score.n
+        n = score.n
       else:
         q = score.q
         n = score.n
