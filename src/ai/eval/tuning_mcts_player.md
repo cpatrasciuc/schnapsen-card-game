@@ -595,7 +595,14 @@ are slightly better than the others on these metrics, so I decided to pick a
 value between these two. I will move forward with a player that uses 150
 permutations and 667 iterations per permutation.
 
-TODO: Tune max_iterations and max_permutations for a budget of 500k iterations.
+For the 500k-iterations budget, I used the 100k iterations player as a starting
+point and generated a grid of three players: for one I multiplied max_iterations
+by 5, for one I multiplied max_permutations by 5, and for one I multiplied both
+max_iterations and max_permutations by &radic;5. No player was significantly
+better than any other player over 1000 bummerls in any metric
+([grid results](https://github.com/cpatrasciuc/schnapsen-card-game/blob/f71f59033c8637314e334f0e05f7e89bad7907c2/src/ai/eval/data/eval_results_500k_iter_budget.png)).
+I will go forward with the player that increases both max_iteration and
+max_permutations.
 
 ## Start with the action deemed best by the HeuristicPlayer
 
