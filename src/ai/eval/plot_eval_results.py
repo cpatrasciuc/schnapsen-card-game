@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from graphviz import Digraph
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, BoundaryNorm
 from pandas import DataFrame
 from statsmodels.stats.proportion import proportion_confint
 
@@ -37,7 +37,9 @@ def _get_metric(player_one: str, player_two: str, dataframe: DataFrame,
 # https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
 def _render_colored_table(player_names, color, win_percentage):
   color_map = ListedColormap(["#dd7e6b", "#d9d9d9", "#93c47d"])
-  plt.imshow(color, cmap=color_map)
+  bounds = [-1, 0.25, 0.75, 2]
+  norm = BoundaryNorm(bounds, color_map.N)
+  plt.imshow(color, cmap=color_map, norm=norm)
   ax = plt.gca()
 
   # Show all ticks and label them with the player names.
