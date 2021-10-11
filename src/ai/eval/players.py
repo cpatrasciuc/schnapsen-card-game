@@ -340,6 +340,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=150,
                                          max_iterations=667,
                                          merge_scoring_info_func=count_visits)),
+  # TODO(mcts): Revaluate this after the bugfix.
   "MctsPlayerSimpleAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -348,6 +349,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_simple_average)),
+  # TODO(mcts): Revaluate this after the bugfix.
   "MctsPlayerWeightedAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -356,7 +358,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_weighted_average)),
-  # TODO(mcts): Run evals for this player.
+  # TODO(mcts): Revaluate this after the bugfix.
   "MctsPlayerLowerCiBoundAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
