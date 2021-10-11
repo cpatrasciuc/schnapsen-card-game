@@ -1,0 +1,4 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+MctsPlayerIterX5,MctsPlayerPermX5,507,493,3021,2961,5319,5286,311129,309993
+MctsPlayerIterX5,MctsPlayerIterAndPermXSqrt5,487,513,3000,2973,5282,5345,310117,311213
+MctsPlayerPermX5,MctsPlayerIterAndPermXSqrt5,507,493,3035,3013,5319,5270,315822,316051
