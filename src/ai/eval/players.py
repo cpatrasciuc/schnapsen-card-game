@@ -11,7 +11,8 @@ from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
   merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average, \
-  merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards
+  merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards, \
+  best_action_frequency
 from ai.permutations import random_perm_generator, \
   lexicographic_perm_generator, sims_table_perm_generator
 from ai.player import Player
@@ -317,6 +318,14 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         perm_generator=sims_table_perm_generator)),
 
   # Evaluate merge scoring info functions.
+  "MctsPlayerMostFrequentBestAction":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=best_action_frequency)),
   "MctsPlayerAverageUcb":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
