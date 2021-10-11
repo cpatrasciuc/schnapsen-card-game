@@ -445,7 +445,45 @@ showed no big changes.
 
 #### Does it matter which permutations we process?
 
-TODO
+One reason for which increasing the number of permutations doesn't lead to a
+significantly better player could be that the initial permutations that we
+process are already giving us enough information to make a good decision. I
+evaluated this using a set of players that use 150 permutations and 667
+iterations per permutation, but each uses a different algorithm to generate the
+permutations (for more details, see `permutations.py`):
+* **Random**: Generates the permutations in a random order, excluding
+  duplicates.
+* **Lexicographic**: Generates the permutations in lexicographic order.
+* **Sims-Tables**: Uses Sims-Tables to generate the permutations in an order 
+ that maximizes *dispersion* (a metric that measures how different from each
+ other are the permutations; see `dispersion()` in `permutations.py`). As
+ opposed to the other two algorithms, this one also knows that the order of the
+ cards in the opponent's hand doesn't matter.
+
+The evaluation results show that the permutations we pick for processing can
+influence the performance of the player:
+
+![eval_permutations](https://github.com/cpatrasciuc/schnapsen-card-game/blob/49c48d3ef941969c90e71c4ae96b116a88bdd22f/src/ai/eval/data/eval_permutations.png)
+
+As expected, when using permutations in lexicographic order we don't see enough
+different scenarios to make good decisions, so this algorithm lost against both
+Random permutations and Sims-Tables permutations. There was no clear difference
+between Random and Sims-Tables. This is also expected, because for a small
+number of permutations (150 in our case) the dispersion of the Random
+permutations is similar to the one achieved using Sims-Tables (the X-axis in the
+plots below represents the number of permutations requested out of ~726M
+possible permutations at the beginning of a game).
+
+![dispersion](https://github.com/cpatrasciuc/schnapsen-card-game/blob/88f57e77b36c253e7c39086b61b86ee2c096e281/src/ai/eval/data/permutations_dispersion.png)
+
+For 150 permutations, the Random generator is faster than Sims-Tables:
+
+![time](https://github.com/cpatrasciuc/schnapsen-card-game/blob/88f57e77b36c253e7c39086b61b86ee2c096e281/src/ai/eval/data/permutations_time.png)
+
+Since we only spend ~0.7% of the time in Sims-Table permutations generator
+([CPU profile](https://github.com/cpatrasciuc/schnapsen-card-game/blob/aced1310e03e704fee0ca4718df70c5240450d36/src/ai/eval/data/iterations_and_time_100perm.profile.txt)),
+I prefer to continue using it, instead of relying on randomness to achieve high
+dispersion. This algorithm was used in all the other evaluations described here. 
 
 ### Fixed computational budget grid
 
