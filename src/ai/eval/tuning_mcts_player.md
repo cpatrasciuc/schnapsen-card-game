@@ -606,11 +606,17 @@ max_permutations.
 
 ## Start with the action deemed best by the HeuristicPlayer
 
-TODO
+TODO:
+- Evaluate player;
+- Count how often the best child at the end of the algorithm is not the
+  heuristic best move.
 
 ## Reuse nodes from previous decisions
 
-TODO
+TODO:
+- Check cache overlap on the entire tree;
+- Try to cache only the top level nodes;
+- Try to navigate the cache based on player action events.
 
 ## Improve root_node merging
 
