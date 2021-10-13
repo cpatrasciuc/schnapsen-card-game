@@ -310,4 +310,4 @@ def overlap_between_mcts_and_heuristic(py_game_state: PyGameState,
   _accumulate_overlap(root_node, py_game_state, 0, data)
   delete_tree(root_node)
   columns = ["max_visits", "heuristic_visits", "heuristic_rank", "level"]
-  return DataFrame(data, columns, dtype=int)
+  return DataFrame(data, columns=columns, dtype=int)
