@@ -37,9 +37,9 @@ def _get_overlap_for_seed(seed: int, options: MctsPlayerOptions) -> DataFrame:
 # the maximum overlap can be achieved if we visit all nodes equally (e.g.,
 # random selection), but that doesn't lead to a better player.
 def get_overlap_for_multiple_game_states():
-  num_seeds = 10
+  num_seeds = 1000
   options = MctsPlayerOptions(num_processes=1, max_iterations=667,
-                              max_permutations=150)
+                              max_permutations=150, use_heuristic=True)
 
   # Process the game states and extract the data.
   with multiprocessing.Pool(processes=4) as pool:
