@@ -64,7 +64,7 @@ As a result of this initial debugging, the ideas to experiment with are:
 - [x] Reduce CPU usage, so we can run more iterations within the budget
 - [x] Pick the best child during the selection phase and balance exploration versus exploitation
 - [x] Find the best combination of max_iterations and max_permutations for a fixed computational budget
-- [ ] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
+- [x] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
 - [ ] Maybe reuse the nodes from the previous decisions instead of always starting from scratch
 - [ ] Improve merging the scores across root nodes
 - [ ] Expand an action and a permutation in each iteration
@@ -606,10 +606,60 @@ max_permutations.
 
 ## Start with the action deemed best by the HeuristicPlayer
 
-TODO:
-- Evaluate player;
-- Count how often the best child at the end of the algorithm is not the
-  heuristic best move.
+In this section, I experimented with the following idea: when we expand a node
+in the Mcts tree for the first time, instead of choosing an action randomly, use
+the action deemed best by the HeuristicPlayer for that game state. I wanted to
+see if that would help find the best child of a node using fewer iterations
+and then exploit that using UCB-based selection. 
+
+Since the CythonMctsPlayer uses C/C++ and the HeuristicPlayer uses Python, there
+is no easy way to make them work together. I'd have to rewrite the
+HeuristicPlayer from scratch in Cython. Before investing any effort in this, I
+wanted to check if it's worth it, so I implemented a prototype that stores in
+each node both the C and the Python game states. These code changes are in the
+`cython_with_heuristic` branch. Because there is a lot of back-and-forth between
+C/C++ (no GIL) and Python (GIL) code, this prototype is 100x slower. I could
+simulate only 100 bummerls between two players that both use
+max_permutations=150 and max_iterations=667, but one uses the HeuristicPlayer
+and the other one doesn't. Both players won exactly 50 out of 100 bummerls, with
+no significant difference in any of the other metrics:
+
+```
+Simulating MctsPlayerDoNotUseHeuristic vs MctsPlayerUseHeuristic
+bummerls: 50:50
+games: 296:308
+game_points: 520:523
+trick_points: 31517:31542
+perf_counter_sum: 1025.7731822589913:110927.6047436561
+process_time_sum: 1025.6098739998947:110905.88797799998
+num_actions_requested: 4125:4104
+Duration (time): 8:21:04.775068
+```
+
+As an additional data point, I run the MctsPlayer over 1000 initial game states
+and for each node in the resulting Mcts tree, I identified the action deemed
+best by the HeuristicPlayer, and then I checked where it ranked among the other
+actions based on the number of visits. A rank of 0 means that the action deemed
+best by the HeuristicPlayer was also considered the best one by the Mcts
+algorithm, and thus it got visited the most. The code for this is in
+`overlap_between_mcts_and_heuristic.py`. I was not looking for a specific
+distribution, I just wanted to compare the results between using and not using
+the HeuristicPlayer with UCB-based Selection. In particular, there is no goal to
+maximize the number of cases where rank is 0, because that means we are either
+playing exactly like the HeuristicPlayer (but we want MctsPlayer to be
+better) or we are visiting all the children equally (i.e., Random Selection).
+
+In the plots below, there is no difference between using or not using the
+HeuristicPlayer with UCB-based Selection. This suggests that it doesn't matter
+what action we process first; we will probably reach a similar result in the
+end.
+
+| ![random](https://github.com/cpatrasciuc/schnapsen-card-game/blob/5af671138883576ee3df25dd0c8bbae77539323b/src/ai/eval/data/overlap_between_mcts_and_heuristic_random.png) | ![ucb](https://github.com/cpatrasciuc/schnapsen-card-game/blob/5af671138883576ee3df25dd0c8bbae77539323b/src/ai/eval/data/overlap_between_mcts_and_heuristic_ucb.png) | ![ucb_with_heuristic](https://github.com/cpatrasciuc/schnapsen-card-game/blob/aeb80fcb3c043324feffd594e939af34d89c0938/src/ai/eval/data/overlap_between_mcts_and_heuristic_ucb_with_heuristic.png) |
+| :---------: | :------: | :---------------------: |
+
+Since the first action we select when we visit a node for the first time
+doesn't seem to influence the performance of the MctsPlayer, I will not pursue
+this idea further.  
 
 ## Reuse nodes from previous decisions
 
