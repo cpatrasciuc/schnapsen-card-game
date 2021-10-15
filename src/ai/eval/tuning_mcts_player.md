@@ -684,3 +684,8 @@ TODO:
 ## Improve root_node merging
 
 TODO
+
+TODO(final eval):
+- Check correlation between game points won and initial cards or diff between
+  initial cards
+- Check the correlation above for Mcts vs Mcts and Mcts vs Heuristic 
