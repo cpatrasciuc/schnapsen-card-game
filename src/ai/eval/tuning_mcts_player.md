@@ -41,7 +41,19 @@ computational budget is:
 | 1 second | 0.08 seconds | 10-20 |
 | 5 seconds | 0.38 seconds | 40-80 |
 
-**TODO:** Verify this computations by rerunning and logging the number of iterations.
+I verified this by running the MctsPlayer on 100 initial game states (seed
+between 0 and 99) and logging the number of iterations per permutation. The
+results are aligned with the expectations:
+
+|       | Time limit: 1 second | Time limit: 5 seconds |
+| :---: | :------------------: | :-------------------: |
+| **mean** | **9.78** | **54.82** |
+| std | 3.09 | 16.37 |
+| min | 1 | 19 |
+| 25% | 8 | 43 |
+| 50% | 9 | 52 |
+| 75% | 11 | 64 |
+| max | 49 | 196 |
 
 I plotted the evolution of the scores for each player action across time for a
 couple of end-game scenarios as well as initial game states ([plot](https://raw.githubusercontent.com/cpatrasciuc/schnapsen-card-game/138670a600e4c23489988699469a37af3b158749/src/ai/eval/data/mcts_convergence.png)).
