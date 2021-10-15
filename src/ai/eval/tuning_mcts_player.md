@@ -679,6 +679,7 @@ TODO:
 - Check cache overlap on the entire tree;
 - Try to cache only the top level nodes;
 - Try to navigate the cache based on player action events.
+- Is it worth it? Caching and reusing vs just increasing the number of perm.
 
 ## Improve root_node merging
 
