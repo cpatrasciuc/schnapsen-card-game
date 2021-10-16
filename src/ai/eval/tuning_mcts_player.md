@@ -77,8 +77,8 @@ As a result of this initial debugging, the ideas to experiment with are:
 - [x] Pick the best child during the selection phase and balance exploration versus exploitation
 - [x] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [x] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
+- [x] Improve the aggregation of scores from all Mcts trees
 - [ ] Maybe reuse the nodes from the previous decisions instead of always starting from scratch
-- [ ] Improve merging the scores across root nodes
 - [ ] Expand an action and a permutation in each iteration
 
 > **Computational budget: `time_limit_sec` vs `max_iterations`**
@@ -673,6 +673,58 @@ Since the first action we select when we visit a node for the first time
 doesn't seem to influence the performance of the MctsPlayer, I will not pursue
 this idea further.  
 
+## Improve the aggregation of scores from all Mcts trees
+
+The MctsPlayer converts an imperfect information game to a list of perfect
+information games (based on the `max_permutations` param), then it runs the Mcts
+algorithm on each perfect information game, resulting in a list of Mcts trees.
+In order to decide which action is the best one, the player needs to aggregate
+for each action the scores that this action has in all the Mcts trees. In this
+section I evaluated different solutions for aggregating the scores:
+* **MostFrequentBestAction**: In each tree we look for the action having the
+  highest score and consider it the best action for that tree. The final
+  aggregated score for one action is the number of trees for which the action is
+  the best action.
+* **AverageUcb**: The aggregated score for one action is the arithmetic mean of
+  the individual scores from all trees. If the subtree corresponding to this
+  action in one of the trees is fully simulated, we use the minimax score from
+  this tree.
+* **CountVisits**: The aggregated score for one action is the total number of
+  visits that this action got in all the trees. This only makes sense if
+  UCB-based Selection is used, so the best nodes in each tree get more visits.
+* **SimpleAverage**: The aggregated score for one action is `sum(Qi) / sum(Ni)`,
+  where `Qi` is the total reward that this action got in the i-th tree, and `Ni`
+  is the number of visits that this action got in the i-th tree. If the subtree
+  corresponding to this action in one of the trees is fully simulated, `Qi` is
+  the minimax score from this tree multiplied with the number of visits.
+* **WeightedAverage**: The aggregated score for one action is `sum(Qi * Ni) /
+  sum(Ni)`. `Qi` and `Ni` have the same meaning as for SimpleAverage.
+* **LowerCiBoundAverage**: The aggregated score for one action is the lower CI
+  bound of the arithmetic mean of the scores from all trees. The CIs are
+  computed using `scipy.stats.bootstrap`.
+* **LowerCiBoundOnRawRewards**: The aggregated score for one action is the lower
+  CI bound of the arithmetic mean of all the raw rewards on all the paths going
+  through this action from all the Mcts trees. If UCB-based Selection is used,
+  there will be more paths going through an action in the trees where this
+  action leads to better results. This means that in the final aggregation we
+  will get more entries from the scenarios where an action is good and fewer
+  entries from the scenarios where the action is bad. It's probably better to
+  use RandomSelection if we don't want to bias the final score.
+
+In order to find out which of these possible solutions is the best, I run a grid
+with a set of players that use the same settings (max_permutations=150 and
+max_iterations=667), but different score aggregation functions:
+
+![eval_merge_scoring_info_func.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/875152a4f60f9de3c2feaed10d3e03e1dcb9cf30/src/ai/eval/data/eval_merge_scoring_info_func.png).
+
+The player that uses **AverageUcb** was significantly better than all the other
+players, except **LowerCiBoundAverage**. LowerCiBoundAverage introduces a
+dependency to scipy and uses more CPU to do the bootstrap resampling, without
+improving the performance of the player (measured using 1000 bummerls).
+
+In conclusion, I will move forward with using **AverageUcb** as the score
+aggregation function.
+
 ## Reuse nodes from previous decisions
 
 TODO:
@@ -680,10 +732,6 @@ TODO:
 - Try to cache only the top level nodes;
 - Try to navigate the cache based on player action events.
 - Is it worth it? Caching and reusing vs just increasing the number of perm.
-
-## Improve root_node merging
-
-TODO
 
 TODO(final eval):
 - Check correlation between game points won and initial cards or diff between
