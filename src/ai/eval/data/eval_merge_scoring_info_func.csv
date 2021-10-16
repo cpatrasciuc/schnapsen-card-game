@@ -1,0 +1,16 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+MctsPlayerCountVisits,MctsPlayerAverageUcb,371,629,2638,3330,4635,5959,305344,318167
+MctsPlayerMostFrequentBestAction,MctsPlayerAverageUcb,434,566,2615,3046,4939,5704,292941,284856
+MctsPlayerMostFrequentBestAction,MctsPlayerCountVisits,589,411,2961,2550,5691,4815,296190,266817
+MctsPlayerAverageUcb,MctsPlayerSimpleAverage,755,245,3057,1665,6621,3506,228201,226011
+MctsPlayerAverageUcb,MctsPlayerWeightedAverage,926,74,2957,793,7744,1864,175792,145399
+MctsPlayerSimpleAverage,MctsPlayerCountVisits,328,672,1918,2840,4045,6210,234892,222843
+MctsPlayerSimpleAverage,MctsPlayerWeightedAverage,754,246,2581,1463,6928,3737,177172,158127
+MctsPlayerSimpleAverage,MctsPlayerMostFrequentBestAction,294,706,1768,2792,3906,6370,211683,218201
+MctsPlayerWeightedAverage,MctsPlayerCountVisits,89,911,981,2935,2315,7716,153012,180519
+MctsPlayerWeightedAverage,MctsPlayerMostFrequentBestAction,102,898,996,2884,2405,7713,150134,179704
+MctsPlayerWeightedAverageRandomSelection,MctsPlayerAverageUcb,353,647,2893,3266,4572,6004,308790,341979
+MctsPlayerLowerCiBoundOnRawRewards,MctsPlayerAverageUcb,69,931,1087,3115,2149,7851,164667,191508
+MctsPlayerLowerCiBoundOnRawRewardsRandomSelection,MctsPlayerAverageUcb,460,540,3135,3116,5158,5554,322157,337194
+MctsPlayerLowerCiBoundAverage,MctsPlayerAverageUcb,496,504,3056,3129,5256,5403,322885,326328
+MctsPlayerLowerCiBoundAverage,MctsPlayerCountVisits,646,354,3477,2549,6039,4464,327158,307175

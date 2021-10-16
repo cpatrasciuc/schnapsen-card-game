@@ -340,7 +340,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=150,
                                          max_iterations=667,
                                          merge_scoring_info_func=count_visits)),
-  # TODO(mcts): Revaluate this after the bugfix.
   "MctsPlayerSimpleAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -349,7 +348,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_simple_average)),
-  # TODO(mcts): Revaluate this after the bugfix.
   "MctsPlayerWeightedAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -358,7 +356,15 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_weighted_average)),
-  # TODO(mcts): Revaluate this after the bugfix.
+  "MctsPlayerWeightedAverageRandomSelection":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        select_best_child=False,
+        merge_scoring_info_func=merge_ucbs_using_weighted_average)),
   "MctsPlayerLowerCiBoundAverage":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -367,7 +373,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=150,
         max_iterations=667,
         merge_scoring_info_func=merge_ucbs_using_lower_ci_bound)),
-  # TODO(mcts): Run evals for this player.
   "MctsPlayerLowerCiBoundOnRawRewards":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
@@ -377,7 +382,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_iterations=667,
         save_rewards=True,
         merge_scoring_info_func=lower_ci_bound_on_raw_rewards)),
-  # TODO(mcts): Run evals on this vs AverageUcb on 1000 bummerls.
   "MctsPlayerLowerCiBoundOnRawRewardsRandomSelection":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
