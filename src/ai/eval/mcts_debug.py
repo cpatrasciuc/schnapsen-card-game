@@ -2,6 +2,8 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import pickle
+
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 
@@ -10,8 +12,19 @@ from ai.cython_mcts_player.mcts_debug import run_mcts_and_collect_data, \
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
+from model.player_id import PlayerId
+from model.player_pair import PlayerPair
 
 _hlines_for_scores = [1, 0.66, 0.33, 0, -0.33, -0.66, -1]
+
+
+def _get_bummerl_score(bummerl, game_index):
+  game_points = PlayerPair(0, 0)
+  for i in range(game_index):
+    result = bummerl.completed_games[i].game_state.game_points
+    game_points.one += result.one
+    game_points.two += result.two
+  return game_points
 
 
 def _plot_data(dataframe: DataFrame, column: str, ax, hlines=None,
@@ -76,10 +89,40 @@ def mcts_player_debug(game_state: GameState, options: MctsPlayerOptions):
   plt.savefig("mcts_player_debug.png")
 
 
+def debug_game(filename: str, game_index: int, options: MctsPlayerOptions):
+  with open(filename, "rb") as binary_file:
+    bummerl = pickle.load(binary_file)
+  game = bummerl.completed_games[game_index]
+  game_points = _get_bummerl_score(bummerl, game_index)
+  game_state = GameState.new(dealer=game.dealer, random_seed=game.seed)
+  num_actions = len(
+    [action for action in game.actions if action.player_id == PlayerId.ONE])
+  action_counter = 0
+  fig, ax = plt.subplots(nrows=num_actions, ncols=2, squeeze=False)
+  for action in game.actions:
+    if action.player_id == PlayerId.ONE:
+      # cheater = False
+      dataframe = run_mcts_player_step_by_step(game_state.next_player_view(),
+                                               options,
+                                               iterations_step=100,
+                                               game_points=game_points)
+      _plot_data(dataframe, "score", ax[action_counter, 0], _hlines_for_scores)
+      # cheater = True
+      dataframe = run_mcts_player_step_by_step(game_state, options,
+                                               iterations_step=100,
+                                               game_points=game_points)
+      _plot_data(dataframe, "score", ax[action_counter, 1], _hlines_for_scores)
+      action_counter += 1
+    game_state = action.execute(game_state)
+  fig.set_size_inches(20, 5 * num_actions)
+  fig.suptitle(f"Debug game: dealer={game.dealer}, seed={game.seed}")
+  plt.tight_layout()
+  plt.savefig("debug_game.png")
+
+
 if __name__ == "__main__":
   main_wrapper(
-    lambda: mcts_debug(GameState.new(random_seed=60),
-                       MctsPlayerOptions(max_iterations=4000,
-                                         max_permutations=20,
-                                         select_best_child=True,
-                                         save_rewards=True)))
+    lambda: debug_game("bummerl_4180_2_done.pickle", 5,
+                       MctsPlayerOptions(max_iterations=667 * 4,
+                                         max_permutations=150,
+                                         save_rewards=False)))
