@@ -13,8 +13,7 @@ import pandas
 from pandas import DataFrame
 from statsmodels.stats.proportion import proportion_confint
 
-from ai.cython_mcts_player.mcts import reset_cache, get_cache_stats, \
-  get_local_cache_stats, move_local_cache_to_global_cache
+from ai.cython_mcts_player.mcts import reset_cache, get_cache_stats, inc_step
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.eval.players import PLAYER_NAMES
 from ai.player import Player
@@ -120,7 +119,6 @@ def evaluate_player_pair_in_process(num_bummerls: int,
   random_seed_generator = random.Random()
 
   cache_data = []
-  local_cache_data = []
 
   # Simulate the games and update the metrics accordingly.
   for i in range(num_bummerls):
@@ -141,20 +139,30 @@ def evaluate_player_pair_in_process(num_bummerls: int,
           game_view = game.game_state
         else:
           game_view = game.game_state.next_player_view()
+        if players[player_id].__class__ == CythonMctsPlayer:
+          inc_step()
         action, perf_counter, process_time = _request_next_action_and_time_it(
           game_view, bummerl.game_points, players[player_id])
         if players[player_id].__class__ == CythonMctsPlayer:
-          local_cache_stats = get_local_cache_stats()
-          print(f"Local cache stats: {local_cache_stats}")
-          local_cache_data.append(local_cache_stats)
-          move_local_cache_to_global_cache()
+          game_id = len(bummerl.completed_games)
+          step, cache_calls, cache_hits, cache_misses, cache_size = \
+            get_cache_stats()
+          df_data = [("calls", cache_calls), ("misses", cache_misses),
+                     ("size", cache_size)]
+          for source_step, hits in cache_hits.items():
+            df_data.append((str(source_step), hits))
+          dataframe = DataFrame(df_data,
+                                columns=["metric_name", "metric_value"],
+                                index=None)
+          dataframe["game_id"] = game_id
+          dataframe["step"] = step
+          dataframe["bummerl_id"] = i
+          print("Cache stats:\n", dataframe)
+          cache_data.append(dataframe)
         game.play_action(action)
         perf_counter_sum[player_id] += perf_counter
         process_time_sum[player_id] += process_time
         num_actions_requested[player_id] += 1
-      cache_stats = get_cache_stats()
-      print(f"Cache stats: {cache_stats}")
-      cache_data.append(cache_stats)
       is_game_of_interest = \
         players.one.game_of_interest or players.two.game_of_interest
       if is_game_of_interest:
@@ -180,16 +188,10 @@ def evaluate_player_pair_in_process(num_bummerls: int,
       if is_bummerl_of_interest:
         bummerls_of_interest.two += 1
 
-  cache_df = DataFrame(cache_data, columns=["calls", "hits", "misses", "size"])
-  if len(cache_df) > 0:
+  if len(cache_data) > 0:
+    cache_df = pandas.concat(cache_data, ignore_index=True)
     cache_df.to_csv(f"cache_data_{multiprocessing.current_process().pid}.csv",
                     index=False)
-  cache_df = DataFrame(local_cache_data,
-                       columns=["calls", "hits", "misses", "size"])
-  if len(cache_df) > 0:
-    cache_df.to_csv(
-      f"local_cache_data_{multiprocessing.current_process().pid}.csv",
-      index=False)
 
   print(end="\r")
   return {"bummerls": bummerls, "games": games, "game_points": game_points,
@@ -202,8 +204,8 @@ def evaluate_player_pair_in_process(num_bummerls: int,
 
 
 def evaluate_player_pair_in_parallel(players: PlayerPair[str],
-                                     num_bummerls: int = 1,
-                                     num_processes: int = 4) -> MetricsDict:
+                                     num_bummerls: int = 100,
+                                     num_processes: int = 1) -> MetricsDict:
   num_bummerls_per_process = num_bummerls // num_processes
   num_bummerls_to_run = [num_bummerls_per_process] * num_processes
   for i in range(num_bummerls % num_processes):

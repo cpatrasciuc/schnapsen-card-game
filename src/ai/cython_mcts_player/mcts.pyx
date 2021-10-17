@@ -4,7 +4,9 @@
 
 # distutils: language=c++
 
+import gc
 import logging
+from collections import defaultdict
 
 from libc.math cimport log, sqrt
 from libc.stdlib cimport free, malloc, rand, srand
@@ -68,74 +70,47 @@ cdef _get_state_cache_key(GameState *game_state):
   return state
 
 CACHE = None
-CACHE_CALLS = 0
-CACHE_HITS = 0
-CACHE_MISSES = 0
-
-LOCAL_CACHE = None
-LOCAL_CACHE_CALLS = 0
-LOCAL_CACHE_HITS = 0
-LOCAL_CACHE_MISSES = 0
+cdef int CACHE_CALLS = 0
+CACHE_HITS = defaultdict(int)
+cdef int CACHE_MISSES = 0
+cdef int STEP
 
 cdef void _add_game_state_to_cache(GameState *game_state):
   global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
-  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
   CACHE_CALLS += 1
   state = _get_state_cache_key(game_state)
   if CACHE is None:
-    CACHE = set()
+    CACHE = {}
     print("Initializing cache")
-  if state in CACHE:
-    CACHE_HITS += 1
+  result = CACHE.get(state, None)
+  if result is not None:
+    CACHE_HITS[result] += 1
   else:
     CACHE_MISSES += 1
-
-  LOCAL_CACHE_CALLS += 1
-  if LOCAL_CACHE is None:
-    LOCAL_CACHE = set()
-    print("Initializing local cache")
-  if state in LOCAL_CACHE:
-    LOCAL_CACHE_HITS += 1
-  else:
-    LOCAL_CACHE_MISSES += 1
-    LOCAL_CACHE.add(state)
+    CACHE[state] = STEP
 
 def get_cache_stats():
-  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
-  return (CACHE_CALLS, CACHE_HITS, CACHE_MISSES,
+  global STEP, CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  return (STEP, CACHE_CALLS, CACHE_HITS, CACHE_MISSES,
           (len(CACHE) if CACHE is not None else 0))
 
-def get_local_cache_stats():
-  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
-  return (LOCAL_CACHE_CALLS,
-          LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES,
-          (len(LOCAL_CACHE) if LOCAL_CACHE is not None else 0))
-
 def reset_cache():
-  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
-  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
+  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES, STEP
   print("Cache is reset")
   CACHE = None
   CACHE_CALLS = 0
-  CACHE_HITS = 0
+  CACHE_HITS = defaultdict(int)
   CACHE_MISSES = 0
-  LOCAL_CACHE = None
-  LOCAL_CACHE_CALLS = 0
-  LOCAL_CACHE_HITS = 0
-  LOCAL_CACHE_MISSES = 0
+  STEP = 0
+  gc.collect()
+  print("Done")
 
-def move_local_cache_to_global_cache():
-  global CACHE, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
-  global LOCAL_CACHE, LOCAL_CACHE_CALLS, LOCAL_CACHE_HITS, LOCAL_CACHE_MISSES
-  print("Moving local cache to global cache")
-  if CACHE is None:
-    CACHE = set(LOCAL_CACHE)
-  else:
-    CACHE.update(LOCAL_CACHE)
-  LOCAL_CACHE = None
-  LOCAL_CACHE_CALLS = 0
-  LOCAL_CACHE_HITS = 0
-  LOCAL_CACHE_MISSES = 0
+def inc_step():
+  global STEP, CACHE_CALLS, CACHE_HITS, CACHE_MISSES
+  STEP += 1
+  CACHE_CALLS = 0
+  CACHE_HITS = defaultdict(int)
+  CACHE_MISSES = 0
 
 cdef Node *_selection(Node *root_node, bint select_best_child) nogil:
   cdef Node *node = root_node
