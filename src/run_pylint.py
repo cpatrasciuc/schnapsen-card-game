@@ -36,6 +36,7 @@ def run_pylint():
     r"ui\.game_options\.GameOptions\..*",
   ]
   extension_pkgs = [
+    "ai.cython_mcts_player.mcts",
     "ai.cython_mcts_player.mcts_debug",
     "ai.cython_mcts_player.player",
   ]
