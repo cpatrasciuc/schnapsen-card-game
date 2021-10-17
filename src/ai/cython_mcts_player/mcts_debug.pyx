@@ -189,6 +189,7 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
   if game_points is not None and options.use_game_points:
     bummerl_score[0] = game_points.one
     bummerl_score[1] = game_points.two
+  cdef int total_budget = options.max_iterations * options.max_permutations
   cdef GameState game_view = from_python_game_state(py_game_view)
   cdef GameState game_state
   cdef vector[Node *] root_nodes
@@ -209,6 +210,8 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
   cdef bint is_fully_simulated, permutation_is_fully_simulated
   dataframes = []
   max_iterations = options.max_iterations
+  if options.reallocate_computational_budget:
+    max_iterations = int(total_budget / permutations.size())
   while True:
     is_fully_simulated = True
     for _ in range(iterations_step):
