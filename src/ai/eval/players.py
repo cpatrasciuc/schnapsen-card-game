@@ -7,7 +7,6 @@ from typing import Dict, Callable
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
-from ai.lib_mcts_player import LibMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
   merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average, \
@@ -63,8 +62,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
   "HeuristicWithTrumpControl":
     lambda player_id: HeuristicPlayer(player_id, HeuristicPlayerOptions(
       trump_control=True)),
-
-  "LibMctsPlayer": LibMctsPlayer,
 
   # Same permutations, different iterations
   "MctsPlayer30perm10000iter":
