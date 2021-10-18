@@ -12,7 +12,7 @@ from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
   merge_ucbs_using_simple_average, merge_ucbs_using_weighted_average, \
   merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards, \
-  best_action_frequency
+  best_action_frequency, average_score_with_tiebreakers
 from ai.permutations import random_perm_generator, \
   lexicographic_perm_generator, sims_table_perm_generator
 from ai.player import Player
@@ -333,6 +333,15 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=150,
                                          max_iterations=667,
                                          merge_scoring_info_func=average_ucb)),
+  # TODO(mcts): Evaluate this player against MctsPlayerAverageUcb and Heuristic.
+  "MctsPlayerAverageScoreWithTiebreakers":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=average_score_with_tiebreakers)),
   "MctsPlayerCountVisits":
     lambda player_id: CythonMctsPlayer(player_id, False,
                                        MctsPlayerOptions(
