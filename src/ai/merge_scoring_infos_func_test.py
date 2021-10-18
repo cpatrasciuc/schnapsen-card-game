@@ -7,8 +7,9 @@ from typing import Dict
 
 from ai.merge_scoring_infos_func import ScoringInfo, best_action_frequency, \
   average_ucb, count_visits, merge_ucbs_using_simple_average, \
-  merge_ucbs_using_weighted_average, merge_ucbs_using_lower_ci_bound, \
-  lower_ci_bound_on_raw_rewards, average_score_with_tiebreakers
+  merge_ucbs_using_weighted_average, average_score_with_tiebreakers
+from ai.merge_scoring_infos_func_with_deps import \
+  merge_ucbs_using_lower_ci_bound, lower_ci_bound_on_raw_rewards
 from model.card import Card
 from model.card_value import CardValue
 from model.player_action import PlayCardAction, PlayerAction, \

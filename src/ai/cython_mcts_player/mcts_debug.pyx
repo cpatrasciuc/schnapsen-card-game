@@ -31,7 +31,8 @@ from ai.heuristic_player import HeuristicPlayer
 from ai.mcts_player import generate_permutations
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb, \
-  lower_ci_bound_on_raw_rewards, are_all_nodes_fully_simulated
+  are_all_nodes_fully_simulated
+from ai.merge_scoring_infos_func_with_deps import lower_ci_bound_on_raw_rewards
 from model.game_state import GameState as PyGameState
 from model.player_action import PlayerAction
 from model.player_pair import PlayerPair

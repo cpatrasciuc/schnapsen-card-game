@@ -20,7 +20,7 @@ from pandas import DataFrame
 from ai.cython_mcts_player.mcts_debug import run_mcts_player_step_by_step
 from ai.eval.utils import same_game_state_after_each_trick_scenarios
 from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import lower_ci_bound_on_raw_rewards
+from ai.merge_scoring_infos_func_with_deps import lower_ci_bound_on_raw_rewards
 from main_wrapper import main_wrapper
 from model.game_state import GameState
 from model.player_id import PlayerId
