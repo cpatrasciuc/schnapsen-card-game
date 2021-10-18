@@ -8,10 +8,11 @@ from typing import Dict
 from ai.merge_scoring_infos_func import ScoringInfo, best_action_frequency, \
   average_ucb, count_visits, merge_ucbs_using_simple_average, \
   merge_ucbs_using_weighted_average, merge_ucbs_using_lower_ci_bound, \
-  lower_ci_bound_on_raw_rewards
+  lower_ci_bound_on_raw_rewards, average_score_with_tiebreakers
 from model.card import Card
 from model.card_value import CardValue
-from model.player_action import PlayCardAction, PlayerAction
+from model.player_action import PlayCardAction, PlayerAction, \
+  CloseTheTalonAction, AnnounceMarriageAction, ExchangeTrumpCardAction
 from model.player_id import PlayerId
 from model.suit import Suit
 
@@ -105,6 +106,60 @@ class AverageUcbTest(unittest.TestCase):
       (PlayCardAction(PlayerId.ONE, Card(Suit.SPADES, CardValue.KING)), 0.5417),
       (PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)), 0.3),
     }, {(action, round(score, 4)) for action, score in actions_and_scores})
+
+
+class AverageScoreWithTiebreakersTest(unittest.TestCase):
+  def test(self):
+    action_1 = AnnounceMarriageAction(PlayerId.ONE,
+                                      Card(Suit.SPADES, CardValue.QUEEN))
+    action_2 = ExchangeTrumpCardAction(PlayerId.ONE)
+    action_3 = CloseTheTalonAction(PlayerId.ONE)
+    action_4 = PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING))
+    actions_and_scores_list = [
+      {
+        action_1: ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=False,
+                              terminal=False),
+        action_2: ScoringInfo(q=6, n=6, score=-0.33, fully_simulated=True,
+                              terminal=False),
+        action_3: ScoringInfo(q=5, n=6, score=5 / 6, fully_simulated=False,
+                              terminal=False),
+      },
+      {
+        action_1: ScoringInfo(q=15, n=20, score=15 / 20, fully_simulated=False,
+                              terminal=False),
+        action_2: ScoringInfo(q=20, n=20, score=20 / 20, fully_simulated=False,
+                              terminal=False),
+        action_3: ScoringInfo(q=5, n=20, score=5 / 20, fully_simulated=False,
+                              terminal=False),
+      },
+      {
+        action_1: ScoringInfo(q=15, n=15, score=0.66, fully_simulated=True,
+                              terminal=False),
+        action_2: ScoringInfo(q=12, n=20, score=12 / 20, fully_simulated=False,
+                              terminal=False),
+        action_4: ScoringInfo(q=-3, n=10, score=-3 / 10, fully_simulated=False,
+                              terminal=False),
+      },
+    ]
+    actions_and_scores = average_score_with_tiebreakers(actions_and_scores_list)
+    self.assertEqual({
+      (action_1, 0.7478),
+      (action_2, 0.4233),
+      (action_3, 0.5417),
+      (action_4, -0.3),
+    }, {(action, round(score[0], 4)) for action, score in actions_and_scores})
+    self.assertEqual({
+      (action_1, 0.8611),
+      (action_2, 0.8667),
+      (action_3, 0.5417),
+      (action_4, -0.3),
+    }, {(action, round(score[1], 4)) for action, score in actions_and_scores})
+    self.assertEqual({
+      (action_1, 50),
+      (action_2, 100),
+      (action_3, -100),
+      (action_4, -4),
+    }, {(action, score[2]) for action, score in actions_and_scores})
 
 
 class CountVisitsTest(unittest.TestCase):

@@ -11,7 +11,8 @@ from typing import List, Tuple, Callable, Dict, Optional, Union
 import numpy as np
 from scipy.stats import bootstrap
 
-from model.player_action import PlayerAction
+from model.player_action import PlayerAction, ExchangeTrumpCardAction, \
+  CloseTheTalonAction, AnnounceMarriageAction, PlayCardAction
 
 
 @dataclasses.dataclass
@@ -44,7 +45,14 @@ class ScoringInfo:
 
 ActionsWithScores = Dict[PlayerAction, ScoringInfo]
 
-AggregatedScores = List[Tuple[PlayerAction, float]]
+FinalScore = Union[float, Tuple]
+"""
+The final aggregated score for one action. It can be a simple float or a tuple
+of floats, with the first element of the tuple being the main score and the
+other elements being the tiebreakers, in order.
+"""
+
+AggregatedScores = List[Tuple[PlayerAction, FinalScore]]
 """
 A list containing each action and its aggregated score. An action should only
 appear once in the output.
@@ -254,6 +262,50 @@ def average_ucb(
   from each permutation.
   """
   return _average_ucb_for_fully_simulated_trees(actions_with_scores_list)
+
+
+def _sign(score: float) -> float:
+  return -1 if score < 0 else 1
+
+
+def _card_value(action: PlayerAction) -> float:
+  if isinstance(action, ExchangeTrumpCardAction):
+    return 100
+  if isinstance(action, CloseTheTalonAction):
+    return -100
+  if isinstance(action, AnnounceMarriageAction):
+    return 50
+  if isinstance(action, PlayCardAction):
+    return action.card.card_value.value
+  raise ValueError(f"Unsupported action type: {type(action)}, {action}")
+
+
+def average_score_with_tiebreakers(
+    actions_with_scores_list: List[ActionsWithScores]) -> AggregatedScores:
+  """
+  The aggregated score for each action is the arithmetic mean of its scores
+  from each permutation. It also uses two tiebreakers:
+  * avg(q/n)
+  * sign(score) * card_value
+  """
+  scores = defaultdict(list)
+  rewards = defaultdict(list)
+  for actions_with_scores in actions_with_scores_list:
+    for action, score in actions_with_scores.items():
+      scores[action].append(score.score)
+      rewards[action].append(score.q / score.n)
+  scores = {action: sum(value) / len(value) for action, value in scores.items()}
+  rewards = {action: sum(value) / len(value) for action, value in
+             rewards.items()}
+  card_values = {action: _sign(score) * _card_value(action) for action, score in
+                 scores.items()}
+  actions_and_scores = [(action, (score, rewards[action], card_values[action]))
+                        for action, score in scores.items()]
+  # noinspection PyUnreachableCode
+  if __debug__:
+    logging.debug("MctsPlayer: Average UCBs with tiebreakers:\n%s",
+                  pprint.pformat(actions_and_scores, indent=True))
+  return actions_and_scores
 
 
 def count_visits(
