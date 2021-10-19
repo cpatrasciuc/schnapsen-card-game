@@ -1,5 +1,7 @@
 # Tuning MctsPlayer
 
+TODO: add a table of contents
+
 ## The problem
 
 The initial version of the MctsPlayer lost 70 out of 100 bummerls against
@@ -78,7 +80,7 @@ As a result of this initial debugging, the ideas to experiment with are:
 - [x] Find the best combination of max_iterations and max_permutations for a fixed computational budget
 - [x] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
 - [x] Improve the aggregation of scores from all Mcts trees
-- [ ] Maybe reuse the nodes from the previous decisions instead of always starting from scratch
+- [x] Reuse the nodes from the previous decisions instead of always starting from scratch
 - [ ] Expand an action and a permutation in each iteration
 
 > **Computational budget: `time_limit_sec` vs `max_iterations`**
@@ -179,7 +181,7 @@ data back to the MctsPlayer, we reduce the amount of data sent from 12Mb to 2Kb
 (99.98% reduction). This allows the MctsPlayer to run 1.5-2x more iterations in
 the same amount of time ([plot](https://github.com/cpatrasciuc/schnapsen-card-game/blob/7a9a12b607cdbae7e39a62703bc633ef9894c86b/src/ai/eval/data/iterations_and_time_8perm.png)).
 The disadvantage of this solution is that we won't be able to
-[reuse these nodes/trees](#reuse-nodes-from-previous-decisions) later. 
+[reuse these nodes/trees](#reuse-the-nodes-from-previous-decisions) later. 
 
 After steps 1-3, the MctsPlayer went from running 800 iterations in 10 seconds
 to running 7k iterations in 10 seconds (8 permutations processed on 8 cores).
@@ -725,13 +727,104 @@ improving the performance of the player (measured using 1000 bummerls).
 In conclusion, I will move forward with using **AverageUcb** as the score
 aggregation function.
 
-## Reuse nodes from previous decisions
+## Reuse the nodes from previous decisions
 
-TODO:
-- Check cache overlap on the entire tree;
-- Try to cache only the top level nodes;
-- Try to navigate the cache based on player action events.
-- Is it worth it? Caching and reusing vs just increasing the number of perm.
+When the MctsPlayer makes a decision, it simulates a significant number of
+games until completion, then it picks the action that had the best overall
+outcome and plays it. It then discards all the scenarios it simulated, so the
+next time it has to make a move, it starts from scratch using the new game
+state at that moment. The idea to experiment with in this section is to cache
+the game states that were already seen in previous decisions and see if reusing
+this data can improve the player.
+
+When we expand a tree node, and we reach a new game state, we would have to
+search for this game state in a cache that would map the already seen game
+states to the corresponding tree nodes. If there is already a node for this game
+state, we would reuse it, instead of creating a new one.
+Unfortunately, implementing this idea is not trivial for the following reasons:
+* **Graph/DAG**: If we always reuse a game state/node from the cache, it means
+  that one game state might have multiple parent states, so the Mcts trees will
+  become a directed acyclic graph (DAG). This means that the backpropagation of
+  the rewards from the leaves back to the root must be updated accordingly.
+* **Speed**: Every time we visit a game state we would have to first
+  search for it in the cache: compute the hash, look up the hash in the cache,
+  compare the game states from the cache with our game state. This might be too
+  slow.
+* **Cache size**: For a budget of 100k iterations we are visiting around 1M
+  different game states per decision in the early game stages. The size of the
+  cache might grow rapidly and become a concern.
+* **Cache cleanup**: If we want to remove entries from the cache, figuring out
+  which entries should be deleted and which ones should be kept, might take a
+  significant amount of time. 
+* **Libraries**: If we want to be fast, we would use a hash map for the cache.
+  If we do it in Python, it would slow everything down significantly
+  because of the back-and-forth between C/C++ (no GIL) and Python (GIL) code.
+  Doing it in C++ with STL might be tricky because we would have to implement
+  `std::hash` for our Cython struct (it's most likely not possible, but I didn't
+  study it in depth). Writing our own hash map in C or Cython requires more
+  work.
+
+Before tackling these non-trivial problems I did a quick prototype in Python.
+The code for it is in the `node_cache` branch. Using this prototype I measured
+how many cache calls we would do and how many cache hits we would get, by
+playing 100 bummerls between MctsPlayer and HeuristicPlayer. Every time the
+MctsPlayer is asked to make a decision, I considered that a new *step*. When
+I get a cache hit, I'm also storing the step at which the cache entry was added
+to the cache. The results are the following:
+
+![cache_stats](https://github.com/cpatrasciuc/schnapsen-card-game/blob/0e8743cf3e99de021dcfdf7089f9443baeb37356/src/ai/eval/data/cache_stats_100_bummerls_vs_heuristic.png)
+
+Takeaways:
+* At the 5th step and later (i.e., approximately after four tricks are played),
+  the number of cache calls is very low, because we don't have to visit a lot of
+  game states at the end of the game. We most likely can fully simulate the
+  entire game tree at this stage and a cache won't bring any performance benefit
+  (i.e., the player will not make better decisions).
+* In the first 3 steps we get 81% or more cache misses, so it seems a cache
+  would not help in these situations either.
+* In the 4th step, we get 52% cache hits. Two thirds of the hits are game states
+  that were added to the cache also in step 4 (so we reach them multiple times
+  through different paths that are explored only in step 4). This 4th step might
+  be the only scenario where a cache might help.
+
+If we cache the game states from previous decisions, how would we use this
+information? There are two possible ways:
+* Some entries from the cache might be valid given the current game situation,
+  but would not match the specific permutations we process at the current step
+  (i.e., at step *i*, we consider that the opponent might have cards *C* in
+  their hand, the opponent might still have cards *C* in their hand at step
+  *i+1*, but we decided to process other permutations at this step, where the
+  opponent has other cards in their hand). In this case, we could reuse the info
+  from the cache as if it were a new permutation in addition to the ones we
+  process at the current step.
+* If the entries in the cache match the permutation we process at the current
+  step we continue expanding that subtree. This means reusing the data from the
+  cache saves us some iterations.
+
+Since reusing the data from the cache is equivalent to having more iterations
+and/or more permutations, I tried to estimate if this would improve the
+performance of the MctsPlayer by simulating 1000 bummerls between the
+100k-iterations-budget player (max_permutations=150, max_iterations=667) and the
+500k-iterations-budget player (max_permutations=335, max_iterations=1491).
+The player with the higher budget was not significantly better:
+
+```
+Simulating MctsPlayerAverageUcb vs MctsPlayerIterAndPermXSqrt5
+bummerls: 478:522 47.80% [44.72%, 50.90%]
+games: 2964:3098 48.89% [47.64%, 50.15%]
+game_points: 5182:5376 
+trick_points: 316279:319600
+```
+
+It is not clear that adding a cache would improve the MctsPlayer, or that the
+improvement would outweigh the work required to implement it. As a result,
+I will not pursue this further in this version of the player.   
+
+## Tiebreakers
+
+TODO
+
+## Final results
 
 TODO(final eval):
 - Check correlation between game points won and initial cards or diff between
