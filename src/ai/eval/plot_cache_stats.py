@@ -141,6 +141,7 @@ def plot_cache_stats():
   hits_from_prev_steps = hits_from_prev_steps.groupby("step").mean()
   ax[0, 0].plot(hits_from_prev_steps.index, hits_from_prev_steps.metric_value,
                 "o-", color="g", label="Hits from previous steps")
+  ax[0, 0].set_xlabel("Step")
   ax[0, 0].legend(loc=0)
 
   fig.suptitle("Cache stats (100 bummerls Mcts vs Heuristic)")
