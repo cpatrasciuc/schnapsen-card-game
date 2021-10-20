@@ -5,7 +5,7 @@
 import math
 from typing import Dict, Callable
 
-from ai.cython_mcts_player.player import CythonMctsPlayer
+from ai.cython_mcts_player.player import CythonMctsPlayer, CythonIsMctsPlayer
 from ai.heuristic_player import HeuristicPlayer, HeuristicPlayerOptions
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import average_ucb, count_visits, \
@@ -450,4 +450,19 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
       MctsPlayerOptions(
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
+
+  # TODO(mcts): Evaluate this player.
+  "IsMctsPlayer150perm667iter":
+    lambda player_id: CythonIsMctsPlayer(player_id, False,
+                                         MctsPlayerOptions(
+                                           num_processes=1,
+                                           max_permutations=150,
+                                           max_iterations=667)),
+  # TODO(mcts): Evaluate this player.
+  "IsMctsPlayer10000perm10iter":
+    lambda player_id: CythonIsMctsPlayer(player_id, False,
+                                         MctsPlayerOptions(
+                                           num_processes=1,
+                                           max_permutations=10000,
+                                           max_iterations=10)),
 }
