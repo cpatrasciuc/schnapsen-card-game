@@ -14,7 +14,7 @@ from ai.cython_mcts_player.card cimport Card, is_unknown
 from ai.cython_mcts_player.game_state cimport GameState, PlayerId, \
   from_python_player_id, from_python_game_state, Points
 from ai.cython_mcts_player.mcts cimport Node, build_tree, MAX_CHILDREN, \
-  delete_tree
+  delete_tree, build_is_tree, ActionNode
 from ai.cython_mcts_player.player_action cimport ActionType, \
   to_python_player_action
 from ai.mcts_player import BaseMctsPlayer
@@ -127,3 +127,65 @@ class CythonMctsPlayer(BaseMctsPlayer):
       &game_view, &permutations, from_python_player_id(self.id.opponent()),
       bummerl_score, max_iterations, options.select_best_child,
       options.exploration_param, options.save_rewards)
+
+
+cdef list _run_is_mcts_single_threaded(GameState *game_view,
+                                       vector[vector[Card]] *permutations,
+                                       PlayerId opponent_id,
+                                       Points *bummerl_score,
+                                       int max_iterations,
+                                       float exploration_param,
+                                       bint save_rewards):
+  cdef int i
+  cdef vector[GameState] game_states
+  for i in range(permutations.size()):
+    game_states.push_back(game_view[0])
+    populate_game_view(&game_states[i], &permutations[0][i], opponent_id)
+  cdef vector[ActionNode] action_nodes = build_is_tree(&game_states,
+                                                       max_iterations,
+                                                       exploration_param,
+                                                       save_rewards,
+                                                       bummerl_score)
+  cdef int j
+  action_with_scores = {}
+  for i in range(action_nodes.size()):
+    py_action = to_python_player_action(action_nodes[i].action)
+    scoring_info = ScoringInfo(
+      q=action_nodes[i].ucb,
+      n=action_nodes[i].n,
+      score=(action_nodes[i].ucb if action_nodes[i].player != opponent_id else -
+      action_nodes[i].ucb),
+      fully_simulated=bool(action_nodes[i].fully_simulated),
+      terminal=None)
+    action_with_scores[py_action] = scoring_info
+    for j in range(action_nodes[i].children.size()):
+      if action_nodes[i].children[j] != NULL:
+        delete_tree(action_nodes[i].children[j])
+  return [action_with_scores]
+
+
+class CythonIsMctsPlayer(CythonMctsPlayer):
+  """
+  Cython-based implementation of BaseMctsPlayer that uses Information Set Mcts.
+  """
+
+  def run_mcts_algorithm(self, py_game_view: PyGameState,
+                         py_permutations: List[List[PyCard]],
+                         game_points = None) -> List[ActionsWithScores]:
+    cdef GameState game_view = from_python_game_state(py_game_view)
+    cdef vector[vector[Card]] permutations
+    cdef int max_iterations = self._options.max_iterations or -1
+    cdef int total_budget
+    from_python_permutations(py_permutations, &permutations)
+    if max_iterations > 0:
+      max_iterations *= self._options.max_permutations
+    cdef Points[2] bummerl_score
+    bummerl_score[0] = 0
+    bummerl_score[1] = 0
+    if self._options.use_game_points and game_points is not None:
+      bummerl_score[0] = game_points.one
+      bummerl_score[1] = game_points.two
+    return _run_is_mcts_single_threaded(
+      &game_view, &permutations, from_python_player_id(self.id.opponent()),
+      bummerl_score, max_iterations, self._options.exploration_param,
+      self._options.save_rewards)

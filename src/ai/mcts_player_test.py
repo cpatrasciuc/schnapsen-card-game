@@ -7,7 +7,7 @@ import os
 import unittest
 from typing import Optional, List
 
-from ai.cython_mcts_player.player import CythonMctsPlayer
+from ai.cython_mcts_player.player import CythonMctsPlayer, CythonIsMctsPlayer
 from ai.mcts_player import MctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
 from ai.merge_scoring_infos_func import best_action_frequency, \
@@ -56,7 +56,7 @@ class MctsPlayerTest(unittest.TestCase):
     try:
       options = MctsPlayerOptions(max_iterations=None)
       player_class = self._mcts_player.__class__
-      if player_class == CythonMctsPlayer:
+      if player_class in [CythonMctsPlayer, CythonIsMctsPlayer]:
         options.num_processes = 1
       player_two = player_class(PlayerId.TWO, options=options)
       players = PlayerPair(self._mcts_player, player_two)
@@ -227,6 +227,12 @@ class CythonMctsPlayerSelectBestChildTest(MctsPlayerTest):
                                 select_best_child=True,
                                 num_processes=1)
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonIsMctsPlayerTest(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = MctsPlayerOptions(max_iterations=None, num_processes=1)
+    self._mcts_player = CythonIsMctsPlayer(PlayerId.ONE, options=options)
 
 
 class CythonMctsPlayerSaveRewardsTest(MctsPlayerTest):

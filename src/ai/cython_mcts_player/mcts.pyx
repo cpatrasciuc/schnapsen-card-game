@@ -12,7 +12,8 @@ from libc.string cimport memset
 from libc.time cimport time
 from libcpp.vector cimport vector
 
-from ai.cython_mcts_player.game_state cimport is_game_over, game_points, Points
+from ai.cython_mcts_player.game_state cimport is_game_over, game_points, \
+  Points, opponent
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
 
@@ -121,8 +122,9 @@ cdef void _update_ucb(Node *node, float exploration_param) nogil:
     node.fully_simulated = True
   else:
     node.ucb = node.q / node.n
-    node.exploration_score = exploration_param * sqrt(
-      2 * log(node.parent.n) / node.n)
+    if node.parent != NULL:
+      node.exploration_score = exploration_param * sqrt(
+        2 * log(node.parent.n) / node.n)
 
 cdef void _update_children_ucb(Node *node, float exploration_param,
                                bint select_best_child) nogil:
@@ -244,6 +246,122 @@ cdef void delete_tree(Node *root_node) nogil:
   if root_node.rewards != NULL:
     del root_node.rewards
   free(root_node)
+
+cdef ActionNode *_action_selection(vector[ActionNode] *action_nodes,
+                                   PlayerId player) nogil:
+  cdef float max_selection_score = -1000000
+  cdef vector[ActionNode *] best_children
+
+  cdef int i
+  cdef float selection_score
+  cdef ActionNode *action_node
+  for i in range(action_nodes.size()):
+    action_node = &(action_nodes[0][i])
+    if action_node.fully_simulated:
+      continue
+    if action_node.n == 0:
+      return action_node
+    selection_score = \
+      action_node.ucb if action_node.player == player else -action_node.ucb
+    selection_score += action_node.exploration_score
+    if selection_score > max_selection_score:
+      max_selection_score = selection_score
+      best_children.clear()
+      best_children.push_back(action_node)
+    elif selection_score == max_selection_score:
+      best_children.push_back(action_node)
+  if best_children.empty():
+    return NULL
+  cdef int index = rand() % best_children.size()
+  return best_children[index]
+
+cdef void _update_action_node_ucb(ActionNode *action_node) nogil:
+  if action_node.fully_simulated:
+    return
+  cdef bint fully_simulated = True
+  cdef float sum_scores = 0
+  cdef float num_children = 0
+  for i in range(action_node.children.size()):
+    if action_node.children[i] == NULL or \
+        not action_node.children[i].fully_simulated:
+      fully_simulated = False
+    if action_node.children[i] == NULL:
+      continue
+    sum_scores += action_node.children[i].ucb
+    num_children += 1
+  if fully_simulated:
+    action_node.fully_simulated = True
+  action_node.ucb = sum_scores / num_children
+  action_node.n += 1
+
+cdef bint run_one_is_iteration(vector[ActionNode] *action_nodes,
+                               vector[GameState] *game_states,
+                               int game_state_index,
+                               int iteration,
+                               float exploration_param,
+                               bint save_rewards,
+                               Points *bummerl_score) nogil:
+  cdef ActionNode *selected_action_node = _action_selection(
+    action_nodes, opponent(game_states[0][0].next_player))
+  if selected_action_node is NULL:
+    return True
+  cdef Node *root_node = selected_action_node.children[game_state_index]
+  cdef GameState game_state
+  if root_node == NULL:
+    game_state = execute(&(game_states[0][game_state_index]),
+                         selected_action_node.action)
+    root_node = init_node(&game_state, NULL, bummerl_score)
+    selected_action_node.children[game_state_index] = root_node
+    selected_action_node.player = root_node.player
+    if root_node.terminal:
+      selected_action_node.fully_simulated = True
+      selected_action_node.ucb = root_node.ucb
+
+  cdef int i
+  if not root_node.terminal:
+    run_one_iteration(root_node, exploration_param, True, save_rewards,
+                      bummerl_score)
+    _update_ucb(root_node, exploration_param)
+    _update_action_node_ucb(selected_action_node)
+    for i in range(action_nodes.size()):
+      if action_nodes[0][i].n > 0:
+        action_nodes[0][i].exploration_score = exploration_param * sqrt(
+          2 * log(iteration) / action_nodes[0][i].n)
+  return False
+
+cdef vector[ActionNode] build_is_tree(vector[GameState] *game_states,
+                                      int max_iterations,
+                                      float exploration_param,
+                                      bint save_rewards=False,
+                                      Points *bummerl_score=NULL) nogil:
+  cdef vector[ActionNode] action_nodes
+  cdef PlayerAction[7] actions
+  get_available_actions(&game_states[0][0], actions)
+  cdef int i
+  cdef ActionNode action_node
+  action_node.children.resize(game_states.size(), NULL)
+  action_node.n = 0
+  action_node.ucb = 0
+  action_node.exploration_score = 0
+  action_node.fully_simulated = False
+  for i in range(MAX_CHILDREN):
+    if actions[i].action_type == ActionType.NO_ACTION:
+      break
+    action_node.action = actions[i]
+    action_nodes.push_back(action_node)
+
+  cdef int iterations = 0
+  cdef int game_state_index = 0
+  while True:
+    iterations += 1
+    game_state_index = (game_state_index + 1) % game_states.size()
+    if run_one_is_iteration(&action_nodes, game_states, game_state_index,
+                            iterations, exploration_param, save_rewards,
+                            bummerl_score):
+      break
+    if 0 < max_iterations <= iterations:
+      break
+  return action_nodes
 
 # Initialize the RNG.
 srand(time(NULL))

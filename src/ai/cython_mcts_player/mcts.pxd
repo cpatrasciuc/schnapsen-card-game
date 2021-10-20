@@ -44,3 +44,19 @@ cdef void delete_tree(Node *root_node) nogil
 
 cdef list best_actions_for_tests(Node *node)
 cdef debug_str(Node *node)
+
+cdef struct ActionNode:
+  PlayerAction action
+  vector[Node *] children
+  PlayerId player
+  int n
+  float ucb
+  float exploration_score
+  bint fully_simulated
+
+# Information Set (IS) Mcts equivalent of the build_tree() function above.
+cdef vector[ActionNode] build_is_tree(vector[GameState] *game_states,
+                                      int max_iterations,
+                                      float exploration_param,
+                                      bint save_rewards= *,
+                                      Points *bummerl_score= *) nogil
