@@ -13,7 +13,7 @@ from libc.time cimport time
 from libcpp.vector cimport vector
 
 from ai.cython_mcts_player.game_state cimport is_game_over, game_points, \
-  Points, opponent
+  Points
 from ai.cython_mcts_player.player_action cimport ActionType, execute, \
   get_available_actions
 
@@ -302,7 +302,7 @@ cdef bint run_one_is_iteration(vector[ActionNode] *action_nodes,
                                bint save_rewards,
                                Points *bummerl_score) nogil:
   cdef ActionNode *selected_action_node = _action_selection(
-    action_nodes, opponent(game_states[0][0].next_player))
+    action_nodes, game_states[0][0].next_player)
   if selected_action_node is NULL:
     return True
   cdef Node *root_node = selected_action_node.children[game_state_index]
