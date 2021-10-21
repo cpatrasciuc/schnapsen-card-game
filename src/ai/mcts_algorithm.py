@@ -97,7 +97,6 @@ class Node(abc.ABC, Generic[_State, _Action]):
     It returns the newly created node.
     """
     assert not self.fully_expanded
-    # TODO(mcts): Start with the action that the HeuristicPlayer would play.
     action = random.choice(self.untried_actions)
     new_state = self._get_next_state(action)
     child = self.__class__(new_state, self)
@@ -204,7 +203,6 @@ class Mcts(Generic[_State, _Action]):
     self._node_class = node_class
     self._max_iterations = None
     self._exploration_param = exploration_param
-    # TODO(mcts): Cache the tree(s) from previous calls.
 
   def build_tree(self, state: _State,
                  max_iterations: Optional[int] = None,

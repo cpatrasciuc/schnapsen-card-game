@@ -89,7 +89,6 @@ class MctsPlayerOptions:
   actual_permutations * actual_iterations = max_permutations * max_iterations.
   """
 
-  # TODO(mcts): Evaluate this.
   use_game_points: bool = True
   """
   If True, the player takes into account the game points. This can change the
