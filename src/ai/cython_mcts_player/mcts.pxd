@@ -54,6 +54,14 @@ cdef struct ActionNode:
   float exploration_score
   bint fully_simulated
 
+cdef bint run_one_is_iteration(vector[ActionNode] *action_nodes,
+                               vector[GameState] *game_states,
+                               int game_state_index,
+                               int iteration,
+                               float exploration_param,
+                               bint save_rewards,
+                               Points *bummerl_score) nogil
+
 # Information Set (IS) Mcts equivalent of the build_tree() function above.
 cdef vector[ActionNode] build_is_tree(vector[GameState] *game_states,
                                       int max_iterations,

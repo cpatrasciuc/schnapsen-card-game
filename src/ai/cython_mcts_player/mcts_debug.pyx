@@ -18,14 +18,18 @@ from ai.cython_mcts_player.card cimport Card
 from ai.cython_mcts_player.game_state cimport from_python_game_state, \
   GameState, from_python_player_id, PlayerId, Points
 from ai.cython_mcts_player.mcts cimport MAX_CHILDREN
+from ai.cython_mcts_player.mcts cimport ActionNode
 from ai.cython_mcts_player.mcts cimport Node
 from ai.cython_mcts_player.mcts cimport build_tree
 from ai.cython_mcts_player.mcts cimport run_one_iteration, init_node
+from ai.cython_mcts_player.mcts cimport run_one_is_iteration
 from ai.cython_mcts_player.mcts cimport delete_tree
 from ai.cython_mcts_player.player cimport build_scoring_info
 from ai.cython_mcts_player.player cimport from_python_permutations
 from ai.cython_mcts_player.player cimport populate_game_view
 from ai.cython_mcts_player.player_action cimport ActionType
+from ai.cython_mcts_player.player_action cimport PlayerAction
+from ai.cython_mcts_player.player_action cimport get_available_actions
 from ai.cython_mcts_player.player_action cimport to_python_player_action
 from ai.heuristic_player import HeuristicPlayer
 from ai.mcts_player import generate_permutations
@@ -34,7 +38,7 @@ from ai.merge_scoring_infos_func import ActionsWithScores, average_ucb, \
   are_all_nodes_fully_simulated
 from ai.merge_scoring_infos_func_with_deps import lower_ci_bound_on_raw_rewards
 from model.game_state import GameState as PyGameState
-from model.player_action import PlayerAction
+from model.player_action import PlayerAction as PyPlayerAction
 from model.player_pair import PlayerPair
 
 def _add_rank_column(dataframe: DataFrame) -> None:
@@ -69,7 +73,7 @@ cdef _build_scoring_info_with_debug(Node *root_node):
 
 def _average_ucb_with_ci(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float, float, float]]:
+  Tuple[PyPlayerAction, float, float, float]]:
   """
   Same as average_ucb(), but tries to compute come CIs for the final score
   of each action.
@@ -108,7 +112,7 @@ def _average_ucb_with_ci(
 
 def _lower_ci_bound_on_raw_rewards_with_ci(
     actions_with_scores_list: List[ActionsWithScores]) -> List[
-  Tuple[PlayerAction, float, float, float]]:
+  Tuple[PyPlayerAction, float, float, float]]:
   is_fully_simulated = are_all_nodes_fully_simulated(actions_with_scores_list)
   if is_fully_simulated:
     return _average_ucb_with_ci(actions_with_scores_list)
@@ -262,6 +266,88 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
 
   for i in range(root_nodes.size()):
     delete_tree(root_nodes[i])
+  return pandas.concat(dataframes, ignore_index=True)
+
+def run_is_mcts_player_step_by_step(
+    py_game_view: PyGameState,
+    options: MctsPlayerOptions,
+    iterations_step: int,
+    game_points: Optional[PlayerPair[int]] = None):
+  cdef Points[2] bummerl_score
+  bummerl_score[0] = 0
+  bummerl_score[1] = 0
+  if game_points is not None and options.use_game_points:
+    bummerl_score[0] = game_points.one
+    bummerl_score[1] = game_points.two
+  cdef int total_budget = options.max_iterations * options.max_permutations
+  cdef GameState game_view = from_python_game_state(py_game_view)
+
+  cdef PlayerId opponent_id = from_python_player_id(
+    py_game_view.next_player.opponent())
+  cdef vector[vector[Card]] permutations
+  from_python_permutations(generate_permutations(py_game_view, options),
+                           &permutations)
+
+  cdef int i, j
+
+  cdef vector[GameState] game_states
+  for i in range(permutations.size()):
+    game_states.push_back(game_view)
+    populate_game_view(&game_states[i], &permutations[i], opponent_id)
+
+  cdef vector[ActionNode] action_nodes
+  cdef PlayerAction[7] actions
+  get_available_actions(&game_states[0], actions)
+  cdef ActionNode action_node
+  action_node.children.resize(game_states.size(), NULL)
+  action_node.n = 0
+  action_node.ucb = 0
+  action_node.exploration_score = 0
+  action_node.fully_simulated = False
+  for i in range(MAX_CHILDREN):
+    if actions[i].action_type == ActionType.NO_ACTION:
+      break
+    action_node.action = actions[i]
+    action_nodes.push_back(action_node)
+
+  cdef int game_state_index = 0
+  cdef int iteration = 0
+  cdef bint is_fully_simulated = False
+  dataframes = []
+  while True:
+    for _ in range(iterations_step):
+      game_state_index = (game_state_index + 1) % game_states.size()
+      iteration += 1
+      if run_one_is_iteration(&action_nodes, &game_states, game_state_index,
+                              iteration, options.exploration_param,
+                              options.save_rewards, bummerl_score):
+        is_fully_simulated = True
+        break
+
+    tmp_data = []
+    for i in range(action_nodes.size()):
+      py_action = to_python_player_action(action_nodes[i].action)
+      tmp_data.append((str(py_action), action_nodes[i].n,
+                       action_nodes[i].ucb if action_nodes[
+                                                i].player != opponent_id else -
+                       action_nodes[i].ucb,
+                       bool(action_nodes[i].fully_simulated)))
+
+    dataframe = DataFrame(data=tmp_data,
+                          columns=["action", "n", "score", "fully_simulated"])
+    dataframe["iteration"] = iteration
+    _add_rank_column(dataframe)
+    dataframes.append(dataframe)
+
+    if is_fully_simulated:
+      break
+    if options.max_iterations is not None and iteration >= total_budget:
+      break
+
+  for i in range(action_nodes.size()):
+    for j in range(action_nodes[i].children.size()):
+      if action_nodes[i].children[j] != NULL:
+        delete_tree(action_nodes[i].children[j])
   return pandas.concat(dataframes, ignore_index=True)
 
 cdef _accumulate_overlap(Node *root_node, py_game_state, level, data):

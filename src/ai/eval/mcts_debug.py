@@ -2,13 +2,14 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import copy
 import pickle
 
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 
 from ai.cython_mcts_player.mcts_debug import run_mcts_and_collect_data, \
-  run_mcts_player_step_by_step
+  run_mcts_player_step_by_step, run_is_mcts_player_step_by_step
 from ai.mcts_player_options import MctsPlayerOptions
 from main_wrapper import main_wrapper
 from model.game_state import GameState
@@ -89,6 +90,20 @@ def mcts_player_debug(game_state: GameState, options: MctsPlayerOptions):
   plt.savefig("mcts_player_debug.png")
 
 
+def is_mcts_player_debug(game_state: GameState, options: MctsPlayerOptions):
+  print("Collecting data...")
+  dataframe = run_is_mcts_player_step_by_step(game_state, options,
+                                              iterations_step=500)
+  # csv_path = "is_mcts_player_debug.csv"
+  # dataframe.to_csv(csv_path, index=False)
+
+  print("Plotting results...")
+  _plot_data(dataframe, "score", plt.gca(), _hlines_for_scores,
+             confidence_columns=("score_low", "score_upp"))
+  plt.tight_layout()
+  plt.savefig("is_mcts_player_debug.png")
+
+
 def debug_game(filename: str, game_index: int, options: MctsPlayerOptions):
   with open(filename, "rb") as binary_file:
     bummerl = pickle.load(binary_file)
@@ -99,6 +114,10 @@ def debug_game(filename: str, game_index: int, options: MctsPlayerOptions):
     [action for action in game.actions if action.player_id == PlayerId.ONE])
   action_counter = 0
   fig, ax = plt.subplots(nrows=num_actions, ncols=2, squeeze=False)
+  is_options = copy.copy(options)
+  is_options.max_permutations = \
+    options.max_permutations * options.max_iterations // 10
+  is_options.max_iterations = 10
   for action in game.actions:
     if action.player_id == PlayerId.ONE:
       # cheater = False
@@ -108,9 +127,10 @@ def debug_game(filename: str, game_index: int, options: MctsPlayerOptions):
                                                game_points=game_points)
       _plot_data(dataframe, "score", ax[action_counter, 0], _hlines_for_scores)
       # cheater = True
-      dataframe = run_mcts_player_step_by_step(game_state, options,
-                                               iterations_step=100,
-                                               game_points=game_points)
+      dataframe = run_is_mcts_player_step_by_step(game_state.next_player_view(),
+                                                  is_options,
+                                                  iterations_step=100,
+                                                  game_points=game_points)
       _plot_data(dataframe, "score", ax[action_counter, 1], _hlines_for_scores)
       action_counter += 1
     game_state = action.execute(game_state)
@@ -122,7 +142,7 @@ def debug_game(filename: str, game_index: int, options: MctsPlayerOptions):
 
 if __name__ == "__main__":
   main_wrapper(
-    lambda: debug_game("bummerl_4180_2_done.pickle", 5,
-                       MctsPlayerOptions(max_iterations=667 * 4,
+    lambda: debug_game("bummerl_4180_2_done.pickle", 3,
+                       MctsPlayerOptions(max_iterations=667,
                                          max_permutations=150,
                                          save_rewards=False)))
