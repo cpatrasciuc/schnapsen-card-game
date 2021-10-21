@@ -198,9 +198,6 @@ def evaluate_one_player_vs_opponent_list(player: str,
                                          opponents: List[str]) -> DataFrame:
   rows = []
   for opponent in opponents:
-    # TODO(eval): Evaluate player against itself for safety.
-    if player == opponent:
-      continue
     print(f"Simulating {player} vs {opponent}")
     players = PlayerPair(player, opponent)
     metrics = evaluate_player_pair_in_parallel(players)
