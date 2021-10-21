@@ -638,4 +638,4 @@ class LowerCiBoundOnRawRewardsTest(unittest.TestCase):
       PlayCardAction(PlayerId.ONE, Card(Suit.CLUBS, CardValue.KING)): -0.3,
     }
     for action, score in actions_and_scores:
-      self.assertAlmostEqual(expected_scores[action], score, delta=0.05)
+      self.assertAlmostEqual(expected_scores[action], score, delta=0.1)
