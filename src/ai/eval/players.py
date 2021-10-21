@@ -450,4 +450,58 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
       MctsPlayerOptions(
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
+
+  # TODO(mcts): Run the final evaluations with these players.
+  "InitialMcts1Sec":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=100,
+        max_iterations=10,
+        merge_scoring_info_func=average_ucb,
+        select_best_child=False,
+        reallocate_computational_budget=False)),
+  "InitialMcts5Sec":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=100,
+        max_iterations=55,
+        merge_scoring_info_func=average_ucb,
+        select_best_child=False,
+        reallocate_computational_budget=False)),
+  "Mcts100kIter":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=average_score_with_tiebreakers)),
+  "Mcts500kIter":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=int(150 * math.sqrt(5)),
+        max_iterations=int(667 * math.sqrt(5)),
+        merge_scoring_info_func=average_score_with_tiebreakers)),
+  "Mcts100kIterCheater":
+    lambda player_id: CythonMctsPlayer(
+      player_id, True,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=average_score_with_tiebreakers)),
+  "Mcts500kIterCheater":
+    lambda player_id: CythonMctsPlayer(
+      player_id, True,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=int(150 * math.sqrt(5)),
+        max_iterations=int(667 * math.sqrt(5)),
+        merge_scoring_info_func=average_score_with_tiebreakers)),
 }
