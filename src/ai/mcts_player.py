@@ -31,8 +31,6 @@ def _find_action_with_max_score(
   Mcts trees, it returns the action with the highest score. If there are
   multiple actions having the highest score, it picks one of them randomly.
   """
-  # TODO(mcts): If multiple actions have the same score, use tiebreakers like
-  #  ucb, card value * sign(ucb).
   max_score = max(score for action, score in actions_and_scores)
   actions_with_max_score = \
     [action for action, score in actions_and_scores if score == max_score]

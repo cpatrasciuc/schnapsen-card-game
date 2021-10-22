@@ -1,0 +1,4 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+Heuristic,MctsPlayerAverageScoreWithTiebreakers,261,739,2452,3561,4079,6296,298255,324438
+Heuristic,MctsPlayerAverageUcb,304,696,2620,3520,4306,6196,314317,327503
+MctsPlayerAverageScoreWithTiebreakers,MctsPlayerAverageUcb,493,507,3042,3082,5311,5360,321396,318423

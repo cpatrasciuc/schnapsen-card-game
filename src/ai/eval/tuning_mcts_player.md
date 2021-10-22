@@ -876,7 +876,48 @@ Notes:
 
 ## Tiebreakers
 
-TODO
+In all the evaluations so far, there are two instances of the MctsPlayer (with
+different configs) playing against each other. In the late stages of the game,
+when the MctsPlayer can simulate the entire game tree, it uses the minimax score
+for each action, instead of the average reward of the paths going through this
+action. The minimax score assumes that the opponent plays perfectly. This means
+that in the late stages of the game, the MctsPlayer might notice that it cannot
+win the game anymore (if its opponent plays perfectly), and as a result it
+picks an action randomly, even if some actions lead to a loss faster. This is
+not a problem when two MctsPlayers play against each other: if one player knows
+it will surely lose, the other also knows it will surely win. This could however
+be a problem when the MctsPlayer plays against the HeuristicPlayer or a human
+player that doesn't play perfectly. 
+
+In a situation where multiple actions have the same minimax outcome, we want to
+differentiate them as follows:
+* If both lead to the same positive outcome for the MctsPlayer, pick the action
+  that gets us there faster.
+* If both lead to the same negative outcome for the MctsPlayer, pick the action
+  that makes it more difficult for the opponent to get that win.
+
+When two actions have the same minimax score, I used the following scores as
+tiebreakers (for more details see `average_score_with_tiebreakers`):
+* **Tiebreaker #1**: The average reward on the paths going through the action.
+  This is the same score we would use to pick an action if we cannot simulate
+  the entire game tree. If the average reward is higher, it means we are in a
+  better average scenario, so the opponent will probably have to work harder to
+  figure out the actions that would get them the win.
+* **Tiebreaker #2**: sign(outcome) * card_value. This means the player prefers
+  to play higher cards when it knows it will surely win, and smaller cards when
+  it knows it will surely lose.
+
+I evaluated this change by running two MctsPlayers against the HeuristicPlayer.
+Both MctsPlayers use max_permutations=150 and max_iterations=667, but one uses
+tiebreakers and the other one doesn't. The win rate of the player that uses
+tiebreakers was with **4.3pp [0.4pp, 8.2pp]** higher than the win rate of the
+player that doesn't use tiebreakers.
+
+As expected, this change has no effect when two MctsPlayers play against each
+other: the player that uses tiebreakers won 49.30% [46.21%, 52.40%] of the
+bummerls against the player that doesn't use tiebreakers.
+
+In conclusion, I will continue to use these two tiebreakers in the MctsPlayer. 
 
 ## Final results
 
