@@ -81,7 +81,7 @@ As a result of this initial debugging, the ideas to experiment with are:
 - [x] When a node is expanded for the first time, start with the action deemed best by the HeuristicPlayer
 - [x] Improve the aggregation of scores from all Mcts trees
 - [x] Reuse the nodes from the previous decisions instead of always starting from scratch
-- [ ] Expand an action and a permutation in each iteration
+- [x] Use Information Set Monte Carlo Tree Search
 
 > **Computational budget: `time_limit_sec` vs `max_iterations`**
 >
@@ -819,6 +819,60 @@ trick_points: 316279:319600
 It is not clear that adding a cache would improve the MctsPlayer, or that the
 improvement would outweigh the work required to implement it. As a result,
 I will not pursue this further in this version of the player.   
+
+## Use Information Set Monte Carlo Tree Search
+
+In this section I experimented with using *Information Set Monte Carlo Tree
+Search (IS-MCTS)*. In IS-MCTS, we use a single tree. At the top of the tree we
+have a level of imperfect information nodes for each possible action in the
+current game state (I called them *action nodes*). We also use a list of
+*N* permutations. Each action node has *N* perfect information children,
+obtained by playing that particular action in the game state corresponding to
+each of the *N* permutations. In each IS-MCTS iteration, we
+first pick an action node using UCB-based selection, then we pick one of its
+perfect information children randomly, and we run a normal Mcts iteration
+starting from this node. At the end of the iteration, we also update the
+action node stats based on the information back-propagated from the new leaf.
+
+The possible improvements over the MctsPlayer are:
+
+* We could identify bad actions earlier, instead of having to identify them *N*
+  times, once in each permutation. This could reduce the total number of
+  iterations spent on bad actions.
+* We should also spend fewer iterations on actions that are good only in a
+  couple of permutations, but bad overall.
+* We might know earlier which action is good across all permutations and invest
+  more iterations in it, as opposed to identifying this action only at the end
+  in the MctsPlayer, after the scores from all the permutations are aggregated.
+    
+
+To evaluate this, I've run the best MctsPlayer so far for the 100k-iterations
+budget against two IS-MCTS players, both having a total computational budget of
+100k iterations as well, one using 150 permutations and the other 10000
+permutations. Note that the MctsPlayer cannot use 10000 permutations because
+that would imply only 10 iterations per permutation for a total budget of 100k
+iterations. I wanted to see if using a high number of permutations and letting
+the IS-MCTS player decide where to spend the whole budget can improve the
+overall performance of the player.
+
+Unfortunately, none of the IS-MCTS players was significantly better than the
+MctsPlayer over 1000 bummerls.     
+
+TODO: eval an is mcts player that uses sum(q)/sum(n) in action nodes.
+
+| IS-MCTS Config | Win rate against MctsPlayer(max_permutations=150, max_iterations=100) |
+| :------------: | :-------------------------------------------------------------------: |
+| 150 permutations | 48.40% [45.31%, 51.50%] |
+| 10000 permutations | 50.10% [47.01%, 53.19%] |
+
+Since switching to IS-MCTS would require all the debug tools to be updated, I
+decided not to use this in this version of the MctsPlayer.
+
+Notes:
+* When the IS-MCTS player uses a high number of permutations (e.g., 10k) the
+  permutations' generation part starts to take a significant amount of time.
+  Some optimizations might be necessary if we decide to use this in the future.
+* The code for this experiment is in the `is_mcts` branch.
 
 ## Tiebreakers
 

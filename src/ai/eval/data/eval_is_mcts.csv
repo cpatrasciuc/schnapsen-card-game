@@ -1,0 +1,3 @@
+player_one,player_two,bummerls_one,bummerls_two,games_one,games_two,game_points_one,game_points_two,trick_points_one,trick_points_two
+MctsPlayerAverageUcb,IsMctsPlayer150perm667iter,516,484,3146,3048,5382,5277,326497,323234
+MctsPlayerAverageUcb,IsMctsPlayer10000perm10iter,499,501,3026,3219,5293,5370,330339,328335
