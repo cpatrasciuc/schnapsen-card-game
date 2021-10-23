@@ -2,10 +2,14 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import os
+import pickle
+import tempfile
 from unittest.mock import Mock
 
 from ai.random_player import RandomPlayer
 from model.bummerl import Bummerl
+from model.game import Game
 from model.game_state import GameState
 from model.game_state_test_utils import get_actions_for_one_complete_game
 from model.player_id import PlayerId
@@ -298,3 +302,64 @@ class GameControllerTest(GraphicUnitTest):
     # The GameController requests no action from the next player.
     next_player = expected_game_state.next_player
     players[next_player].request_next_action.assert_not_called()
+
+  def test_auto_save_folder(self):
+    with tempfile.TemporaryDirectory() as auto_save_folder:
+      saved_games = []
+
+      def _verify_auto_save_data():
+        bummerl_filename = os.path.join(auto_save_folder,
+                                        "autosave_bummerl.pickle")
+        with open(bummerl_filename, "rb") as input_file:
+          bummerl = pickle.load(input_file)
+        self.assertEqual(len(saved_games), len(bummerl.completed_games))
+        for i, game in enumerate(bummerl.completed_games):
+          self._assert_game_equal(game, saved_games[i])
+
+      class TestScoreViewWithBummerlCount:
+        # pylint: disable=too-few-public-methods
+
+        def __init__(self, done_callback, auto_save_folder):
+          self._num_bummerls = 0
+          self._done_callback = done_callback
+          self._auto_save_folder = auto_save_folder
+
+        def score_view_delegate(self, score_history, dismiss_callback):
+          game_filename = os.path.join(self._auto_save_folder,
+                                       "autosave_game.pickle")
+          with open(game_filename, "rb") as input_file:
+            game = pickle.load(input_file)
+            saved_games.append(game)
+          _verify_auto_save_data()
+          total_game_points = PlayerPair(0, 0)
+          for _, game_points in score_history:
+            total_game_points.one += game_points.one
+            total_game_points.two += game_points.two
+          if total_game_points.one > 6 or total_game_points.two > 6:
+            self._num_bummerls += 1
+          if self._num_bummerls >= 1:
+            dismiss_callback()
+          else:
+            self._done_callback()
+
+      game_widget = GameWidget(GameOptions(enable_animations=False))
+      players = PlayerPair(ComputerPlayer(RandomPlayer(PlayerId.ONE)),
+                           ComputerPlayer(RandomPlayer(PlayerId.TWO)))
+      one_bummerl_played = Mock()
+      score_view = TestScoreViewWithBummerlCount(one_bummerl_played,
+                                                 auto_save_folder)
+
+      self.render(game_widget)
+
+      # noinspection PyTypeChecker
+      game_controller = GameController(game_widget, players,
+                                       score_view.score_view_delegate, 0,
+                                       auto_save_folder)
+      game_controller.start()
+      self.wait_for_mock_callback(one_bummerl_played, timeout_seconds=60)
+      game_controller.stop()
+
+  def _assert_game_equal(self, expected: Game, actual: Game):
+    self.assertEqual(expected.dealer, actual.dealer)
+    self.assertEqual(expected.seed, actual.seed)
+    self.assertEqual(expected.actions, actual.actions)

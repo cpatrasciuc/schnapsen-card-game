@@ -3,6 +3,8 @@
 #  found in the LICENSE file.
 
 import logging
+import os
+import pickle
 from typing import Optional, Callable
 
 from kivy.base import runTouchApp, EventLoop
@@ -28,12 +30,13 @@ class GameController:
   the game state accordingly and notifies the UI about these changes.
   """
 
-  # pylint: disable=too-few-public-methods
+  # pylint: disable=too-few-public-methods,too-many-arguments
 
   def __init__(
       self, game_widget: GameWidget, players: PlayerPair[Player],
       score_view_callback: ScoreViewCallback = ScoreView.show_score_view,
-      computer_action_delay_seconds: int = 1):
+      computer_action_delay_seconds: int = 1,
+      auto_save_folder: Optional[str] = None):
     """
     Initializes a new GameController.
     :param game_widget: The UI that will be updated throughout the game.
@@ -45,12 +48,15 @@ class GameController:
     :param: computer_action_delay_seconds: The time in seconds that the
     GameController should wait after the computer completes a trick, so that the
     user can see the card that the computer played.
+    :param auto_save_folder: If it's not None, when a game is completed, the
+    game and the bummerl are saved in two files in the given folder.
     """
     self._bummerl: Optional[Bummerl] = None
     self._game_widget = game_widget
     self._players = players
     self._score_view_callback = score_view_callback
     self._wait_seconds = computer_action_delay_seconds
+    self._auto_save_folder = auto_save_folder
 
   def start(self, bummerl: Optional[Bummerl] = None) -> None:
     """
@@ -161,6 +167,7 @@ class GameController:
     if self._bummerl.game.game_state.is_game_over:
       logging.info("GameController: Game is over")
       self._bummerl.finalize_game()
+      self._autosave_game_and_bummerl()
       if self._bummerl.is_over:
         logging.info("GameController: Bummerl is over")
         logging.info("GameController: %s games played",
@@ -168,6 +175,17 @@ class GameController:
       self._show_score_view()
     else:
       self._request_next_action()
+
+  def _autosave_game_and_bummerl(self):
+    if self._auto_save_folder is None:
+      return
+    game_filename = os.path.join(self._auto_save_folder, "autosave_game.pickle")
+    with open(game_filename, "wb") as output_file:
+      pickle.dump(self._bummerl.completed_games[-1], output_file)
+    bummerl_filename = os.path.join(self._auto_save_folder,
+                                    "autosave_bummerl.pickle")
+    with open(bummerl_filename, "wb") as output_file:
+      pickle.dump(self._bummerl, output_file)
 
   def _show_score_view(self) -> None:
     """
