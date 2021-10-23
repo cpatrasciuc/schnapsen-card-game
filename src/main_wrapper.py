@@ -35,6 +35,7 @@ def main_wrapper(main: Callable[[], None], log_level=None) -> int:
     result = 1
   end_time = time.time()
   end_process_time = time.process_time()
+  print()
   print(f"Duration (time): {_time_diff(start_time, end_time)}")
   process_time_diff = _time_diff(start_process_time, end_process_time)
   print(f"Duration (process_time): {process_time_diff}")
