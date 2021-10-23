@@ -451,14 +451,13 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
 
-  # TODO(mcts): Evaluate this player.
+  # IS-MCTS players.
   "IsMctsPlayer150perm667iter":
     lambda player_id: CythonIsMctsPlayer(player_id, False,
                                          MctsPlayerOptions(
                                            num_processes=1,
                                            max_permutations=150,
                                            max_iterations=667)),
-  # TODO(mcts): Evaluate this player.
   "IsMctsPlayer10000perm10iter":
     lambda player_id: CythonIsMctsPlayer(player_id, False,
                                          MctsPlayerOptions(

@@ -287,12 +287,14 @@ cdef void _update_action_node_ucb(ActionNode *action_node) nogil:
       fully_simulated = False
     if action_node.children[i] == NULL:
       continue
-    sum_scores += action_node.children[i].ucb
+    sum_scores += action_node.children[i].q if not action_node.children[
+      i].fully_simulated else action_node.children[i].ucb * \
+                              action_node.children[i].n
     num_children += 1
   if fully_simulated:
     action_node.fully_simulated = True
-  action_node.ucb = sum_scores / num_children
   action_node.n += 1
+  action_node.ucb = sum_scores / action_node.n
 
 cdef bint run_one_is_iteration(vector[ActionNode] *action_nodes,
                                vector[GameState] *game_states,
