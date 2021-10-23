@@ -1,6 +1,19 @@
 # Tuning MctsPlayer
 
-TODO: add a table of contents
+## Table of contents
+
+* [The problem](#the-problem)
+* [Initial analysis](#initial-analysis)
+* Improvements ideas:
+  * [Reduce CPU usage](#reduce-cpu-usage)
+  * [Select the best child and balance exploration vs exploitation](#select-the-best-child-and-balance-exploration-vs-exploitation)
+  * [Tune the max_iterations and max_permutations params](#tune-the-max_iterations-and-max_permutations-params)
+  * [Start with the action deemed best by the HeuristicPlayer](#start-with-the-action-deemed-best-by-the-heuristicplayer)
+  * [Improve the aggregation of scores from all Mcts trees](#improve-the-aggregation-of-scores-from-all-mcts-trees)
+  * [Reuse the nodes from previous decisions](#reuse-the-nodes-from-previous-decisions)
+  * [Use Information Set Monte Carlo Tree Search](#use-information-set-monte-carlo-tree-search)
+* [Tiebreakers](#tiebreakers)
+* [Final results](#final-results)
 
 ## The problem
 
