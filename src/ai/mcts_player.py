@@ -9,7 +9,7 @@ import logging
 import math
 import multiprocessing
 import random
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from ai.mcts_algorithm import Mcts, ucb_for_player
 from ai.mcts_player_options import MctsPlayerOptions
@@ -102,8 +102,7 @@ class BaseMctsPlayer(Player, abc.ABC):
     return permutations
 
   def get_actions_and_scores(self, game_view: GameState, game_points: Optional[
-    PlayerPair[int]] = None) -> List[
-    Tuple[PlayerAction, float]]:
+    PlayerPair[int]] = None) -> AggregatedScores:
     permutations = self._generate_permutations(game_view)
     actions_with_scores_list = self.run_mcts_algorithm(game_view, permutations,
                                                        game_points)
