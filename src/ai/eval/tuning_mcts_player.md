@@ -858,12 +858,12 @@ overall performance of the player.
 Unfortunately, none of the IS-MCTS players was significantly better than the
 MctsPlayer over 1000 bummerls.     
 
-TODO: eval an is mcts player that uses sum(q)/sum(n) in action nodes.
-
-| IS-MCTS Config | Win rate against MctsPlayer(max_permutations=150, max_iterations=100) |
-| :------------: | :-------------------------------------------------------------------: |
-| 150 permutations | 48.40% [45.31%, 51.50%] |
-| 10000 permutations | 50.10% [47.01%, 53.19%] |
+| IS-MCTS Config | Top-level aggregation | Win rate against MctsPlayer(max_permutations=150, max_iterations=100) |
+| :------------: | :-------------------: | :-------------------------------------------------------------------: |
+| 150 permutations | avg(score) | 48.40% [45.31%, 51.50%] |
+| 10000 permutations | avg(score) | 50.10% [47.01%, 53.19%] |
+| 150 permutations | sum(Q)/sum(N) | 46.00% [42.93%, 49.10%] |
+| 10000 permutations | sum(Q)/sum(N) | 44.60% [41.55%, 47.70%] |
 
 Since switching to IS-MCTS would require all the debug tools to be updated, I
 decided not to use this in this version of the MctsPlayer.
