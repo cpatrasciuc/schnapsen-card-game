@@ -2,12 +2,14 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+from pathlib import Path
 from typing import Optional
 
 from kivy.app import App
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player_options import MctsPlayerOptions
+from ai.merge_scoring_infos_func import average_score_with_tiebreakers
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.computer_player import OutOfProcessComputerPlayer
@@ -37,11 +39,15 @@ class SchnapsenApp(App):
     computer_player: Player = OutOfProcessComputerPlayer(
       # TODO(mcts): Tune the number of max_iterations.
       CythonMctsPlayer,
-      (PlayerId.TWO, False, MctsPlayerOptions(max_iterations=667,
-                                              max_permutations=150,
-                                              num_processes=1)))
+      (PlayerId.TWO, False, MctsPlayerOptions(
+        max_iterations=667,
+        max_permutations=150,
+        num_processes=1,
+        merge_scoring_info_func=average_score_with_tiebreakers)))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
-    self._game_controller = GameController(self._game_widget, players)
+    auto_save_folder = str(Path(__file__).parent.parent.absolute())
+    self._game_controller = GameController(self._game_widget, players,
+                                           auto_save_folder=auto_save_folder)
     return self._game_widget
 
   def on_start(self):
