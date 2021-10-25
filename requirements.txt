@@ -17,5 +17,5 @@ scipy~=1.7.1
 py-cpuinfo~=8.0.0
 
 # Requirement for CythonMctsPlayer
-setuptools~=58.2.0
+setuptools~=58.3.0
 Cython~=0.29.24
