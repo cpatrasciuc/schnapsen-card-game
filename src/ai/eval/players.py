@@ -451,7 +451,7 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         num_processes=1, max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)))),
 
-  # TODO(mcts): Run the final evaluations with these players.
+  # Players for the final evaluation of CythonMctsPlayer v1.0.
   "InitialMcts1Sec":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
