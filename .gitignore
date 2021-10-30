@@ -147,3 +147,6 @@ dmypy.json
 /.idea/other.xml
 /src/autosave_bummerl.pickle
 /src/autosave_game.pickle
+/src/ai/cython_mcts_player/*.c
+/src/ai/cython_mcts_player/*.cpp
+/src/ai/cython_mcts_player/*.html
