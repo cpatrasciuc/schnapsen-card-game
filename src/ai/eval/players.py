@@ -331,7 +331,6 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
                                          max_permutations=150,
                                          max_iterations=667,
                                          merge_scoring_info_func=average_ucb)),
-  # TODO(mcts): Evaluate this player against MctsPlayerAverageUcb and Heuristic.
   "MctsPlayerAverageScoreWithTiebreakers":
     lambda player_id: CythonMctsPlayer(
       player_id, False,
