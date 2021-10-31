@@ -2,6 +2,9 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
--r requirements-app.txt
--r requirements-tests.txt
--r requirements-ai-evals.txt
+# Requirements for the main app.
+Kivy~=2.0.0
+
+# Requirement for CythonMctsPlayer
+setuptools~=58.3.0
+Cython~=0.29.24
