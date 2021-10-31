@@ -9,7 +9,7 @@ from typing import Optional, List
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
 from ai.mcts_player import MctsPlayer
-from ai.mcts_player_options import MctsPlayerOptions
+from ai.mcts_player_options import MctsPlayerOptions, mcts_player_options_v1
 from ai.merge_scoring_infos_func import best_action_frequency, \
   average_ucb, ActionsWithScores, merge_ucbs_using_simple_average, \
   merge_ucbs_using_weighted_average, count_visits
@@ -235,6 +235,12 @@ class CythonMctsPlayerSaveRewardsTest(MctsPlayerTest):
                                 select_best_child=True,
                                 save_rewards=True,
                                 num_processes=1)
+    self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
+
+
+class CythonMctsPlayerV1Test(MctsPlayerTest):
+  def setUp(self) -> None:
+    options = mcts_player_options_v1()
     self._mcts_player = CythonMctsPlayer(PlayerId.ONE, options=options)
 
 

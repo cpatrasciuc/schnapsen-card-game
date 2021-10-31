@@ -6,7 +6,8 @@ import dataclasses
 import multiprocessing
 from typing import Optional
 
-from ai.merge_scoring_infos_func import average_ucb, MergeScoringInfosFunc
+from ai.merge_scoring_infos_func import average_ucb, MergeScoringInfosFunc, \
+  average_score_with_tiebreakers
 from ai.permutations import PermutationsGenerator, sims_table_perm_generator
 
 
@@ -16,8 +17,7 @@ class MctsPlayerOptions:
 
   # pylint: disable=too-many-instance-attributes
 
-  # TODO(mcts): Find a good default value.
-  max_iterations: Optional[int] = 1
+  max_iterations: Optional[int] = 150
   """
   The maximum number of Mcts iterations run for one permutation. The total
   number of iterations is max_iterations x max_permutations, spread across
@@ -25,7 +25,7 @@ class MctsPlayerOptions:
   the entire game tree is expanded.
   """
 
-  max_permutations: int = multiprocessing.cpu_count()
+  max_permutations: int = 667
   """
   The player converts an imperfect-information game to a perfect-information
   game by using a random permutation of the unseen cards set. This parameter
@@ -97,3 +97,16 @@ class MctsPlayerOptions:
   means that the break-even point changes, so the player will be more
   conservative if it's leading and more aggressive if it's behind.
   """
+
+
+def mcts_player_options_v1() -> MctsPlayerOptions:
+  """
+  Returns the best options found for MctsPlayer v1.0 using a total computational
+  budget of 100k iterations. For more details, see tuning_mcts_player.md.
+  """
+  return MctsPlayerOptions(
+    max_iterations=150, max_permutations=667, num_processes=1,
+    perm_generator=sims_table_perm_generator,
+    merge_scoring_info_func=average_score_with_tiebreakers,
+    select_best_child=True, exploration_param=1, save_rewards=False,
+    reallocate_computational_budget=True, use_game_points=True)
