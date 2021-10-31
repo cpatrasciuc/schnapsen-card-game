@@ -934,6 +934,68 @@ In conclusion, I will continue to use these two tiebreakers in the MctsPlayer.
 
 ## Final results
 
+For the final round of evaluations, I've run a grid with the following players:
+* **RandomPlayer**
+* **HeuristicPlayer**
+* **InitialMcts1Sec** and **InitialMcts5Sec**: These players simulate the
+  initial MctsPlayers evaluated at the beginning of this page, by disabling all
+  the improvements added meanwhile. Because initially the computational budget
+  was specified in seconds, not iterations, the max_iterations and
+  max_permutations params for these players were picked such that I get
+  equivalent players on my computer.
+* **Mcts100kIter** and **Mcts500kIter**: These are (Cython)MctsPlayers that
+  include all the improvements discussed on this page. They use a total
+  computational budget of 100k and 500k iterations, respectively.
+* **Mcts100kIterCheater** and **Mcts500kIterCheater**: same as above, but they
+  are instantiated with `cheater=True`, which means they know the opponent's
+  cards and the order of the cards in the talon.
+
+The results are as follows:
+
+![eval_results_mcts_v1.0.png](https://github.com/cpatrasciuc/schnapsen-card-game/blob/415f37635f84018aa39491596e18567e33e4a3d1/src/ai/eval/data/eval_results_mcts_v1.0.png)
+
+Mcts100kIter and Mcts500kIter are the best non-cheater players. They are
+significantly better than the HeuristicPlayer, so the goal of this project is
+achieved.
+
+### How much did the MctsPlayer improve after all these changes?
+
+The table below shows the difference in performance against the HeuristicPlayer
+between the initial MctsPlayers from the [Problem statement section](#the-problem)
+and the versions that include all the improvements discussed on this page:
+
+| Cheater | Budget | Win rate before improvements (over 100 bummerls) | Win rate after improvements (over 1000 bummerls) | Win rate delta |
+| :-----: | :----: | :----------------------------------------------: | :----------------------------------------------: | :------------: | 
+| True | 1 sec or 100k iter | **77% [67.85%, 84.16%]** | **97.80% [96.69%, 98.54%]** | **20.8pp [12.5pp, 29.1pp]** |
+| True | 5 sec or 500k iter | **85% [76.72%, 90.69%]** | **97.50% [96.34%, 98.30%]** | **12.5pp [5.43pp, 19.57pp]** |
+| False | 1 sec or 100k iter | 55% [45.24%, 64.39%] | **75.70% [72.95%, 78.26%]** | **20.7pp [10.59pp, 30.81pp]** |
+| False | 5 sec or 500k iter | **60% [50.20%, 69.06%]** | **70.10% [67.19%, 72.86%]** | **10.1pp [0.09pp, 20.11pp]** |
+
+Since the CIs over 100 bummerls are wider, I tried to get tighter CIs by
+simulating the initial setups (same number of permutations, similar number of
+iterations) using the faster CythonMctsPlayer (InitialMcts1Sec and
+InitialMcts5Sec). The table below is similar to the one above, but replaces the
+initial results over 100 bummerls with the results of InitialMcts1Sec and
+InitialMcts5Secs over 1000 bummerls:
+
+| Cheater | Budget | Win rate before improvements | Win rate after improvements | Win rate delta |
+| :-----: | :----: | :--------------------------: | :-------------------------: | :------------: | 
+| False | 1 sec or 100k iter | **46.40% [43.33%, 49.50%]** | **75.70% [72.95%, 78.26%]** | **29.3pp [25.22pp, 33.38pp]** |
+| False | 5 sec or 500k iter | **55.30% [52.20%, 58.36%]** | **70.10% [67.19%, 72.86%]** | **14.8pp [10.61pp, 18.99pp]** |
+
+NOTE: To compute the CI of the win rate delta I used the [Wald method](https://www.statology.org/confidence-interval-difference-in-proportions-calculator/),
+implemented in `statsmodels.stats.proportion.confint_proportions_2indep`.
+
+### Could we learn something from the cheater players?
+
+Mcts100kIter and Mcts500kIter are significantly worse than the cheater players.
+By playing a couple of games against the cheater players myself and after using
+`mcts_debug.py` plots in parallel for cheater and non-cheater players for the
+same game states, it seems that the cheater players abuse the fact that they
+know all the cards and close the talon very frequently. This means there is no
+clear strategy improvement that could be learned from these players and
+transferred to the non-cheater players.
+
 TODO(final eval):
 - Check correlation between game points won and initial cards or diff between
   initial cards
