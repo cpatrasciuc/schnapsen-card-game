@@ -8,8 +8,7 @@ from typing import Optional
 from kivy.app import App
 
 from ai.cython_mcts_player.player import CythonMctsPlayer
-from ai.mcts_player_options import MctsPlayerOptions
-from ai.merge_scoring_infos_func import average_score_with_tiebreakers
+from ai.mcts_player_options import mcts_player_options_v1
 from model.player_id import PlayerId
 from model.player_pair import PlayerPair
 from ui.computer_player import OutOfProcessComputerPlayer
@@ -18,7 +17,7 @@ from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
 from ui.player import Player
 
-__version__ = '0.1'
+__version__ = '1.0'
 
 
 class SchnapsenApp(App):
@@ -37,13 +36,7 @@ class SchnapsenApp(App):
     self._game_widget.size_hint = 1, 1
     human_player: Player = self._game_widget
     computer_player: Player = OutOfProcessComputerPlayer(
-      # TODO(mcts): Tune the number of max_iterations.
-      CythonMctsPlayer,
-      (PlayerId.TWO, False, MctsPlayerOptions(
-        max_iterations=667,
-        max_permutations=150,
-        num_processes=1,
-        merge_scoring_info_func=average_score_with_tiebreakers)))
+      CythonMctsPlayer, (PlayerId.TWO, False, mcts_player_options_v1()))
     players: PlayerPair[Player] = PlayerPair(human_player, computer_player)
     auto_save_folder = str(Path(__file__).parent.parent.absolute())
     self._game_controller = GameController(self._game_widget, players,
