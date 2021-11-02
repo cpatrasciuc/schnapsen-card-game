@@ -30,7 +30,7 @@ class SchnapsenApp(App):
     # TODO(ui): Set self.icon.
 
   def build(self):
-    self._game_options = GameOptions(computer_cards_visible=True)
+    self._game_options = GameOptions()
     self._game_widget = GameWidget(game_options=self._game_options)
     self._game_widget.padding_pct = 0.01
     self._game_widget.size_hint = 1, 1
