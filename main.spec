@@ -5,10 +5,12 @@
 import os
 import sys
 
+os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
+
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
 from PyInstaller.building.datastruct import Tree
-from kivy_deps import sdl2, glew
+from kivy_deps import sdl2, angle
 
 sys.path.append(os.path.join(SPECPATH, "src"))
 
@@ -51,7 +53,7 @@ exe = EXE(pyz,
           analysis.zipfiles,
           analysis.datas,
           ui_resources,
-          *[Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)],
+          *[Tree(p) for p in (sdl2.dep_bins + angle.dep_bins)],
           exclude_binaries=False,
           name=f"schnapsen-card-game-{schnapsen_app.__version__}",
           icon=os.path.join(SPECPATH, "src", "ui", "resources", "icon.ico"),
