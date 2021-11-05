@@ -5,7 +5,7 @@
 import os
 import sys
 
-os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
+os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
 
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
