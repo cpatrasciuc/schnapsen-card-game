@@ -207,6 +207,8 @@ class PlayCardAction(PlayerAction):
         new_game_state.cards_in_hand[winner.opponent()].append(
           new_game_state.trump_card)
         new_game_state.trump_card = None
+    # TODO(ai): If the talon is closed and the opponent cannot play the same
+    #  suit or trump, make the cards of that suit and trump public in the talon.
 
     # Update the next player
     new_game_state.next_player = winner
