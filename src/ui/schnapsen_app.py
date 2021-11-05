@@ -2,6 +2,7 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -17,20 +18,19 @@ from ui.game_options import GameOptions
 from ui.game_widget import GameWidget
 from ui.player import Player
 
-__version__ = '1.0'
+__version__ = "1.0"
 
 
 class SchnapsenApp(App):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
+    self._game_options = GameOptions()
     self._game_widget: Optional[GameWidget] = None
     self._game_controller: Optional[GameController] = None
-    self._game_options: Optional[GameOptions] = None
     self.title = f"Schnapsen Card Game :: v{__version__}"
-    # TODO(ui): Set self.icon.
+    self.icon = os.path.join(self._game_options.resource_path, "icon.png")
 
   def build(self):
-    self._game_options = GameOptions()
     self._game_widget = GameWidget(game_options=self._game_options)
     self._game_widget.padding_pct = 0.01
     self._game_widget.size_hint = 1, 1
