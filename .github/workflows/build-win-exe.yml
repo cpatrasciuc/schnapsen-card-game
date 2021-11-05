@@ -25,7 +25,8 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-app.txt
+          pip install -r requirements-packaging.txt
       - name: Build Cython modules
         run: |
           cd src && python setup.py build_ext --inplace --force
@@ -33,7 +34,7 @@ jobs:
         run: |
           python -OO -m PyInstaller -F --clean -y --debug=all main.spec
           $filename = Get-ChildItem dist -Name
-          Write-Output "::set-env name=ARTIFACT_FILE_NAME::$filename"
+          echo ARTIFACT_FILE_NAME=$filename | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         env:
           PYTHONIOENCODING: utf-8:backslashreplace
       - name: Upload artifact
