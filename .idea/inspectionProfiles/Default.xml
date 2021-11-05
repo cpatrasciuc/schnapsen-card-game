@@ -14,6 +14,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="ui.game_options.GameOptions.*" />
+          <option value="main.SPECPATH" />
         </list>
       </option>
     </inspection_tool>

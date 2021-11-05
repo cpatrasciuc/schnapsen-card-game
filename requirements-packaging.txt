@@ -2,7 +2,5 @@
 #  Use of this source code is governed by a BSD-style license that can be
 #  found in the LICENSE file.
 
--r requirements-app.txt
--r requirements-tests.txt
--r requirements-ai-evals.txt
--r requirements-packaging.txt
+# Requirements for building and packaging the app.
+pyinstaller~=4.6
