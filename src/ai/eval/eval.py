@@ -130,7 +130,8 @@ def evaluate_player_pair_in_process(num_bummerls: int,
       while not game.game_state.is_game_over:
         player_id = game.game_state.next_player
         if players[player_id].cheater:
-          game_view = game.game_state
+          game_view = game.game_state.next_player_view(
+            allow_public_in_talon=True)
         else:
           game_view = game.game_state.next_player_view()
         action, perf_counter, process_time = _request_next_action_and_time_it(
@@ -140,7 +141,7 @@ def evaluate_player_pair_in_process(num_bummerls: int,
         process_time_sum[player_id] += process_time
         num_actions_requested[player_id] += 1
       is_game_of_interest = \
-        players.one.game_of_interest or players.two.game_of_interest
+        players.one.game_of_interest or players.two.game_of_interest or game.game_state.is_talon_closed
       if is_game_of_interest:
         is_bummerl_of_interest = True
       _accumulate_player_pair(trick_points, game.game_state.trick_points)

@@ -503,4 +503,22 @@ PLAYER_NAMES: Dict[str, CreatePlayerFn] = {
         max_permutations=int(150 * math.sqrt(5)),
         max_iterations=int(667 * math.sqrt(5)),
         merge_scoring_info_func=average_score_with_tiebreakers)),
+
+  # Evaluate closed talon changes.
+  "MctsFollowSuitNoMemory":
+    lambda player_id: CythonMctsPlayer(
+      player_id, False,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=average_score_with_tiebreakers)),
+  "MctsFollowSuitWithMemory":
+    lambda player_id: CythonMctsPlayer(
+      player_id, True,
+      MctsPlayerOptions(
+        num_processes=1,
+        max_permutations=150,
+        max_iterations=667,
+        merge_scoring_info_func=average_score_with_tiebreakers)),
 }

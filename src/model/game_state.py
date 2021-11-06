@@ -253,7 +253,8 @@ class GameState:
                            self.player_that_closed_the_talon,
                            self.opponent_points_when_talon_was_closed)
 
-  def next_player_view(self) -> "GameState":
+  def next_player_view(self,
+                       allow_public_in_talon: bool = False) -> "GameState":
     """
     Returns the GameState that represents the game as seen from the
     next_player's perspective. It replaces the opponent's unseen cards and talon
@@ -265,8 +266,8 @@ class GameState:
       if not card.public and card != played_card:
         view.cards_in_hand[self.next_player.opponent()][i] = None
     for i, card in enumerate(self.talon):
-      assert not card.public, "Talon cards should never be public"
-      view.talon[i] = None
+      if not card.public or not allow_public_in_talon:
+        view.talon[i] = None
     return view
 
   def deep_copy(self) -> "GameState":
