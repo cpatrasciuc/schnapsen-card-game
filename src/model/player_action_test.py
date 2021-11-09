@@ -694,6 +694,58 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.TWO])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
+  def test_play_trick_talon_closed_opponent_cannot_follow_suit(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trick = game_state.won_tricks.two.pop(0)
+      game_state.talon.append(trick.one)
+      game_state.talon.append(trick.two)
+      trick = game_state.won_tricks.two.pop(0)
+      game_state.talon.append(trick.one)
+      game_state.talon.append(trick.two)
+      game_state.trick_points.two = 0
+    game_state.close_talon()
+    self.assertEqual([False, False, False, False, False],
+                     [card.public for card in game_state.talon])
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.TEN))
+    self.assertTrue(action.can_execute_on(game_state))
+    game_state = action.execute(game_state)
+    self.assertEqual([False, False, False, False, False],
+                     [card.public for card in game_state.talon])
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.CLUBS, CardValue.JACK))
+    self.assertTrue(action.can_execute_on(game_state))
+    game_state = action.execute(game_state)
+    self.assertEqual([False, True, True, False, False],
+                     [card.public for card in game_state.talon])
+
+  def test_play_trick_talon_closed_opponent_cannot_follow_suit_or_trump(self):
+    game_state = get_game_state_for_tests()
+    with GameStateValidator(game_state):
+      trick = game_state.won_tricks.one.pop(0)
+      game_state.talon.append(trick.one)
+      game_state.talon.append(trick.two)
+      game_state.trick_points.one -= trick.one.card_value
+      game_state.trick_points.one -= trick.two.card_value
+      trick = game_state.won_tricks.two.pop(-1)
+      game_state.talon.append(trick.one)
+      game_state.talon.append(trick.two)
+      game_state.trick_points.two -= trick.one.card_value
+      game_state.trick_points.two -= trick.two.card_value
+      game_state.next_player = PlayerId.TWO
+    game_state.close_talon()
+    self.assertEqual([False, False, False, False, False],
+                     [card.public for card in game_state.talon])
+    action = PlayCardAction(PlayerId.TWO, Card(Suit.DIAMONDS, CardValue.QUEEN))
+    self.assertTrue(action.can_execute_on(game_state))
+    game_state = action.execute(game_state)
+    self.assertEqual([False, False, False, False, False],
+                     [card.public for card in game_state.talon])
+    action = PlayCardAction(PlayerId.ONE, Card(Suit.HEARTS, CardValue.QUEEN))
+    self.assertTrue(action.can_execute_on(game_state))
+    game_state = action.execute(game_state)
+    self.assertEqual([True, False, False, True, True],
+                     [card.public for card in game_state.talon])
+
 
 class AvailableActionsTest(unittest.TestCase):
   """Tests for the get_available_actions() functions."""

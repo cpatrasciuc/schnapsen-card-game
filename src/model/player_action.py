@@ -193,6 +193,25 @@ class PlayCardAction(PlayerAction):
       new_game_state.cards_in_hand[player_id].remove(
         new_game_state.current_trick[player_id])
 
+    # In case the talon is closed and the player could not follow the lead
+    # suit, reveal the lead-suit cards in the talon. This will allow an AI
+    # player to know which cards cannot be in the opponent's hand, if it has to
+    # make a decision in the future.
+    lead_suit = new_game_state.current_trick[self.player_id.opponent()].suit
+    played_suit = new_game_state.current_trick[self.player_id].suit
+    if new_game_state.is_talon_closed and lead_suit != played_suit:
+      new_game_state.talon = list(game_state.talon)
+      for i, card in enumerate(new_game_state.talon):
+        if card.suit == lead_suit:
+          new_game_state.talon[i] = card.copy()
+          new_game_state.talon[i].public = True
+        # In case the player didn't follow suit and didn't play a trump card,
+        # reveal all the trump cards in the talon as well.
+        if card.suit == new_game_state.trump and \
+            played_suit != new_game_state.trump:
+          new_game_state.talon[i] = card.copy()
+          new_game_state.talon[i].public = True
+
     # Clear current trick.
     new_game_state.current_trick = PlayerPair(None, None)
 

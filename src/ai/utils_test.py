@@ -313,6 +313,17 @@ class GetUnseenCardsTest(unittest.TestCase):
   def test_game_state(self):
     self.assertEqual([], get_unseen_cards(get_game_state_for_tests()))
 
+  def test_game_view_with_public_talon_cards(self):
+    game_state = get_game_state_for_tests()
+    game_state.talon[0].public = True
+    game_view = game_state.next_player_view()
+    unseen_cards = get_unseen_cards(game_view)
+    self.assertEqual([Card(Suit.SPADES, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.JACK),
+                      Card(Suit.CLUBS, CardValue.QUEEN),
+                      Card(Suit.CLUBS, CardValue.KING)],
+                     unseen_cards)
+
 
 class PopulateGameViewTest(unittest.TestCase):
   def test_game_view(self):

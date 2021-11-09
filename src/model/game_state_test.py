@@ -412,6 +412,15 @@ class GameStateNextPlayerViewTest(unittest.TestCase):
     self.assertEqual(game_state.trick_points, view.trick_points)
     self.assertEqual(game_state.current_trick, view.current_trick)
 
+  def test_public_cards_in_the_talon(self):
+    game_state = GameState.new(dealer=PlayerId.ONE, random_seed=0)
+    game_state.talon[0].public = True
+    game_state.talon[5].public = True
+    view = game_state.next_player_view()
+    self.assertEqual([Card(Suit.SPADES, CardValue.KING), None, None, None, None,
+                      Card(Suit.SPADES, CardValue.TEN), None, None, None],
+                     view.talon)
+
 
 class GameStateCopyTest(unittest.TestCase):
   def _assert_is_copy(self, obj1, obj2):
