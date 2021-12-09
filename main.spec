@@ -3,6 +3,7 @@
 #  found in the LICENSE file.
 
 import os
+import platform
 import sys
 
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
@@ -10,7 +11,12 @@ os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
 from PyInstaller.building.datastruct import Tree
-from kivy_deps import sdl2, angle
+
+if platform.system() == "Windows":
+  from kivy_deps import sdl2, angle
+  dependencies = sdl2.dep_bins + angle.dep_bins
+else:
+  dependencies = []
 
 sys.path.append(os.path.join(SPECPATH, "src"))
 
@@ -53,7 +59,7 @@ exe = EXE(pyz,
           analysis.zipfiles,
           analysis.datas,
           ui_resources,
-          *[Tree(p) for p in (sdl2.dep_bins + angle.dep_bins)],
+          *[Tree(p) for p in dependencies],
           exclude_binaries=False,
           name=f"schnapsen-card-game-{schnapsen_app.__version__}",
           icon=os.path.join(SPECPATH, "src", "ui", "resources", "icon.ico"),
@@ -66,3 +72,10 @@ exe = EXE(pyz,
           target_arch=None,
           codesign_identity=None,
           entitlements_file=None)
+
+if platform.system() == "Darwin":
+  app = BUNDLE(exe,
+               name=f"{exe.name}.app",
+               icon=exe.icon,
+               bundle_identifier=None,
+               version=schnapsen_app.__version__)
