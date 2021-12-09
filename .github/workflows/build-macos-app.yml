@@ -36,8 +36,13 @@ jobs:
           cd dist
           filename=`find * -perm +111 -type f -maxdepth 1 -print`
           zip $filename.zip $filename.app -r
-          echo ARTIFACT_FILE_NAME=$filename.zip > $GITHUB_ENV
-      - name: Upload artifact
+          echo ARTIFACT_FILE_NAME=$filename > $GITHUB_ENV
+      - name: Upload artifact (ZIP)
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILE_NAME }}.zip
+          path: dist/${{ env.ARTIFACT_FILE_NAME }}.zip
+      - name: Upload artifact (EXE)
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.ARTIFACT_FILE_NAME }}
