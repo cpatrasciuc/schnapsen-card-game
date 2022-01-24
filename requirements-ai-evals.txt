@@ -4,7 +4,7 @@
 
 # Requirements for evaluating AI players.
 statsmodels~=0.13.1
-pandas~=1.3.5
+pandas~=1.4.0
 matplotlib~=3.5.1
 numpy~=1.22.1
 graphviz~=0.19
