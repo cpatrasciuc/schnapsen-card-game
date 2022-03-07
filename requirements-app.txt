@@ -3,7 +3,7 @@
 #  found in the LICENSE file.
 
 # Requirements for the main app.
-Kivy~=2.0.0
+Kivy~=2.1.0
 
 # Requirement for CythonMctsPlayer
 setuptools~=60.9.3
