@@ -6,5 +6,5 @@
 Kivy~=2.1.0
 
 # Requirement for CythonMctsPlayer
-setuptools~=62.3.2
+setuptools~=62.3.3
 Cython~=0.29.30
