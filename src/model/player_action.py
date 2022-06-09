@@ -121,7 +121,7 @@ class PlayCardAction(PlayerAction):
           return False
     else:
       for card in hand:
-        if card.suit == other.suit or card.suit == game_state.trump:
+        if card.suit in (other.suit, game_state.trump):
           return False
     return True
 
