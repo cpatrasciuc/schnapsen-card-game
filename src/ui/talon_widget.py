@@ -182,5 +182,7 @@ if __name__ == "__main__":
   runTouchApp(talon_widget)
 
   # noinspection PyStringFormat
+  # pylint: disable=consider-using-f-string
   print("(%.1f, (%d, %d), [%d, %d], (%.1f, %.1f), (%.1f, %.1f))" % (
     RATIO, *talon_widget.size, *_card.size, *_card.pos, *trump_card.pos))
+  # pylint: enable=consider-using-f-string
