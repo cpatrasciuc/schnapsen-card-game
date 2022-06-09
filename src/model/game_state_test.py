@@ -501,8 +501,8 @@ class GameStateCopyTest(unittest.TestCase):
 
     results.sort()
     print()
-    print("\n".join(
-      ("%.10f\t%s" % (time_taken, name)) for time_taken, name in results))
+    print(
+      "\n".join(f"{time_taken:.10f}\t{name}" for time_taken, name in results))
     # self.assertEqual("copy", results[0][1])
     # self.assertEqual("deep_copy", results[1][1])
 
