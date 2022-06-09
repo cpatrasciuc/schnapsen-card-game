@@ -41,4 +41,4 @@ class PlayerPair(Generic[_TypeName]):
   @staticmethod
   def _check_key_type(key) -> None:
     if not isinstance(key, PlayerId):
-      raise TypeError("Keys must be of type PlayerId, not %s." % type(key))
+      raise TypeError(f"Keys must be of type PlayerId, not {type(key)}.")
