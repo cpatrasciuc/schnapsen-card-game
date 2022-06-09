@@ -133,7 +133,7 @@ def profile(max_permutations: int, max_iterations: int = 1000):
   suffix = _get_file_suffix(max_permutations)
   profiler_path = os.path.join(folder, f"iterations_and_time{suffix}.profile")
   profiler.dump_stats(profiler_path)
-  with open(profiler_path + ".txt", "w") as output_file:
+  with open(profiler_path + ".txt", "w", encoding="utf-8") as output_file:
     stats = pstats.Stats(profiler, stream=output_file).strip_dirs().sort_stats(
       SortKey.CUMULATIVE)
     stats.print_stats()
