@@ -67,9 +67,9 @@ def iterations_for_closing_the_talon():
   num_not_fully_simulated = len(dataframe[dataframe.iteration.isnull()])
   not_fully_simulated_pct = 100.0 * num_not_fully_simulated / num_seeds
   plt.title(
-    "In %.0f%% of the cases (%s out of %s),\n"
-    "closing the talon was not fully simulated." % (
-      not_fully_simulated_pct, num_not_fully_simulated, num_seeds))
+    f"In {not_fully_simulated_pct:.0f}% of the cases "
+    f"({num_not_fully_simulated} out of {num_seeds}),\n"
+    "closing the talon was not fully simulated.")
   plt.suptitle("Iterations required to fully simulate closing the talon")
   plt.xlabel("Iterations")
   plt.tight_layout()
