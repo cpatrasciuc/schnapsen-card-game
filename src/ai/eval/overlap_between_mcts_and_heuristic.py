@@ -38,8 +38,13 @@ def _get_overlap_for_seed(seed: int, options: MctsPlayerOptions) -> DataFrame:
 # random selection), but that doesn't lead to a better player.
 def get_overlap_for_multiple_game_states():
   num_seeds = 1000
-  options = MctsPlayerOptions(num_processes=1, max_iterations=667,
-                              max_permutations=150, use_heuristic=True)
+  # The use_heuristic argument is available only in the mcts_with_heuristic and
+  # cython_with_heuristic branches.
+  options = MctsPlayerOptions(  # pylint: disable=unexpected-keyword-arg
+    num_processes=1,
+    max_iterations=667,
+    max_permutations=150,
+    use_heuristic=True)
 
   # Process the game states and extract the data.
   with multiprocessing.Pool(processes=4) as pool:
