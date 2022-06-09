@@ -248,8 +248,8 @@ class HeuristicPlayer(Player):
       marriage_value = 40 if self._marriage_suit == game_view.trump else 20
       points += marriage_value
     points += sum(
-      [card.card_value for card in remaining_cards[:len(winning_cards)]])
-    points += sum([card.card_value for card in winning_cards])
+      card.card_value for card in remaining_cards[:len(winning_cards)])
+    points += sum(card.card_value for card in winning_cards)
     logging.debug(
       "HeuristicPlayer: Estimated points if winning cards are played: %s",
       points)
@@ -448,9 +448,9 @@ class HeuristicPlayer(Player):
     points += self._opp_card.card_value + min_trump_card.card_value
     if min_trump_card in winning_cards:
       del winning_cards[min_trump_card]
-    points += sum([card.card_value for card in winning_cards])
+    points += sum(card.card_value for card in winning_cards)
     points += sum(
-      [card.card_value for card in unplayed_cards[:len(winning_cards)]])
+      card.card_value for card in unplayed_cards[:len(winning_cards)])
     logging.debug("HeuristicPlayer: Lower bound of points that can be won: %s",
                   points)
     if points > 65:
