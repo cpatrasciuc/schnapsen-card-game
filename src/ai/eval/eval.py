@@ -56,9 +56,9 @@ def _prop_confidence_interval(pair: PlayerPair[int]):
   elif ci_upp < 0.5:
     begin = "\033[91m"  # red
   end = "\033[0m" if begin != "" else ""
-  low = "{:.2%}".format(ci_low)
-  upp = "{:.2%}".format(ci_upp)
-  mean = "{:.2%}".format(count / nobs)
+  low = f"{ci_low:.2%}"
+  upp = f"{ci_upp:.2%}"
+  mean = f"{(count / nobs):.2%}"
   return f"{begin}{mean} [{low}, {upp}]{end}"
 
 
