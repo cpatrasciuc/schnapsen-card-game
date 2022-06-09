@@ -190,7 +190,7 @@ class SimsTablePermGenerator:
     assert self._increment > 0, self._increment
 
   def _find_best_increment(self, max_searches: int = 100) -> int:
-    if self._m == self._n or self._n == 1:
+    if self._n in (self._m, 1):
       return 1  # It doesn't matter. There will be only one permutation.
     num_searches = min(self._r - 1, max_searches)
     possible_increments = list(
