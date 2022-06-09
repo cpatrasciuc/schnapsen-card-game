@@ -32,14 +32,13 @@ class Card:
       raise ValueError("card_value and suit cannot be None")
     if not isinstance(self.suit, Suit):
       raise TypeError(
-        "suit must be an instance of Suit, not %s." % type(self.suit))
+        f"suit must be an instance of Suit, not {type(self.suit)}.")
     if not isinstance(self.card_value, CardValue):
-      raise TypeError(
-        "card_value must be an instance of CardValue, not %s." % type(
-          self.card_value))
+      raise TypeError("card_value must be an instance of CardValue, " +
+                      f"not {type(self.card_value)}.")
 
   def __str__(self):
-    return "%s%s" % (self.card_value, self.suit)
+    return f"{self.card_value}{self.suit}"
 
   @staticmethod
   def get_all_cards():
