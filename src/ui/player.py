@@ -33,7 +33,7 @@ class Player(abc.ABC):
     will use (0, 0).
     """
 
-  def is_cheater(self) -> bool:  # pylint: disable=no-self-use
+  def is_cheater(self) -> bool:
     """
     If it returns True, the GameController will send the whole GameState as a
     parameter to request_next_action(). This means that the opponents' cards and
