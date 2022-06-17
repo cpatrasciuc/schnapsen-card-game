@@ -363,7 +363,7 @@ class PopulateGameViewTest(unittest.TestCase):
   def test_cards_missing_in_both_hands(self):
     game_state = get_game_state_for_tests()
     game_view = game_state.next_player_view()
-    game_view.cards_in_hand[PlayerId.ONE][0] = None
+    game_view.cards_in_hand.one[0] = None
     unseen_cards = get_unseen_cards(game_view)
     with self.assertRaisesRegex(AssertionError, "Cards missing in both hands"):
       populate_game_view(game_view, unseen_cards)
