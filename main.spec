@@ -13,6 +13,7 @@ os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
 from PyInstaller.building.datastruct import Tree
+from PyInstaller.building.osx import BUNDLE
 
 if platform.system() == "Windows":
   from kivy_deps import sdl2, angle
@@ -118,6 +119,9 @@ pyz = PYZ(analysis.pure, analysis.zipped_data, cipher=block_cipher)
 
 _maybe_add_windows_version_info()
 
+icon_file_name = "icon.icns" if platform.system() == "Darwin" else "icon.ico"
+icon_path = os.path.join(SPECPATH, "src", "ui", "resources", icon_file_name)
+
 exe = EXE(pyz,
           analysis.scripts,
           analysis.binaries,
@@ -127,7 +131,7 @@ exe = EXE(pyz,
           *[Tree(p) for p in dependencies],
           exclude_binaries=False,
           name=output_filename,
-          icon=os.path.join(SPECPATH, "src", "ui", "resources", "icon.ico"),
+          icon=icon_path,
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
