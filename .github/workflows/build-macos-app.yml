@@ -32,7 +32,7 @@ jobs:
           cd src && python setup.py build_ext --inplace --force
       - name: Build the MacOS app bundle and zip it.
         run: |
-          python -OO -m PyInstaller -F --windowed --clean -y --debug=all main.spec
+          python -OO -m PyInstaller --clean -y main.spec
           cd dist
           filename=`find * -perm +111 -type f -maxdepth 1 -print`
           zip $filename.zip $filename.app -r
