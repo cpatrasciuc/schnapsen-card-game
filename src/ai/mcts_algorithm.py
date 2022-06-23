@@ -143,7 +143,7 @@ class Node(abc.ABC, Generic[_State, _Action]):
       logging.error("MctsAlgorithm: All children are None: %s",
                     pprint.pformat(self.children, indent=True))
       return [(child, action) for action, child in self.children.items()]
-    best_ucb = max([ucb for ucb, child, action in children_with_ucbs])
+    best_ucb = max(ucb for ucb, child, action in children_with_ucbs)
     return [(child, action) for ucb, child, action in children_with_ucbs if
             ucb == best_ucb]
 

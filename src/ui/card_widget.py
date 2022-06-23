@@ -228,8 +228,10 @@ class CardWidget(Scatter):
                          center_y=self.center_y, duration=duration / 2)
     else:
       part_1 = Animation(width=0, duration=duration / 2)
+    # pylint: disable=unnecessary-dunder-call
     part_1.bind(
       on_complete=lambda *_: self.__setattr__("visible", not self.visible))
+    # pylint: enable=unnecessary-dunder-call
     if fixed_center:
       part_2 = Animation(width=self.width, center_x=self.center_x,
                          center_y=self.center_y, duration=duration / 2)

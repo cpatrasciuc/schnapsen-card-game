@@ -1091,7 +1091,7 @@ class GameWidgetGraphicTest(_GameWidgetBaseTest):
     self.assertFalse(king_hearts_widget.grayed_out)
     self.assert_do_translation(False, king_hearts_widget)
     self.assert_pixels_almost_equal([dp(38), dp(59)], king_hearts_widget.size)
-    self.assertEqual(drag_pos, king_hearts_widget.center)
+    self.assert_pixels_almost_equal(drag_pos, king_hearts_widget.center)
 
     jack_spades = Card(Suit.SPADES, CardValue.JACK)
     jack_spades_widget = game_widget.cards[jack_spades]

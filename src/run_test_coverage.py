@@ -56,7 +56,7 @@ def run_all_tests_with_coverage(folders: List[str] = None) -> None:
   # Print a text report to stdout.
   print()
   cov.report(skip_empty=True, skip_covered=True, show_missing=True)
-  print("\nOutput saved to: %s" % html_path)
+  print(f"\nOutput saved to: {html_path}")
 
 
 if __name__ == "__main__":

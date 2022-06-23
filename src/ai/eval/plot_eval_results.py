@@ -68,7 +68,7 @@ def _render_colored_table(player_names, color, win_percentage):
       if np.isnan(win_percentage[i][j]):
         text = "N/A"
       else:
-        text = "{:.2%}".format(win_percentage[i][j])
+        text = f"{win_percentage[i][j]:.2%}"
       ax.text(j, i, text, ha="center", va="center",
               color="k" if color[i][j] == 0.5 else "w")
 

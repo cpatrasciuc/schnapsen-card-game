@@ -32,7 +32,7 @@ jobs:
           cd src && python setup.py build_ext --inplace --force
       - name: Package the app as a stand-alone Windows executable
         run: |
-          python -OO -m PyInstaller -F --clean -y --debug=all main.spec
+          python -OO -m PyInstaller --clean -y main.spec
           $filename = Get-ChildItem dist -Name
           echo ARTIFACT_FILE_NAME=$filename | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         env:

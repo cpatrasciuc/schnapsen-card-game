@@ -130,7 +130,7 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
     game_state.next_player = PlayerId.TWO
     self.assertTrue(game_state.is_to_lead(PlayerId.TWO))
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
-    self.assertTrue(trump_jack in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertTrue(trump_jack in game_state.cards_in_hand.two)
     self.assertFalse(game_state.is_talon_closed)
     action = ExchangeTrumpCardAction(PlayerId.TWO)
     self.assertFalse(action.can_execute_on(game_state))
@@ -139,7 +139,7 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
   def test_cannot_exchange_trump_if_not_in_players_hand(self):
     game_state = get_game_state_for_tests()
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
-    self.assertFalse(trump_jack in game_state.cards_in_hand[PlayerId.ONE])
+    self.assertFalse(trump_jack in game_state.cards_in_hand.one)
     self.assertTrue(game_state.is_to_lead(PlayerId.ONE))
     self.assertFalse(game_state.is_talon_closed)
     action = ExchangeTrumpCardAction(PlayerId.ONE)
@@ -155,9 +155,9 @@ class ExchangeTrumpCardActionTest(unittest.TestCase):
     trump_jack = Card(suit=game_state.trump, card_value=CardValue.JACK)
     game_state = action.execute(game_state)
     self.assertEqual(game_state.trump_card, trump_jack)
-    self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.TWO])
-    index = game_state.cards_in_hand[PlayerId.TWO].index(trump_card)
-    self.assertTrue(game_state.cards_in_hand[PlayerId.TWO][index].public)
+    self.assertTrue(trump_card in game_state.cards_in_hand.two)
+    index = game_state.cards_in_hand.two.index(trump_card)
+    self.assertTrue(game_state.cards_in_hand.two[index].public)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
   def test_cannot_execute_illegal_action(self):
@@ -227,8 +227,8 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertFalse(action.can_execute_on(game_state.next_player_view()))
     # Swap the queen of spades with the trump card
     with GameStateValidator(game_state):
-      queen_spades = game_state.cards_in_hand[PlayerId.TWO].pop()
-      game_state.cards_in_hand[PlayerId.TWO].append(game_state.trump_card)
+      queen_spades = game_state.cards_in_hand.two.pop()
+      game_state.cards_in_hand.two.append(game_state.trump_card)
       game_state.trump_card = queen_spades
       game_state.trump_card.public = True
     action = AnnounceMarriageAction(PlayerId.TWO, queen_spades)
@@ -245,7 +245,7 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual([Suit.HEARTS], game_state.marriage_suits[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
-    king_hearts = game_state.cards_in_hand[PlayerId.ONE][1]
+    king_hearts = game_state.cards_in_hand.one[1]
     self.assertTrue(king_hearts.public)
 
   def test_announce_trump_marriage(self):
@@ -261,15 +261,15 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual([Suit.DIAMONDS, Suit.CLUBS],
                      game_state.marriage_suits[PlayerId.TWO])
     self.assertEqual(PlayerId.ONE, game_state.next_player)
-    king_clubs = game_state.cards_in_hand[PlayerId.TWO][1]
+    king_clubs = game_state.cards_in_hand.two[1]
     self.assertTrue(king_clubs.public)
 
   def test_announce_marriage_without_scoring_any_trick(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
-      for trick in game_state.won_tricks[PlayerId.ONE]:
+      for trick in game_state.won_tricks.one:
         game_state.talon.extend([trick.one, trick.two])
-      for trick in game_state.won_tricks[PlayerId.TWO]:
+      for trick in game_state.won_tricks.two:
         game_state.talon.extend([trick.one, trick.two])
       game_state.won_tricks = PlayerPair([], [])
       game_state.trick_points = PlayerPair(0, 0)
@@ -283,7 +283,7 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual([Suit.HEARTS], game_state.marriage_suits[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
-    king_hearts = game_state.cards_in_hand[PlayerId.ONE][1]
+    king_hearts = game_state.cards_in_hand.one[1]
     self.assertTrue(king_hearts.public)
 
   def test_announcing_marriage_is_enough_to_win_the_game(self):
@@ -294,7 +294,7 @@ class AnnounceMarriageActionTest(unittest.TestCase):
     action = AnnounceMarriageAction(PlayerId.TWO, king_clubs)
     self.assertTrue(action.can_execute_on(game_state))
     game_state = action.execute(game_state)
-    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    queen_clubs = game_state.cards_in_hand.two[4]
     self.assertTrue(queen_clubs.public)
     self.assertEqual(93, game_state.trick_points[PlayerId.TWO])
     self.assertTrue(game_state.is_game_over)
@@ -334,12 +334,12 @@ class PlayCardActionTest(unittest.TestCase):
 
   def test_can_only_execute_on_players_turn(self):
     game_state = get_game_state_for_tests()
-    card = game_state.cards_in_hand[PlayerId.ONE][0]
+    card = game_state.cards_in_hand.one[0]
     action_one = PlayCardAction(PlayerId.ONE, card)
     self.assertTrue(action_one.can_execute_on(game_state))
     self.assertTrue(action_one.can_execute_on(game_state.next_player_view()))
     action_two = PlayCardAction(PlayerId.TWO,
-                                game_state.cards_in_hand[PlayerId.TWO][0])
+                                game_state.cards_in_hand.two[0])
     self.assertFalse(action_two.can_execute_on(game_state))
     self.assertFalse(action_two.can_execute_on(game_state.next_player_view()))
     game_state = action_one.execute(game_state)
@@ -352,20 +352,20 @@ class PlayCardActionTest(unittest.TestCase):
     game_state = get_game_state_for_tests()
     for card in Card.get_all_cards():
       action = PlayCardAction(PlayerId.ONE, card)
-      self.assertEqual(card in game_state.cards_in_hand[PlayerId.ONE],
+      self.assertEqual(card in game_state.cards_in_hand.one,
                        action.can_execute_on(game_state))
-      self.assertEqual(card in game_state.cards_in_hand[PlayerId.ONE],
+      self.assertEqual(card in game_state.cards_in_hand.one,
                        action.can_execute_on(game_state.next_player_view()))
     action = PlayCardAction(PlayerId.ONE,
-                            game_state.cards_in_hand[PlayerId.ONE][0])
+                            game_state.cards_in_hand.one[0])
     self.assertTrue(action.can_execute_on(game_state))
     self.assertTrue(action.can_execute_on(game_state.next_player_view()))
     game_state = action.execute(game_state)
     for card in Card.get_all_cards():
       action = PlayCardAction(PlayerId.TWO, card)
-      self.assertEqual(card in game_state.cards_in_hand[PlayerId.TWO],
+      self.assertEqual(card in game_state.cards_in_hand.two,
                        action.can_execute_on(game_state))
-      self.assertEqual(card in game_state.cards_in_hand[PlayerId.TWO],
+      self.assertEqual(card in game_state.cards_in_hand.two,
                        action.can_execute_on(game_state.next_player_view()))
 
   def test_must_follow_suit_cannot_play_lower_card_same_suit(self):
@@ -397,7 +397,7 @@ class PlayCardActionTest(unittest.TestCase):
     game_state = action.execute(game_state)
     ace_spades = Card(Suit.SPADES, CardValue.ACE)
     num_legal_cards = 0
-    for card in game_state.cards_in_hand[PlayerId.ONE]:
+    for card in game_state.cards_in_hand.one:
       action = PlayCardAction(PlayerId.ONE, card)
       is_legal_card = action.can_execute_on(game_state)
       self.assertEqual(card == ace_spades, is_legal_card, msg=f"{card}")
@@ -429,7 +429,7 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertTrue(action.can_execute_on(game_state))
     game_state = action.execute(game_state)
     num_legal_cards = 0
-    for card in game_state.cards_in_hand[PlayerId.ONE]:
+    for card in game_state.cards_in_hand.one:
       action = PlayCardAction(PlayerId.ONE, card)
       is_legal_card = action.can_execute_on(game_state)
       self.assertEqual(card.suit == Suit.SPADES, is_legal_card, msg=f"{card}")
@@ -466,7 +466,7 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertTrue(action.can_execute_on(game_state))
     game_state = action.execute(game_state)
     num_legal_cards = 0
-    for card in game_state.cards_in_hand[PlayerId.ONE]:
+    for card in game_state.cards_in_hand.one:
       action = PlayCardAction(PlayerId.ONE, card)
       is_legal_card = action.can_execute_on(game_state)
       self.assertEqual(card.suit == Suit.SPADES, is_legal_card, msg=f"{card}")
@@ -482,11 +482,11 @@ class PlayCardActionTest(unittest.TestCase):
     game_state.close_talon()
     self.assertTrue(game_state.must_follow_suit())
     action = PlayCardAction(PlayerId.ONE,
-                            game_state.cards_in_hand[PlayerId.ONE][0])
+                            game_state.cards_in_hand.one[0])
     self.assertTrue(action.can_execute_on(game_state))
     game_state = action.execute(game_state)
     num_legal_cards = 0
-    for card in game_state.cards_in_hand[PlayerId.TWO]:
+    for card in game_state.cards_in_hand.two:
       action = PlayCardAction(PlayerId.TWO, card)
       is_legal_card = action.can_execute_on(game_state)
       self.assertEqual(card.suit == game_state.trump, is_legal_card,
@@ -516,7 +516,7 @@ class PlayCardActionTest(unittest.TestCase):
     num_legal_cards = 0
     valid_cards = [Card(Suit.CLUBS, CardValue.KING),
                    Card(Suit.CLUBS, CardValue.ACE)]
-    for card in game_state.cards_in_hand[PlayerId.TWO]:
+    for card in game_state.cards_in_hand.two:
       action = PlayCardAction(PlayerId.TWO, card)
       is_legal_card = action.can_execute_on(game_state)
       self.assertEqual(card in valid_cards, is_legal_card, msg=f"{card}")
@@ -532,9 +532,9 @@ class PlayCardActionTest(unittest.TestCase):
       game_state.next_player = PlayerId.TWO
       game_state.close_talon()
     action = PlayCardAction(PlayerId.TWO,
-                            game_state.cards_in_hand[PlayerId.TWO][0])
+                            game_state.cards_in_hand.two[0])
     game_state = action.execute(game_state)
-    for card in game_state.cards_in_hand[PlayerId.ONE]:
+    for card in game_state.cards_in_hand.one:
       action = PlayCardAction(PlayerId.ONE, card)
       self.assertTrue(action.can_execute_on(game_state))
       self.assertTrue(action.can_execute_on(game_state.next_player_view()))
@@ -543,23 +543,23 @@ class PlayCardActionTest(unittest.TestCase):
     game_state = get_game_state_for_tests()
     trump_card = game_state.trump_card
     last_talon_card = game_state.talon[0]
-    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    queen_hearts = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     game_state = action.execute(game_state)
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
-    queen_diamonds = game_state.cards_in_hand[PlayerId.TWO][0]
+    queen_diamonds = game_state.cards_in_hand.two[0]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(28, 53), game_state.trick_points)
     self.assertEqual(PlayerPair(queen_hearts, queen_diamonds),
                      game_state.won_tricks[PlayerId.ONE][-1])
-    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(queen_diamonds in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertTrue(last_talon_card in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand.one)
+    self.assertFalse(queen_diamonds in game_state.cards_in_hand.two)
+    self.assertTrue(last_talon_card in game_state.cards_in_hand.one)
+    self.assertTrue(trump_card in game_state.cards_in_hand.two)
     self.assertEqual([], game_state.talon)
     self.assertIsNone(game_state.trump_card)
     self.assertEqual(PlayerId.ONE, game_state.next_player)
@@ -568,23 +568,23 @@ class PlayCardActionTest(unittest.TestCase):
     game_state = get_game_state_for_tests()
     trump_card = game_state.trump_card
     last_talon_card = game_state.talon[0]
-    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    queen_hearts = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     game_state = action.execute(game_state)
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
-    jack_clubs = game_state.cards_in_hand[PlayerId.TWO][2]
+    jack_clubs = game_state.cards_in_hand.two[2]
     action = PlayCardAction(PlayerId.TWO, jack_clubs)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(22, 58), game_state.trick_points)
     self.assertEqual(PlayerPair(queen_hearts, jack_clubs),
                      game_state.won_tricks[PlayerId.TWO][-1])
-    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(jack_clubs in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertTrue(trump_card in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertTrue(last_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand.one)
+    self.assertFalse(jack_clubs in game_state.cards_in_hand.two)
+    self.assertTrue(trump_card in game_state.cards_in_hand.one)
+    self.assertTrue(last_talon_card in game_state.cards_in_hand.two)
     self.assertEqual([], game_state.talon)
     self.assertIsNone(game_state.trump_card)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
@@ -595,23 +595,23 @@ class PlayCardActionTest(unittest.TestCase):
     first_talon_card = game_state.talon[0]
     second_talon_card = game_state.talon[1]
 
-    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    queen_hearts = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     game_state = action.execute(game_state)
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
-    queen_diamonds = game_state.cards_in_hand[PlayerId.TWO][0]
+    queen_diamonds = game_state.cards_in_hand.two[0]
     action = PlayCardAction(PlayerId.TWO, queen_diamonds)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(28, 33), game_state.trick_points)
     self.assertEqual(PlayerPair(queen_hearts, queen_diamonds),
                      game_state.won_tricks[PlayerId.ONE][-1])
-    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(queen_diamonds in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand.one)
+    self.assertFalse(queen_diamonds in game_state.cards_in_hand.two)
+    self.assertTrue(first_talon_card in game_state.cards_in_hand.one)
+    self.assertTrue(second_talon_card in game_state.cards_in_hand.two)
     self.assertEqual([Card(Suit.CLUBS, CardValue.TEN)], game_state.talon)
     self.assertEqual(PlayerId.ONE, game_state.next_player)
 
@@ -619,51 +619,51 @@ class PlayCardActionTest(unittest.TestCase):
     game_state = get_game_state_for_tests()
     game_state.close_talon()
 
-    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    queen_hearts = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     game_state = action.execute(game_state)
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
-    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    queen_clubs = game_state.cards_in_hand.two[4]
     action = PlayCardAction(PlayerId.TWO, queen_clubs)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(22, 59), game_state.trick_points)
     self.assertEqual(PlayerPair(queen_hearts, queen_clubs),
                      game_state.won_tricks[PlayerId.TWO][-1])
-    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(queen_clubs in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertEqual(4, len(game_state.cards_in_hand[PlayerId.ONE]))
-    self.assertEqual(4, len(game_state.cards_in_hand[PlayerId.TWO]))
+    self.assertFalse(queen_hearts in game_state.cards_in_hand.one)
+    self.assertFalse(queen_clubs in game_state.cards_in_hand.two)
+    self.assertEqual(4, len(game_state.cards_in_hand.one))
+    self.assertEqual(4, len(game_state.cards_in_hand.two))
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
   def test_play_trick_talon_is_empty(self):
     game_state = get_game_state_with_empty_talon_for_tests()
 
-    ace_clubs = game_state.cards_in_hand[PlayerId.ONE][0]
+    ace_clubs = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, ace_clubs)
     game_state = action.execute(game_state)
     self.assertEqual(ace_clubs, game_state.current_trick[PlayerId.ONE])
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
-    jack_clubs = game_state.cards_in_hand[PlayerId.TWO][2]
+    jack_clubs = game_state.cards_in_hand.two[2]
     action = PlayCardAction(PlayerId.TWO, jack_clubs)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(48, 59), game_state.trick_points)
     self.assertEqual(PlayerPair(ace_clubs, jack_clubs),
                      game_state.won_tricks[PlayerId.ONE][-1])
-    self.assertFalse(ace_clubs in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(jack_clubs in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertEqual(3, len(game_state.cards_in_hand[PlayerId.ONE]))
-    self.assertEqual(3, len(game_state.cards_in_hand[PlayerId.TWO]))
+    self.assertFalse(ace_clubs in game_state.cards_in_hand.one)
+    self.assertFalse(jack_clubs in game_state.cards_in_hand.two)
+    self.assertEqual(3, len(game_state.cards_in_hand.one))
+    self.assertEqual(3, len(game_state.cards_in_hand.two))
     self.assertEqual(PlayerId.ONE, game_state.next_player)
 
   def test_play_trick_winner_has_pending_marriage_points(self):
     game_state = get_game_state_for_tests()
     with GameStateValidator(game_state):
-      for trick in game_state.won_tricks[PlayerId.TWO]:
+      for trick in game_state.won_tricks.two:
         game_state.trick_points[PlayerId.TWO] -= trick.one.card_value
         game_state.trick_points[PlayerId.TWO] -= trick.two.card_value
         game_state.talon.extend([trick.one, trick.two])
@@ -673,7 +673,7 @@ class PlayCardActionTest(unittest.TestCase):
     first_talon_card = game_state.talon[0]
     second_talon_card = game_state.talon[1]
 
-    queen_hearts = game_state.cards_in_hand[PlayerId.ONE][0]
+    queen_hearts = game_state.cards_in_hand.one[0]
     action = PlayCardAction(PlayerId.ONE, queen_hearts)
     game_state = action.execute(game_state)
     self.assertEqual(queen_hearts, game_state.current_trick[PlayerId.ONE])
@@ -681,17 +681,17 @@ class PlayCardActionTest(unittest.TestCase):
     self.assertEqual([Suit.DIAMONDS], game_state.marriage_suits[PlayerId.TWO])
     self.assertEqual(0, game_state.trick_points[PlayerId.TWO])
 
-    queen_clubs = game_state.cards_in_hand[PlayerId.TWO][4]
+    queen_clubs = game_state.cards_in_hand.two[4]
     action = PlayCardAction(PlayerId.TWO, queen_clubs)
     game_state = action.execute(game_state)
     self.assertEqual(PlayerPair(None, None), game_state.current_trick)
     self.assertEqual(PlayerPair(22, 26), game_state.trick_points)
     self.assertEqual(PlayerPair(queen_hearts, queen_clubs),
                      game_state.won_tricks[PlayerId.TWO][-1])
-    self.assertFalse(queen_hearts in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertFalse(queen_clubs in game_state.cards_in_hand[PlayerId.TWO])
-    self.assertTrue(second_talon_card in game_state.cards_in_hand[PlayerId.ONE])
-    self.assertTrue(first_talon_card in game_state.cards_in_hand[PlayerId.TWO])
+    self.assertFalse(queen_hearts in game_state.cards_in_hand.one)
+    self.assertFalse(queen_clubs in game_state.cards_in_hand.two)
+    self.assertTrue(second_talon_card in game_state.cards_in_hand.one)
+    self.assertTrue(first_talon_card in game_state.cards_in_hand.two)
     self.assertEqual(PlayerId.TWO, game_state.next_player)
 
   def test_play_trick_talon_closed_opponent_cannot_follow_suit(self):

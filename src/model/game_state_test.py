@@ -391,7 +391,7 @@ class GameStateNextPlayerViewTest(unittest.TestCase):
 
   def test_next_player_two_view_with_played_card(self):
     game_state = get_game_state_for_tests()
-    played_card = game_state.cards_in_hand[PlayerId.ONE][3]
+    played_card = game_state.cards_in_hand.one[3]
     with GameStateValidator(game_state):
       game_state.current_trick[PlayerId.ONE] = played_card
       game_state.next_player = PlayerId.TWO
@@ -501,8 +501,8 @@ class GameStateCopyTest(unittest.TestCase):
 
     results.sort()
     print()
-    print("\n".join(
-      ("%.10f\t%s" % (time_taken, name)) for time_taken, name in results))
+    print(
+      "\n".join(f"{time_taken:.10f}\t{name}" for time_taken, name in results))
     # self.assertEqual("copy", results[0][1])
     # self.assertEqual("deep_copy", results[1][1])
 

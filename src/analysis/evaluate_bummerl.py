@@ -95,7 +95,7 @@ def _print_eval_result(eval_result: EvalResult,
   print(spacing, end="")
   score = eval_result[3]
   no_decision_str = "NO DECISION"
-  score = "{:.5f}".format(score) if score is not None else no_decision_str
+  score = f"{score:.5f}" if score is not None else no_decision_str
   _print_with_width(score, len(no_decision_str) + 2, ">")
   if eval_result[3] is None or round(eval_result[3], 5) == 0.0:
     print()
@@ -119,9 +119,11 @@ def print_eval_results(eval_results: EvalResults,
   print()
   print("Overall performance:")
   if num_actions.one != 0:
-    print("\tONE:\t" + ("{:.5f}".format(sum_scores.one / num_actions.one)))
+    performance = sum_scores.one / num_actions.one
+    print(f"\tONE:\t{performance:.5f}")
   if num_actions.two != 0:
-    print("\tTWO:\t" + ("{:.5f}".format(sum_scores.two / num_actions.two)))
+    performance = sum_scores.two / num_actions.two
+    print(f"\tTWO:\t{performance:.5f}")
 
 
 def _main():

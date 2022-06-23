@@ -48,7 +48,7 @@ def _get_trick_points_color(points: int) -> str:
 
 def _get_game_points_color(points: int) -> str:
   """Returns the markup color that should be used to display the game score."""
-  assert 0 <= points < 7, "Invalid game points: %s" % points
+  assert 0 <= points < 7, f"Invalid game points: {points}"
   if points < 4:
     return "33aa33"  # green
   if points == 4:
@@ -560,7 +560,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       card_widget.grayed_out = False
       card_slots_widget = self._player_card_widgets[player]
       pos = card_slots_widget.remove_card(card_widget)
-      assert pos[0] is not None, "Player %s does not hold %s" % (player, card)
+      assert pos[0] is not None, f"Player {player} does not hold {card}"
       self.add_widget(card_widget)
       if center is None:
         center = self._get_default_play_location(player)

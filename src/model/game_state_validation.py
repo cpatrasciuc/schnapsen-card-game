@@ -106,7 +106,7 @@ def _verify_there_are_twenty_unique_cards(game_state: GameState) -> None:
                            Counter(all_cards).items() if count > 1]
   if len(duplicated_card_names) != 0:
     raise InvalidGameStateError(
-      "Duplicated cards: %s" % ",".join(duplicated_card_names))
+      f"Duplicated cards: {','.join(duplicated_card_names)}")
 
 
 def _validate_marriage_suits(game_state: GameState) -> None:
@@ -114,8 +114,8 @@ def _validate_marriage_suits(game_state: GameState) -> None:
   duplicated_marriages = [suit for suit, count in Counter(marriages).items()
                           if count > 1]
   if len(duplicated_marriages) > 0:
-    raise InvalidGameStateError("Duplicated marriage suits: %s" % (
-      ",".join(str(suit) for suit in duplicated_marriages)))
+    suits = ",".join(str(suit) for suit in duplicated_marriages)
+    raise InvalidGameStateError(f"Duplicated marriage suits: {suits}")
 
   # Check if at least one card from the marriage suits was played and that the
   # not-yet-played cards are in the player's hand.
@@ -148,12 +148,12 @@ def _validate_trick_points(game_state: GameState) -> None:
   expected_points = PlayerPair()
   for player_id in PlayerId:
     expected_points[player_id] = sum(
-      [card.card_value for trick in game_state.won_tricks[player_id] for card in
-       [trick.one, trick.two]])
+      card.card_value for trick in game_state.won_tricks[player_id] for card in
+      [trick.one, trick.two])
     if expected_points[player_id] > 0:
       expected_points[player_id] += sum(
-        [20 if suit != game_state.trump else 40 for suit in
-         game_state.marriage_suits[player_id]])
+        20 if suit != game_state.trump else 40 for suit in
+        game_state.marriage_suits[player_id])
   if expected_points != game_state.trick_points:
     raise InvalidGameStateError(
       f"Invalid trick points. Expected {expected_points}, "
