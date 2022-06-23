@@ -8,8 +8,7 @@ from collections import defaultdict
 from typing import List, Tuple, Optional
 
 import numpy as np
-import pandas
-from pandas import DataFrame
+from pandas import concat, DataFrame
 from scipy.stats import bootstrap
 
 from libcpp.vector cimport vector
@@ -178,7 +177,7 @@ def run_mcts_and_collect_data(py_game_state: PyGameState,
     if max_iterations is not None and iteration >= max_iterations:
       break
   delete_tree(root_node)
-  return pandas.concat(dataframes, ignore_index=True)
+  return concat(dataframes, ignore_index=True)
 
 def run_mcts_player_step_by_step(py_game_view: PyGameState,
                                  options: MctsPlayerOptions,
@@ -262,7 +261,7 @@ def run_mcts_player_step_by_step(py_game_view: PyGameState,
 
   for i in range(root_nodes.size()):
     delete_tree(root_nodes[i])
-  return pandas.concat(dataframes, ignore_index=True)
+  return concat(dataframes, ignore_index=True)
 
 cdef _accumulate_overlap(Node *root_node, py_game_state, level, data):
   if root_node.terminal:
