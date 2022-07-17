@@ -27,6 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-app.txt
           pip install -r requirements-packaging.txt
+          python -m pip install --upgrade Pillow
       - name: Build Cython modules
         run: |
           cd src && python setup.py build_ext --inplace --force
