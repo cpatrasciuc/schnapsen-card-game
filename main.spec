@@ -146,6 +146,6 @@ exe = EXE(pyz,
 if platform.system() == "Darwin":
   app = BUNDLE(exe,
                name=f"{exe.name}.app",
-               icon=exe.icon,
+               icon=icon_path,
                bundle_identifier=None,
                version=schnapsen_app.__version__)
