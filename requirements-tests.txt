@@ -3,5 +3,5 @@
 #  found in the LICENSE file.
 
 # Requirements for tests/linting.
-coverage~=6.4
+coverage~=6.5
 pylint~=2.15.3
