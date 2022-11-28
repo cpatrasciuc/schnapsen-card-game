@@ -4,4 +4,4 @@
 
 # Requirements for tests/linting.
 coverage~=6.5
-pylint~=2.15.3
+pylint~=2.15.6
