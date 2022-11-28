@@ -11,4 +11,4 @@ graphviz~=0.20
 scipy~=1.9.3
 
 # For printing CPU details when profiling.
-py-cpuinfo~=8.0.0
+py-cpuinfo~=9.0.0
