@@ -3,7 +3,7 @@
 #  found in the LICENSE file.
 
 # Requirements for evaluating AI players.
-statsmodels~=0.13.5
+statsmodels~=0.14.1
 pandas~=2.2.2
 matplotlib~=3.6.3
 numpy~=1.24.2
