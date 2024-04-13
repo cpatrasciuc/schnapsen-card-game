@@ -259,7 +259,7 @@ class Mcts(Generic[_State, _Action]):
         node = random.choice(best_children)
       else:
         node = random.choice(not_fully_simulated_children)
-    raise Exception("Should not reach this code")  # pragma: no cover
+    raise AssertionError("Should not reach this code")  # pragma: no cover
 
   @staticmethod
   def _fully_expand(node: Node) -> Node:
