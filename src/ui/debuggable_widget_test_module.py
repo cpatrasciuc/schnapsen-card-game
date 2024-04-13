@@ -28,7 +28,7 @@ def main():
   for attribute in ["debug_text", "color_rgba", "background_rgba"]:
     if hasattr(debuggable_widget, attribute) != __debug__:
       negation = "not " if __debug__ else ""
-      raise Exception(
+      raise AssertionError(
         f"{attribute} should {negation}be present in {config} mode.")
 
   # Test that code that uses DebuggableWidgets does not crash in RELEASE mode.
