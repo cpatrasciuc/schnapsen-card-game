@@ -39,7 +39,7 @@ jobs:
           zip $filename.zip $filename.app -r
           echo ARTIFACT_FILE_NAME=$filename > $GITHUB_ENV
       - name: Upload artifact (ZIP)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_FILE_NAME }}.zip
           path: dist/${{ env.ARTIFACT_FILE_NAME }}.zip
