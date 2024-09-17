@@ -38,7 +38,7 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8:backslashreplace
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_FILE_NAME }}
           path: dist/${{ env.ARTIFACT_FILE_NAME }}
