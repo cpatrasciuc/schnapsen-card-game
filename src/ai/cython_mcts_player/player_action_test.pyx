@@ -379,6 +379,6 @@ class ToPythonPlayerActionTest(unittest.TestCase):
                                     Card(Suit.HEARTS, CardValue.KING))))
 
   def test_unrecognized_player_action(self):
-    with self.assertRaisesRegexp(ValueError, "Unrecognized player action"):
+    with self.assertRaisesRegex(ValueError, "Unrecognized player action"):
       to_python_player_action(PlayerAction(<ActionType> 10, 1,
                                            Card(Suit.HEARTS, CardValue.KING)))
