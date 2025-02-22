@@ -30,7 +30,8 @@ class GameController:
   the game state accordingly and notifies the UI about these changes.
   """
 
-  # pylint: disable=too-few-public-methods,too-many-arguments
+  # pylint: disable=too-few-public-methods,too-many-arguments,
+  # pylint: disable= too-many-positional-arguments
 
   def __init__(
       self, game_widget: GameWidget, players: PlayerPair[Player],
