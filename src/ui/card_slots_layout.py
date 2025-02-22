@@ -38,7 +38,7 @@ class CardSlotsLayout(Layout, DebuggableWidget):
     on half of their width/height.
     :param kwargs: Parameters to forward to the base class' constructor.
     """
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     super().__init__(**kwargs)
     self._rows = rows
     self._cols = cols

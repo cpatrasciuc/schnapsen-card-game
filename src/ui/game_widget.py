@@ -680,7 +680,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
       assert False, "Should not reach this code"  # pragma: no cover
     done_callback()
 
-  # pylint: disable=too-many-arguments
+  # pylint: disable=too-many-arguments,too-many-positional-arguments
   def on_trick_completed(self, trick: Trick, winner: PlayerId,
                          cards_in_hand: PlayerPair[List[Card]],
                          draw_new_cards: bool,
@@ -738,7 +738,7 @@ class GameWidget(FloatLayout, Player, metaclass=GameWidgetMeta):
                                                         draw_new_cards,
                                                         done_callback))
 
-  # pydgdgdlint: disable=too-many-arguments
+  # pylint: disable=too-many-arguments,too-many-positional-arguments
   def _on_trick_completed_after_animations(self, trick: Trick, winner: PlayerId,
                                            draw_new_cards: bool,
                                            done_callback: Closure) -> None:

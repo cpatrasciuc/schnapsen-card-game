@@ -64,7 +64,7 @@ class _GameWidgetBaseTest(GraphicUnitTest):
     game_widget.on_action(action, done_callback)
     self.wait_for_mock_callback(done_callback)
 
-  # pylint: disable=too-many-arguments
+  # pylint: disable=too-many-arguments,too-many-positional-arguments
   def _on_trick_completed(self, game_widget: GameWidget, trick: Trick,
                           winner: PlayerId,
                           cards_in_hand: PlayerPair[List[Card]],
@@ -128,7 +128,7 @@ class _GameWidgetWithCancelledAnimations(GraphicUnitTest):
     self.wait_for_mock_callback(done_callback)
     self.advance_frames(1)
 
-  # pylint: disable=too-many-arguments
+  # pylint: disable=too-many-arguments,too-many-positional-arguments
   def _on_trick_completed(self, game_widget: GameWidget, trick: Trick,
                           winner: PlayerId,
                           cards_in_hand: PlayerPair[List[Card]],
