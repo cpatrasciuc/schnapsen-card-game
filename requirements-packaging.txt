@@ -3,4 +3,4 @@
 #  found in the LICENSE file.
 
 # Requirements for building and packaging the app.
-pyinstaller~=6.16
+pyinstaller~=6.17
